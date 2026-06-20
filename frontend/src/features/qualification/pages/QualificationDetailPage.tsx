@@ -1,10 +1,10 @@
 import React from 'react';
-import { useParams, Link } from 'react-router-dom';
+import { useParams, Link } from '@tanstack/react-router';
 import { useQuery } from '@tanstack/react-query';
 import { qualificationApi } from '../api/qualificationApi';
 
 export const QualificationDetailPage: React.FC = () => {
-  const { leadId } = useParams<{ leadId: string }>();
+  const { leadId } = useParams({ strict: false }) as { leadId: string };
 
   const { data: q, isLoading, error } = useQuery({
     queryKey: ['qualification', leadId],
@@ -92,9 +92,9 @@ export const QualificationDetailPage: React.FC = () => {
               <dt className="text-sm font-medium text-gray-500">Raw Website Analysis</dt>
               <dd className="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">
                 {q.website_analysis_id ? (
-                  <Link to={`/analysis/${q.lead_id}`} className="text-indigo-600 hover:text-indigo-900">
-                    View Analysis ({q.website_analysis_id})
-                  </Link>
+                  <Link to="/analysis/$leadId" params={{ leadId: q.lead_id }} className="text-indigo-600 hover:text-indigo-800 text-sm font-medium">
+                View Full Analysis &rarr;
+              </Link>
                 ) : (
                   'No linked analysis'
                 )}

@@ -175,6 +175,22 @@ const qualificationDetailRoute = createRoute({
   component: QualificationDetailPage,
 })
 
+// ── Outreach Routes ───────────────────────────────────────────
+import { OutreachListPage } from '@/features/outreach/pages/OutreachListPage'
+import { OutreachDetailPage } from '@/features/outreach/pages/OutreachDetailPage'
+
+const outreachListRoute = createRoute({
+  getParentRoute: () => protectedRoute,
+  path: '/outreach',
+  component: OutreachListPage,
+})
+
+const outreachDetailRoute = createRoute({
+  getParentRoute: () => protectedRoute,
+  path: '/outreach/$draftId',
+  component: OutreachDetailPage,
+})
+
 // ── CRM Routes ────────────────────────────────────────────────
 import { CRMBoardPage, OpportunityDetailPage, MeetingsPage } from '@/features/crm'
 
@@ -330,6 +346,8 @@ const routeTree = rootRoute.addChildren([
     analysisDetailRoute,
     qualificationListRoute,
     qualificationDetailRoute,
+    outreachListRoute,
+    outreachDetailRoute,
     crmBoardRoute,
     opportunityDetailRoute,
     meetingsRoute,

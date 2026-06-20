@@ -18,7 +18,8 @@ import {
   MonitorDot,
   ClipboardList,
   DatabaseBackup,
-  Bell
+  Bell,
+  Send
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
@@ -33,6 +34,7 @@ const NAV_ITEMS: NavItem[] = [
   { to: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
   { to: '/leads', label: 'Leads', icon: Target },
   { to: '/crm', label: 'CRM', icon: Building2 },
+  { to: '/outreach', label: 'Outreach Drafts', icon: Send },
   { to: '/clients', label: 'Clients', icon: Briefcase },
   { to: '/knowledge', label: 'Knowledge OS', icon: BookOpen },
   { to: '/documents', label: 'Document Vault', icon: FileBox },

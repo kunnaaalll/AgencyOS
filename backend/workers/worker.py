@@ -20,6 +20,7 @@ from core.config import settings
 from workers.jobs.discovery import discover_businesses, validate_business, enrich_business
 from workers.jobs.analysis import analyze_website_job
 from workers.jobs.qualification_ai import qualify_lead_job
+from workers.jobs.outreach import generate_outreach_job
 
 import structlog
 
@@ -41,6 +42,7 @@ FUNCTIONS: list = [
     enrich_business,
     analyze_website_job,
     qualify_lead_job,
+    generate_outreach_job,
 ]
 
 

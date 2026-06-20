@@ -1,7 +1,7 @@
 import React from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { qualificationApi } from '../api/qualificationApi';
-import { Link } from 'react-router-dom';
+import { Link } from '@tanstack/react-router';
 
 export const QualificationListPage: React.FC = () => {
   const { data: qualifications, isLoading, error } = useQuery({
@@ -59,7 +59,7 @@ export const QualificationListPage: React.FC = () => {
                   {(q.confidence * 100).toFixed(0)}%
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                  <Link to={`/qualifications/${q.lead_id}`} className="text-indigo-600 hover:text-indigo-900">
+                  <Link to="/qualifications/$leadId" params={{ leadId: q.lead_id }} className="text-indigo-600 hover:text-indigo-900">
                     View
                   </Link>
                 </td>

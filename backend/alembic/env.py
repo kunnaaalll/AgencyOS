@@ -28,6 +28,8 @@ from domain.finance.models import (  # noqa: F401
 )
 from domain.knowledge.models import KnowledgeArticle, KnowledgeCategory  # noqa: F401
 from domain.lead.models import Lead, LeadAnalysis  # noqa: F401
+from domain.qualification_ai.models import AIQualification  # noqa: F401
+from domain.outreach.models import OutreachDraft  # noqa: F401
 from domain.organization.models import Organization  # noqa: F401
 from domain.project.models import Project  # noqa: F401
 from domain.role.models import Role  # noqa: F401

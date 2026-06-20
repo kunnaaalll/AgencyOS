@@ -10,12 +10,13 @@ import {
 import { getSystemHealth, getNotifications } from '../../system/api'
 import { useQuery } from '@tanstack/react-query'
 import { authStore } from '@/store/authStore'
+import api from '@/lib/api'
 
 export function ExecutiveDashboardPage() {
   const [dateRange, setDateRange] = useState<DateRange>('30d')
   const { data: summary, isLoading, error } = useExecutiveSummary()
   
-  const userRole = authStore.state.user?.role?.name || ''
+  const userRole = (authStore.state.user as any)?.role?.name || ''
   const isSuperAdmin = userRole === 'Super Admin'
 
   const { data: systemHealth } = useQuery({
@@ -39,10 +40,8 @@ export function ExecutiveDashboardPage() {
   const { data: analyses } = useQuery({
     queryKey: ['analysis-list'],
     queryFn: async () => {
-      const response = await fetch('/api/v1/analysis', {
-        headers: { 'Authorization': `Bearer ${authStore.state.token}` }
-      });
-      return response.json();
+      const { data } = await api.get('/api/v1/analysis');
+      return data;
     },
   })
 
@@ -50,10 +49,17 @@ export function ExecutiveDashboardPage() {
   const { data: qualifications } = useQuery({
     queryKey: ['qualifications-list'],
     queryFn: async () => {
-      const response = await fetch('/api/v1/qualification', {
-        headers: { 'Authorization': `Bearer ${authStore.state.token}` }
-      });
-      return response.json();
+      const { data } = await api.get('/api/v1/qualification');
+      return data;
+    },
+  })
+
+  // Outreach Metrics
+  const { data: outreachDrafts } = useQuery({
+    queryKey: ['outreach-list'],
+    queryFn: async () => {
+      const { data } = await api.get('/api/v1/outreach');
+      return data;
     },
   })
 
@@ -108,6 +114,22 @@ export function ExecutiveDashboardPage() {
       qualified 
     };
   }, [qualifications]);
+
+  const outreachMetrics = useMemo(() => {
+    if (!outreachDrafts || !Array.isArray(outreachDrafts) || outreachDrafts.length === 0) {
+      return { total: 0, approved: 0, used: 0 };
+    }
+    const total = outreachDrafts.length;
+    let approved = 0;
+    let used = 0;
+
+    outreachDrafts.forEach(d => {
+      if (d.status === 'APPROVED') approved++;
+      if (d.status === 'USED') used++;
+    });
+
+    return { total, approved, used };
+  }, [outreachDrafts]);
 
   if (isLoading) {
     return (
@@ -246,6 +268,13 @@ export function ExecutiveDashboardPage() {
             <MetricRow label="High Priority Leads" value={qualificationMetrics.highPriority} />
             <MetricRow label="Qualified Leads" value={qualificationMetrics.qualified} />
             <MetricRow label="Avg Opportunity Score" value={qualificationMetrics.avgOpportunityScore.toFixed(1)} />
+          </SectionCard>
+
+          {/* Outreach Metrics */}
+          <SectionCard title="Outreach Drafts" href="/outreach">
+            <MetricRow label="Drafts Generated" value={outreachMetrics.total} />
+            <MetricRow label="Approved Drafts" value={outreachMetrics.approved} />
+            <MetricRow label="Used Drafts" value={outreachMetrics.used} />
           </SectionCard>
 
           {/* Revenue Metrics */}

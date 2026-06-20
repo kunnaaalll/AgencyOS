@@ -1,4 +1,4 @@
-import { apiClient } from '@/lib/apiClient';
+import api from '@/lib/api';
 
 export interface QualificationResponse {
   id: string;
@@ -18,17 +18,17 @@ export interface QualificationResponse {
 
 export const qualificationApi = {
   getQualifications: async (): Promise<QualificationResponse[]> => {
-    const response = await apiClient.get('/api/v1/qualification');
-    return response.data;
+    const { data } = await api.get('/api/v1/qualification');
+    return data;
   },
 
-  getQualificationByLead: async (leadId: string): Promise<QualificationResponse> => {
-    const response = await apiClient.get(`/api/v1/qualification/${leadId}`);
-    return response.data;
+  getQualificationByLeadId: async (leadId: string): Promise<QualificationResponse> => {
+    const { data } = await api.get(`/api/v1/qualification/lead/${leadId}`);
+    return data;
   },
 
-  runQualification: async (leadId: string): Promise<{ message: string }> => {
-    const response = await apiClient.post(`/api/v1/qualification/run/${leadId}`);
-    return response.data;
-  },
+  generateQualification: async (leadId: string): Promise<{ message: string, job_id?: string }> => {
+    const { data } = await api.post('/api/v1/qualification/generate', { lead_id: leadId });
+    return data;
+  }
 };
