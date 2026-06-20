@@ -1,14 +1,16 @@
 import uuid
-from typing import Sequence
+from collections.abc import Sequence
+
+from fastapi import HTTPException, status
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
-from fastapi import HTTPException, status
 
+from domain.project.services import ProjectService
+from domain.task.events import TaskCreatedEvent
 from domain.task.models import Task
 from domain.task.schemas import TaskCreate, TaskUpdate
-from domain.task.events import TaskCreatedEvent
 from events.dispatcher import dispatch_event
-from domain.project.services import ProjectService
+
 
 class TaskService:
     @staticmethod
@@ -29,7 +31,7 @@ class TaskService:
     @staticmethod
     async def create_task(db: AsyncSession, project_id: uuid.UUID, data: TaskCreate) -> Task:
         await ProjectService.get_project(db, project_id) # Verify project exists
-        
+
         task = Task(
             project_id=project_id,
             title=data.title,
@@ -55,11 +57,11 @@ class TaskService:
     @staticmethod
     async def update_task(db: AsyncSession, task_id: uuid.UUID, data: TaskUpdate) -> Task:
         task = await TaskService.get_task(db, task_id)
-        
+
         update_data = data.model_dump(exclude_unset=True)
         for key, value in update_data.items():
             setattr(task, key, value)
-            
+
         await db.flush()
         return task
 

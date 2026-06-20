@@ -1,16 +1,18 @@
 import uuid
-from typing import Sequence
+from collections.abc import Sequence
+
 from fastapi import HTTPException, status
-from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from domain.knowledge.models import KnowledgeArticle, KnowledgeCategory
 from domain.knowledge.schemas import (
     KnowledgeArticleCreate,
     KnowledgeArticleUpdate,
     KnowledgeCategoryCreate,
-    KnowledgeCategoryUpdate
+    KnowledgeCategoryUpdate,
 )
+
 
 class KnowledgeService:
     # ── Categories ───────────────────────────────────────────────

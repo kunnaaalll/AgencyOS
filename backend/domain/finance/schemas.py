@@ -1,8 +1,10 @@
-from datetime import datetime, date
+from datetime import date, datetime
 from uuid import UUID
+
 from pydantic import BaseModel, Field
 
-from domain.finance.enums import RevenueStatus, ExpenseStatus
+from domain.finance.enums import ExpenseStatus, RevenueStatus
+
 
 # -- Revenue Schemas --
 class RevenueBase(BaseModel):

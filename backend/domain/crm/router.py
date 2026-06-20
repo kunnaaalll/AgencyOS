@@ -1,21 +1,21 @@
 import uuid
-from typing import Sequence
+
 from fastapi import APIRouter, Depends, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from core.database import get_db
 from domain.auth.deps import require_permissions
 from domain.crm.schemas import (
-    OpportunityCreate,
-    OpportunityUpdate,
-    OpportunityResponse,
     ActivityCreate,
-    ActivityUpdate,
     ActivityResponse,
-    MeetingCreate,
-    MeetingUpdate,
-    MeetingResponse,
+    ActivityUpdate,
     CRMStats,
+    MeetingCreate,
+    MeetingResponse,
+    MeetingUpdate,
+    OpportunityCreate,
+    OpportunityResponse,
+    OpportunityUpdate,
 )
 from domain.crm.services import CRMService
 

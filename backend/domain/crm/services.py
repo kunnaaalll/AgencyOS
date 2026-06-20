@@ -1,26 +1,27 @@
 import uuid
-from typing import Sequence
-from sqlalchemy import select, func
-from sqlalchemy.ext.asyncio import AsyncSession
-from fastapi import HTTPException, status
+from collections.abc import Sequence
 
-from domain.crm.models import Opportunity, Activity, Meeting
-from domain.crm.schemas import (
-    OpportunityCreate,
-    OpportunityUpdate,
-    ActivityCreate,
-    ActivityUpdate,
-    MeetingCreate,
-    MeetingUpdate,
-    CRMStats,
-)
+from fastapi import HTTPException, status
+from sqlalchemy import func, select
+from sqlalchemy.ext.asyncio import AsyncSession
+
 from domain.crm.enums import PipelineStage
 from domain.crm.events import (
-    OpportunityCreatedEvent,
-    OpportunityStageChangedEvent,
     MeetingScheduledEvent,
-    OpportunityWonEvent,
+    OpportunityCreatedEvent,
     OpportunityLostEvent,
+    OpportunityStageChangedEvent,
+    OpportunityWonEvent,
+)
+from domain.crm.models import Activity, Meeting, Opportunity
+from domain.crm.schemas import (
+    ActivityCreate,
+    ActivityUpdate,
+    CRMStats,
+    MeetingCreate,
+    MeetingUpdate,
+    OpportunityCreate,
+    OpportunityUpdate,
 )
 from events.dispatcher import dispatch_event
 
@@ -53,7 +54,7 @@ class CRMService:
     @staticmethod
     async def create_opportunity(db: AsyncSession, data: OpportunityCreate) -> Opportunity:
         probability = PROBABILITY_MAP.get(data.pipeline_stage, 10)
-        
+
         opp = Opportunity(
             lead_id=data.lead_id,
             title=data.title,
@@ -79,16 +80,16 @@ class CRMService:
     @staticmethod
     async def update_opportunity(db: AsyncSession, opp_id: uuid.UUID, data: OpportunityUpdate) -> Opportunity:
         opp = await CRMService.get_opportunity(db, opp_id)
-        
+
         old_stage = opp.pipeline_stage
-        
+
         update_data = data.model_dump(exclude_unset=True)
         for key, value in update_data.items():
             setattr(opp, key, value)
-            
+
         if "pipeline_stage" in update_data:
             opp.probability = PROBABILITY_MAP.get(opp.pipeline_stage, opp.probability)
-            
+
         await db.flush()
 
         if "pipeline_stage" in update_data and old_stage != opp.pipeline_stage:
@@ -117,12 +118,12 @@ class CRMService:
         stmt = select(Activity).where(Activity.opportunity_id == opp_id).order_by(Activity.created_at.desc())
         result = await db.execute(stmt)
         return result.scalars().all()
-        
+
     @staticmethod
     async def create_activity(db: AsyncSession, opp_id: uuid.UUID, data: ActivityCreate) -> Activity:
         # verify opp exists
         await CRMService.get_opportunity(db, opp_id)
-        
+
         activity = Activity(
             opportunity_id=opp_id,
             user_id=data.user_id,
@@ -143,14 +144,14 @@ class CRMService:
         activity = result.scalar_one_or_none()
         if not activity:
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Activity not found")
-            
+
         update_data = data.model_dump(exclude_unset=True)
         for key, value in update_data.items():
             setattr(activity, key, value)
-            
+
         await db.flush()
         return activity
-        
+
     @staticmethod
     async def delete_activity(db: AsyncSession, act_id: uuid.UUID) -> None:
         stmt = select(Activity).where(Activity.id == act_id)
@@ -166,11 +167,11 @@ class CRMService:
         stmt = select(Meeting).where(Meeting.opportunity_id == opp_id).order_by(Meeting.scheduled_at.asc())
         result = await db.execute(stmt)
         return result.scalars().all()
-        
+
     @staticmethod
     async def create_meeting(db: AsyncSession, opp_id: uuid.UUID, data: MeetingCreate) -> Meeting:
         await CRMService.get_opportunity(db, opp_id)
-        
+
         meeting = Meeting(
             opportunity_id=opp_id,
             meeting_type=data.meeting_type,
@@ -182,9 +183,9 @@ class CRMService:
         )
         db.add(meeting)
         await db.flush()
-        
+
         await dispatch_event(MeetingScheduledEvent(meeting_id=str(meeting.id), opportunity_id=str(opp_id)))
-        
+
         return meeting
 
     @staticmethod
@@ -194,11 +195,11 @@ class CRMService:
         meeting = result.scalar_one_or_none()
         if not meeting:
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Meeting not found")
-            
+
         update_data = data.model_dump(exclude_unset=True)
         for key, value in update_data.items():
             setattr(meeting, key, value)
-            
+
         await db.flush()
         return meeting
 
@@ -217,24 +218,24 @@ class CRMService:
         stmt = select(Opportunity)
         result = await db.execute(stmt)
         opps = result.scalars().all()
-        
+
         pipeline_value = sum(o.value for o in opps if o.pipeline_stage not in [PipelineStage.WON, PipelineStage.LOST])
         weighted_pipeline_value = sum(int(o.value * (o.probability / 100.0)) for o in opps if o.pipeline_stage not in [PipelineStage.WON, PipelineStage.LOST])
-        
+
         won = sum(1 for o in opps if o.pipeline_stage == PipelineStage.WON)
         lost = sum(1 for o in opps if o.pipeline_stage == PipelineStage.LOST)
-        
+
         total_closed = won + lost
         conversion_rate = (won / total_closed * 100) if total_closed > 0 else 0.0
-        
+
         # Meetings scheduled
         # Just count all upcoming meetings
-        # For simplicity, counting all meetings for now. 
+        # For simplicity, counting all meetings for now.
         # In a real scenario we might only count those > func.now()
         mtg_stmt = select(func.count(Meeting.id))
         mtg_result = await db.execute(mtg_stmt)
         meetings_scheduled = mtg_result.scalar_one() or 0
-        
+
         return CRMStats(
             pipeline_value=pipeline_value,
             weighted_pipeline_value=weighted_pipeline_value,

@@ -1,13 +1,12 @@
-import uuid
-from fastapi import APIRouter, Depends, HTTPException, status
-from sqlalchemy.ext.asyncio import AsyncSession
+from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
 
-from core.database import get_db
 from api.deps import get_current_user
-from domain.user.models import User
+from core.database import get_db
 from domain.discovery.models import DiscoveryJob
 from domain.discovery.schemas import DiscoveryJobCreate, DiscoveryJobResponse
+from domain.user.models import User
 
 router = APIRouter(prefix="/v1", tags=["Discovery"])
 
@@ -20,7 +19,7 @@ async def list_discovery_jobs(
 ):
     if not current_user.has_permission("leads:read"):
         raise HTTPException(status_code=403, detail="Not enough permissions")
-        
+
     result = await db.execute(select(DiscoveryJob).offset(skip).limit(limit))
     return result.scalars().all()
 
@@ -32,7 +31,7 @@ async def create_discovery_job(
 ):
     if not current_user.has_permission("leads:create"):
         raise HTTPException(status_code=403, detail="Not enough permissions")
-        
+
     job = DiscoveryJob(**job_in.model_dump())
     db.add(job)
     await db.commit()

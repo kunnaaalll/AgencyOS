@@ -1,10 +1,13 @@
 import uuid
 from datetime import datetime
-from sqlalchemy import String, ForeignKey, Enum as SQLEnum, Text, DateTime, BigInteger
+
+from sqlalchemy import BigInteger, DateTime, ForeignKey, String, Text
+from sqlalchemy import Enum as SQLEnum
 from sqlalchemy.orm import Mapped, mapped_column
 
 from core.database import Base
 from domain.documents.enums import DocumentType
+
 
 class Document(Base):
     __tablename__ = "documents"

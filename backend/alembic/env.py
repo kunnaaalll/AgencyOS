@@ -6,25 +6,32 @@ Supports async SQLAlchemy engine.
 import asyncio
 from logging.config import fileConfig
 
-from alembic import context
 from sqlalchemy import pool
 from sqlalchemy.engine import Connection
 from sqlalchemy.ext.asyncio import async_engine_from_config
 
+from alembic import context
+
 # Import all models to register them with metadata
 from core.database import Base
-from domain.organization.models import Organization  # noqa: F401
-from domain.role.models import Role  # noqa: F401
-from domain.user.models import User  # noqa: F401
-from domain.lead.models import Lead, LeadAnalysis  # noqa: F401
-from domain.discovery.models import DiscoveryJob  # noqa: F401
-from domain.crm.models import Opportunity, Activity, Meeting  # noqa: F401
 from domain.client.models import Client  # noqa: F401
-from domain.project.models import Project  # noqa: F401
-from domain.task.models import Task  # noqa: F401
-from domain.finance.models import Revenue, Expense, Founder, Distribution, FinanceSettings  # noqa: F401
+from domain.crm.models import Activity, Meeting, Opportunity  # noqa: F401
+from domain.discovery.models import DiscoveryJob  # noqa: F401
+from domain.documents.models import CredentialRecord, Document  # noqa: F401
+from domain.finance.models import (  # noqa: F401
+    Distribution,
+    Expense,
+    FinanceSettings,
+    Founder,
+    Revenue,
+)
 from domain.knowledge.models import KnowledgeArticle, KnowledgeCategory  # noqa: F401
-from domain.documents.models import Document, CredentialRecord  # noqa: F401
+from domain.lead.models import Lead, LeadAnalysis  # noqa: F401
+from domain.organization.models import Organization  # noqa: F401
+from domain.project.models import Project  # noqa: F401
+from domain.role.models import Role  # noqa: F401
+from domain.task.models import Task  # noqa: F401
+from domain.user.models import User  # noqa: F401
 
 # Alembic Config object
 config = context.config

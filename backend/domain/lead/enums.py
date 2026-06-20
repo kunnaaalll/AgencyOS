@@ -1,5 +1,6 @@
 from enum import Enum
 
+
 class LeadStatus(str, Enum):
     NEW = "NEW"
     ANALYZED = "ANALYZED"

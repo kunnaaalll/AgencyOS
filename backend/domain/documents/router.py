@@ -1,27 +1,26 @@
 import uuid
-from typing import List
-from fastapi import APIRouter, Depends, status, UploadFile, File, Form
+
+from fastapi import APIRouter, Depends, File, Form, UploadFile, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from core.database import get_db
-from core.security import get_current_user
-from domain.user.models import User
-from domain.role.dependencies import require_permissions
-from domain.documents.schemas import (
-    DocumentResponse, 
-    DocumentCreate, 
-    CredentialRecordCreate, 
-    CredentialRecordResponse, 
-    CredentialRecordUpdate
-)
-from domain.documents.services import DocumentService, CredentialService
 from domain.documents.enums import DocumentType
+from domain.documents.schemas import (
+    CredentialRecordCreate,
+    CredentialRecordResponse,
+    CredentialRecordUpdate,
+    DocumentCreate,
+    DocumentResponse,
+)
+from domain.documents.services import CredentialService, DocumentService
+from domain.role.dependencies import require_permissions
+from domain.user.models import User
 
 router = APIRouter(tags=["Documents & Credentials"])
 
 # ── Documents ──────────────────────────────────────────────────
 
-@router.get("/v1/documents", response_model=List[DocumentResponse])
+@router.get("/v1/documents", response_model=list[DocumentResponse])
 async def list_documents(
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(require_permissions(["documents:read"]))
@@ -71,7 +70,7 @@ async def download_document(
 
 # ── Credentials ────────────────────────────────────────────────
 
-@router.get("/v1/credentials", response_model=List[CredentialRecordResponse])
+@router.get("/v1/credentials", response_model=list[CredentialRecordResponse])
 async def list_credentials(
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(require_permissions(["documents:read"]))

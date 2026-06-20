@@ -1,7 +1,7 @@
-from pydantic import BaseModel, Field, EmailStr
-from datetime import datetime
 import uuid
-from typing import Optional
+from datetime import datetime
+
+from pydantic import BaseModel
 
 from domain.documents.enums import DocumentType
 
@@ -9,7 +9,7 @@ from domain.documents.enums import DocumentType
 
 class DocumentCreate(BaseModel):
     name: str
-    client_id: Optional[uuid.UUID] = None
+    client_id: uuid.UUID | None = None
     document_type: DocumentType = DocumentType.GENERAL
 
 class DocumentResponse(BaseModel):
@@ -21,8 +21,8 @@ class DocumentResponse(BaseModel):
     bucket: str
     storage_key: str
     document_type: DocumentType
-    client_id: Optional[uuid.UUID] = None
-    uploaded_by: Optional[uuid.UUID] = None
+    client_id: uuid.UUID | None = None
+    uploaded_by: uuid.UUID | None = None
     created_at: datetime
     updated_at: datetime
 
@@ -33,23 +33,23 @@ class DocumentResponse(BaseModel):
 
 class CredentialRecordCreate(BaseModel):
     provider: str
-    client_id: Optional[uuid.UUID] = None
-    account_email: Optional[str] = None
-    notes: Optional[str] = None
+    client_id: uuid.UUID | None = None
+    account_email: str | None = None
+    notes: str | None = None
 
 class CredentialRecordUpdate(BaseModel):
-    provider: Optional[str] = None
-    account_email: Optional[str] = None
-    notes: Optional[str] = None
-    last_verified_at: Optional[datetime] = None
+    provider: str | None = None
+    account_email: str | None = None
+    notes: str | None = None
+    last_verified_at: datetime | None = None
 
 class CredentialRecordResponse(BaseModel):
     id: uuid.UUID
     provider: str
-    client_id: Optional[uuid.UUID] = None
-    account_email: Optional[str] = None
-    notes: Optional[str] = None
-    last_verified_at: Optional[datetime] = None
+    client_id: uuid.UUID | None = None
+    account_email: str | None = None
+    notes: str | None = None
+    last_verified_at: datetime | None = None
     created_at: datetime
     updated_at: datetime
 

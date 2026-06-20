@@ -1,7 +1,10 @@
 import uuid
 from datetime import datetime
-from pydantic import BaseModel, ConfigDict, HttpUrl
+
+from pydantic import BaseModel, ConfigDict
+
 from domain.lead.enums import LeadStatus, Priority
+
 
 class LeadBase(BaseModel):
     business_name: str
@@ -35,7 +38,7 @@ class LeadResponse(LeadBase):
     qualification_status: str | None
     created_at: datetime
     updated_at: datetime
-    
+
     model_config = ConfigDict(from_attributes=True)
 
 class LeadAnalysisBase(BaseModel):
@@ -60,7 +63,7 @@ class LeadAnalysisResponse(LeadAnalysisBase):
     analyzed_at: datetime | None
     created_at: datetime
     updated_at: datetime
-    
+
     model_config = ConfigDict(from_attributes=True)
 
 class LeadStats(BaseModel):

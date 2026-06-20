@@ -4,16 +4,18 @@ AgencyOS V2 — Storage Service
 
 import uuid
 from datetime import timedelta
-from minio.error import S3Error
+
 from fastapi import UploadFile
+from minio.error import S3Error
 
 from core.config import settings
 from core.minio import get_minio_client
 
+
 class StorageService:
     @staticmethod
     async def upload_file(
-        file: UploadFile, 
+        file: UploadFile,
         bucket: str = settings.MINIO_BUCKET_NAME,
         prefix: str = ""
     ) -> str:
@@ -28,9 +30,9 @@ class StorageService:
         ext = ""
         if file.filename and "." in file.filename:
             ext = f".{file.filename.split('.')[-1]}"
-            
+
         storage_key = f"{prefix}{file_id}{ext}" if prefix else f"{file_id}{ext}"
-        
+
         # Read file into memory or stream it
         file_size = -1
         client.put_object(
@@ -45,7 +47,7 @@ class StorageService:
 
     @staticmethod
     async def generate_presigned_url(
-        storage_key: str, 
+        storage_key: str,
         bucket: str = settings.MINIO_BUCKET_NAME,
         expires_in_hours: int = 24
     ) -> str:
@@ -61,7 +63,7 @@ class StorageService:
 
     @staticmethod
     async def delete_file(
-        storage_key: str, 
+        storage_key: str,
         bucket: str = settings.MINIO_BUCKET_NAME
     ) -> None:
         """

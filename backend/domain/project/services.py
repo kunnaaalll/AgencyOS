@@ -1,14 +1,16 @@
 import uuid
-from typing import Sequence
+from collections.abc import Sequence
+
+from fastapi import HTTPException, status
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
-from fastapi import HTTPException, status
 
+from domain.client.services import ClientService
+from domain.project.events import ProjectCreatedEvent
 from domain.project.models import Project
 from domain.project.schemas import ProjectCreate, ProjectUpdate
-from domain.project.events import ProjectCreatedEvent
 from events.dispatcher import dispatch_event
-from domain.client.services import ClientService
+
 
 class ProjectService:
     @staticmethod
@@ -29,7 +31,7 @@ class ProjectService:
     @staticmethod
     async def create_project(db: AsyncSession, client_id: uuid.UUID, data: ProjectCreate) -> Project:
         await ClientService.get_client(db, client_id) # Verify client exists
-        
+
         project = Project(
             client_id=client_id,
             name=data.name,
@@ -53,11 +55,11 @@ class ProjectService:
     @staticmethod
     async def update_project(db: AsyncSession, project_id: uuid.UUID, data: ProjectUpdate) -> Project:
         project = await ProjectService.get_project(db, project_id)
-        
+
         update_data = data.model_dump(exclude_unset=True)
         for key, value in update_data.items():
             setattr(project, key, value)
-            
+
         await db.flush()
         return project
 

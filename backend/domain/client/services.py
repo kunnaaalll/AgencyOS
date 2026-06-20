@@ -1,14 +1,16 @@
 import uuid
-from typing import Sequence
-from sqlalchemy import select, func
-from sqlalchemy.ext.asyncio import AsyncSession
-from fastapi import HTTPException, status
+from collections.abc import Sequence
 
-from domain.client.models import Client
-from domain.client.schemas import ClientCreate, ClientUpdate, ClientStats
+from fastapi import HTTPException, status
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
+
 from domain.client.enums import ClientStatus, HealthStatus
 from domain.client.events import ClientCreatedEvent, ClientHealthChangedEvent
+from domain.client.models import Client
+from domain.client.schemas import ClientCreate, ClientStats, ClientUpdate
 from events.dispatcher import dispatch_event
+
 
 class ClientService:
     @staticmethod
@@ -58,13 +60,13 @@ class ClientService:
     @staticmethod
     async def update_client(db: AsyncSession, client_id: uuid.UUID, data: ClientUpdate) -> Client:
         client = await ClientService.get_client(db, client_id)
-        
+
         old_health = client.health_status
-        
+
         update_data = data.model_dump(exclude_unset=True)
         for key, value in update_data.items():
             setattr(client, key, value)
-            
+
         await db.flush()
 
         if "health_status" in update_data and old_health != client.health_status:
@@ -89,12 +91,12 @@ class ClientService:
         stmt = select(Client)
         result = await db.execute(stmt)
         clients = result.scalars().all()
-        
+
         active_clients = sum(1 for c in clients if c.status == ClientStatus.ACTIVE)
         monthly_retainer_revenue = sum(c.monthly_retainer for c in clients if c.status == ClientStatus.ACTIVE)
         at_risk_clients = sum(1 for c in clients if c.health_status == HealthStatus.AT_RISK and c.status == ClientStatus.ACTIVE)
         renewals_due = sum(1 for c in clients if c.health_status == HealthStatus.RENEWAL_DUE and c.status == ClientStatus.ACTIVE)
-        
+
         return ClientStats(
             active_clients=active_clients,
             monthly_retainer_revenue=monthly_retainer_revenue,

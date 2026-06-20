@@ -1,10 +1,13 @@
 import uuid
 from datetime import datetime
-from sqlalchemy import String, Integer, DateTime, ForeignKey, Enum as SQLEnum, Text, Float
+
+from sqlalchemy import DateTime, ForeignKey, Integer, String, Text
+from sqlalchemy import Enum as SQLEnum
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from core.database import Base
 from domain.client.enums import ClientStatus, HealthStatus
+
 
 class Client(Base):
     __tablename__ = "clients"
@@ -18,7 +21,7 @@ class Client(Base):
     monthly_retainer: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
     contract_start_date: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     contract_end_date: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
-    
+
     status: Mapped[ClientStatus] = mapped_column(
         SQLEnum(ClientStatus, name="clientstatus_enum"), default=ClientStatus.ACTIVE, nullable=False
     )

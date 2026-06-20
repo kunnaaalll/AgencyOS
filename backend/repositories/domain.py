@@ -1,7 +1,6 @@
 """AgencyOS V2 — Domain-specific Repositories"""
 
 from sqlalchemy import select
-from sqlalchemy.ext.asyncio import AsyncSession
 
 from domain.organization.models import Organization
 from domain.role.models import Role

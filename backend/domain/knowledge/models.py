@@ -1,9 +1,12 @@
 import uuid
-from sqlalchemy import String, ForeignKey, Enum as SQLEnum, Text, ARRAY
+
+from sqlalchemy import ARRAY, ForeignKey, String, Text
+from sqlalchemy import Enum as SQLEnum
 from sqlalchemy.orm import Mapped, mapped_column
 
 from core.database import Base
 from domain.knowledge.enums import KnowledgeStatus
+
 
 class KnowledgeCategory(Base):
     __tablename__ = "knowledge_categories"

@@ -8,7 +8,6 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from core.exceptions import ConflictException, NotFoundException
 from core.security import hash_password
-from domain.user.models import User
 from domain.user.schemas import UserCreate, UserListResponse, UserResponse, UserUpdate
 from repositories.domain import UserRepository
 

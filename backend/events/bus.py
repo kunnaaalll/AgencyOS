@@ -7,7 +7,8 @@ Future phases will replace this with Redis Pub/Sub or a message broker.
 
 import asyncio
 from collections import defaultdict
-from typing import Any, Callable, Coroutine
+from collections.abc import Callable, Coroutine
+from typing import Any
 
 from events.base import BaseEvent
 

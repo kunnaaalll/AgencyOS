@@ -1,10 +1,13 @@
 import uuid
 from datetime import datetime
-from sqlalchemy import String, Integer, DateTime, ForeignKey, Enum as SQLEnum, Text
+
+from sqlalchemy import DateTime, ForeignKey, Integer, String, Text
+from sqlalchemy import Enum as SQLEnum
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from core.database import Base
-from domain.crm.enums import PipelineStage, ActivityType, MeetingType
+from domain.crm.enums import ActivityType, MeetingType, PipelineStage
+
 
 class Opportunity(Base):
     __tablename__ = "opportunities"
@@ -19,7 +22,7 @@ class Opportunity(Base):
     owner_id: Mapped[uuid.UUID | None] = mapped_column(ForeignKey("users.id", ondelete="SET NULL"), nullable=True)
     expected_close_date: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     notes: Mapped[str | None] = mapped_column(Text, nullable=True)
-    
+
     # Relationships
     lead: Mapped["Lead"] = relationship("Lead") # type: ignore
     owner: Mapped["User"] = relationship("User") # type: ignore

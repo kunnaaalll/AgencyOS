@@ -1,16 +1,23 @@
 import uuid
-from typing import Sequence
+from collections.abc import Sequence
 from datetime import date
-from sqlalchemy import select, func
-from sqlalchemy.ext.asyncio import AsyncSession
-from fastapi import HTTPException, status
 
-from domain.finance.models import Revenue, Expense, Founder, Distribution, FinanceSettings
+from fastapi import HTTPException
+from sqlalchemy import func, select
+from sqlalchemy.ext.asyncio import AsyncSession
+
+from domain.finance.enums import ExpenseStatus, RevenueStatus
+from domain.finance.models import Expense, FinanceSettings, Founder, Revenue
 from domain.finance.schemas import (
-    RevenueCreate, RevenueUpdate, ExpenseCreate, ExpenseUpdate,
-    FounderCreate, FounderUpdate, FinanceSummaryResponse, ForecastResponse
+    ExpenseCreate,
+    ExpenseUpdate,
+    FinanceSummaryResponse,
+    ForecastResponse,
+    FounderCreate,
+    FounderUpdate,
+    RevenueCreate,
+    RevenueUpdate,
 )
-from domain.finance.enums import RevenueStatus, ExpenseStatus
 
 
 class FinanceService:
@@ -110,7 +117,7 @@ class FinanceService:
         mrr = mrr_result.scalar() or 0.0
 
         net_profit = float(total_revenue) - float(total_expenses)
-        
+
         settings = await FinanceService.get_settings(db)
         reserve_allocation = net_profit * (float(settings.reserve_percentage) / 100.0) if net_profit > 0 else 0.0
         distribution_pool = net_profit - reserve_allocation if net_profit > 0 else 0.0
@@ -136,10 +143,10 @@ class DistributionService:
         query = select(func.sum(Founder.equity_percentage)).where(Founder.is_active == True)
         if ignore_id:
             query = query.where(Founder.id != ignore_id)
-        
+
         result = await db.execute(query)
         current_total = float(result.scalar() or 0.0)
-        
+
         if round(current_total + float(new_equity), 2) > 100.0:
             raise HTTPException(status_code=400, detail="Total active equity cannot exceed 100%")
 
@@ -147,7 +154,7 @@ class DistributionService:
     async def create_founder(db: AsyncSession, data: FounderCreate) -> Founder:
         if data.is_active:
             await DistributionService.validate_equity(db, new_equity=data.equity_percentage)
-            
+
         founder = Founder(**data.model_dump())
         db.add(founder)
         await db.commit()
@@ -159,18 +166,18 @@ class DistributionService:
         founder = await db.get(Founder, founder_id)
         if not founder:
             raise HTTPException(status_code=404, detail="Founder not found")
-        
+
         update_data = data.model_dump(exclude_unset=True)
-        
+
         is_active = update_data.get('is_active', founder.is_active)
         new_equity = update_data.get('equity_percentage', founder.equity_percentage)
-        
+
         if is_active:
             await DistributionService.validate_equity(db, ignore_id=founder_id, new_equity=new_equity)
-            
+
         for key, value in update_data.items():
             setattr(founder, key, value)
-            
+
         await db.commit()
         await db.refresh(founder)
         return founder
@@ -188,16 +195,16 @@ class ForecastService:
     @staticmethod
     async def get_forecast(db: AsyncSession) -> ForecastResponse:
         summary = await FinanceService.get_summary(db)
-        
+
         # Simple forecasting (e.g., projecting next month based on MRR trend)
         # Without historical trend data, we'll just apply a simple optimistic 10% growth rule for demo purposes
         projected_mrr = summary.mrr * 1.10
         projected_profit = summary.net_profit * 1.05
-        
+
         # Hiring affordability (can we afford a $5k/mo resource?)
         # Let's say we need projected profit > $10k
         hiring_affordability = projected_profit / 2.0 if projected_profit > 0 else 0.0
-        
+
         return ForecastResponse(
             projected_mrr=projected_mrr,
             projected_profit=projected_profit,

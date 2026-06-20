@@ -3,7 +3,6 @@ AgencyOS V2 — Role Model
 RBAC role with extensible JSON permissions array.
 """
 
-from typing import Any
 
 from sqlalchemy import JSON, String
 from sqlalchemy.orm import Mapped, mapped_column, relationship

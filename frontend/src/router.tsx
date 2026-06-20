@@ -12,7 +12,10 @@ import { authStore } from '@/store/authStore'
 
 // ── Page imports ──────────────────────────────────────────────
 import { LoginPage } from '@/features/auth/LoginPage'
-import { DashboardPage } from '@/features/dashboard/DashboardPage'
+import { 
+  ExecutiveDashboardPage, GrowthAnalyticsPage, SalesAnalyticsPage, 
+  FinanceAnalyticsPage, DeliveryAnalyticsPage 
+} from '@/features/analytics'
 import { UsersPage } from '@/features/users/UsersPage'
 import { AppLayout } from '@/components/layout/AppLayout'
 
@@ -61,7 +64,31 @@ const indexRoute = createRoute({
 const dashboardRoute = createRoute({
   getParentRoute: () => protectedRoute,
   path: '/dashboard',
-  component: DashboardPage,
+  component: ExecutiveDashboardPage,
+})
+
+const growthAnalyticsRoute = createRoute({
+  getParentRoute: () => protectedRoute,
+  path: '/analytics/growth',
+  component: GrowthAnalyticsPage,
+})
+
+const salesAnalyticsRoute = createRoute({
+  getParentRoute: () => protectedRoute,
+  path: '/analytics/sales',
+  component: SalesAnalyticsPage,
+})
+
+const financeAnalyticsRoute = createRoute({
+  getParentRoute: () => protectedRoute,
+  path: '/analytics/finance',
+  component: FinanceAnalyticsPage,
+})
+
+const deliveryAnalyticsRoute = createRoute({
+  getParentRoute: () => protectedRoute,
+  path: '/analytics/delivery',
+  component: DeliveryAnalyticsPage,
 })
 
 const usersRoute = createRoute({
@@ -206,6 +233,10 @@ const routeTree = rootRoute.addChildren([
   protectedRoute.addChildren([
     indexRoute,
     dashboardRoute,
+    growthAnalyticsRoute,
+    salesAnalyticsRoute,
+    financeAnalyticsRoute,
+    deliveryAnalyticsRoute,
     usersRoute,
     leadsRoute,
     leadDetailRoute,

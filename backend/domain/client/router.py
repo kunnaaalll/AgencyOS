@@ -1,18 +1,17 @@
 import uuid
-from typing import List
+
 from fastapi import APIRouter, Depends, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from core.database import get_db
-from core.security import get_current_user
-from domain.user.models import User
-from domain.role.dependencies import require_permissions
-from domain.client.schemas import ClientCreate, ClientUpdate, ClientResponse, ClientStats
+from domain.client.schemas import ClientCreate, ClientResponse, ClientStats, ClientUpdate
 from domain.client.services import ClientService
+from domain.role.dependencies import require_permissions
+from domain.user.models import User
 
 router = APIRouter(prefix="/api/v1/clients", tags=["Clients"])
 
-@router.get("", response_model=List[ClientResponse])
+@router.get("", response_model=list[ClientResponse])
 async def list_clients(
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(require_permissions(["clients:read"]))

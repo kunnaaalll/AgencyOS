@@ -1,19 +1,24 @@
 import uuid
-from typing import Sequence
 
 from fastapi import APIRouter, Depends, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from api.deps import get_current_active_user, require_any_permission
+from api.deps import require_any_permission
 from core.database import get_db
-from domain.user.models import User
 from domain.finance.schemas import (
-    RevenueCreate, RevenueUpdate, RevenueResponse,
-    ExpenseCreate, ExpenseUpdate, ExpenseResponse,
-    FounderCreate, FounderUpdate, FounderResponse,
-    FinanceSummaryResponse, ForecastResponse
+    ExpenseCreate,
+    ExpenseResponse,
+    ExpenseUpdate,
+    FinanceSummaryResponse,
+    ForecastResponse,
+    FounderCreate,
+    FounderResponse,
+    FounderUpdate,
+    RevenueCreate,
+    RevenueResponse,
+    RevenueUpdate,
 )
-from domain.finance.services import FinanceService, DistributionService, ForecastService
+from domain.finance.services import DistributionService, FinanceService, ForecastService
 
 router = APIRouter(prefix="/finance", tags=["finance"])
 

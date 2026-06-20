@@ -6,7 +6,7 @@ Uses Pydantic Settings v2 for type-safe environment variable loading.
 from functools import lru_cache
 from typing import Literal
 
-from pydantic import AnyHttpUrl, field_validator
+from pydantic import field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 

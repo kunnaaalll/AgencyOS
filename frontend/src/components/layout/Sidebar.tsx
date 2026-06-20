@@ -13,6 +13,7 @@ import {
   BookOpen,
   FileBox,
   Key,
+  DollarSign
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
@@ -90,22 +91,39 @@ export function Sidebar() {
         {/* Future sections placeholder */}
         <div className="pt-4">
           <p className="px-3 text-xs font-semibold text-surface-600 uppercase tracking-wider mb-2">
-            Coming Soon
+            Analytics & OS
           </p>
           {[
-            { label: 'Analytics', icon: Activity },
-          ].map(({ label, icon: Icon }) => (
-            <div
-              key={label}
-              className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm text-surface-600 cursor-not-allowed select-none"
-            >
-              <Icon className="w-4.5 h-4.5 flex-shrink-0 text-surface-700" />
-              {label}
-              <span className="ml-auto text-xs bg-surface-800 text-surface-600 px-1.5 py-0.5 rounded-md">
-                Phase 5
-              </span>
-            </div>
-          ))}
+            { label: 'Growth', to: '/analytics/growth', icon: Target },
+            { label: 'Sales', to: '/analytics/sales', icon: Activity },
+            { label: 'Finance', to: '/analytics/finance', icon: DollarSign },
+            { label: 'Delivery', to: '/analytics/delivery', icon: Briefcase },
+          ].map(({ label, to, icon: Icon }) => {
+            const isActive = currentPath === to || currentPath.startsWith(`${to}/`)
+            return (
+              <Link
+                key={to}
+                to={to}
+                className={cn(
+                  'flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-150 group',
+                  isActive
+                    ? 'bg-brand-600/20 text-brand-300 border border-brand-600/30'
+                    : 'text-surface-300 hover:bg-surface-800 hover:text-white'
+                )}
+              >
+                <Icon
+                  className={cn(
+                    'w-4.5 h-4.5 flex-shrink-0 transition-colors',
+                    isActive ? 'text-brand-400' : 'text-surface-400 group-hover:text-surface-200'
+                  )}
+                />
+                {label}
+                {isActive && (
+                  <span className="ml-auto w-1.5 h-1.5 rounded-full bg-brand-400" />
+                )}
+              </Link>
+            )
+          })}
         </div>
       </nav>
 

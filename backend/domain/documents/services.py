@@ -1,29 +1,27 @@
 import uuid
-from typing import List, Sequence
-from fastapi import UploadFile, HTTPException, status
-from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select
+from collections.abc import Sequence
 
-from domain.documents.models import Document, CredentialRecord
-from domain.documents.schemas import (
-    DocumentCreate, 
-    CredentialRecordCreate, 
-    CredentialRecordUpdate
-)
-from domain.documents.storage import StorageService
+from fastapi import HTTPException, UploadFile, status
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
+
 from core.config import settings
+from domain.documents.models import CredentialRecord, Document
+from domain.documents.schemas import CredentialRecordCreate, CredentialRecordUpdate, DocumentCreate
+from domain.documents.storage import StorageService
+
 
 class DocumentService:
     @staticmethod
     async def upload_document(
-        db: AsyncSession, 
-        file: UploadFile, 
-        metadata: DocumentCreate, 
+        db: AsyncSession,
+        file: UploadFile,
+        metadata: DocumentCreate,
         user_id: uuid.UUID
     ) -> Document:
         # Upload to MinIO
         storage_key = await StorageService.upload_file(file, bucket=settings.MINIO_BUCKET_NAME, prefix="documents/")
-        
+
         # Create database record
         doc = Document(
             name=metadata.name,
@@ -56,10 +54,10 @@ class DocumentService:
     @staticmethod
     async def delete_document(db: AsyncSession, document_id: uuid.UUID) -> None:
         doc = await DocumentService.get_document(db, document_id)
-        
+
         # Delete from MinIO
         await StorageService.delete_file(doc.storage_key, bucket=doc.bucket)
-        
+
         # Delete from DB
         await db.delete(doc)
         await db.commit()

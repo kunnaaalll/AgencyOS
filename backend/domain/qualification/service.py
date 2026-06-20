@@ -1,5 +1,6 @@
 from domain.lead.enums import Priority
 
+
 class QualificationService:
     @staticmethod
     def calculate_score(

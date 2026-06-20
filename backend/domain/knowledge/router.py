@@ -1,27 +1,26 @@
 import uuid
-from typing import List
+
 from fastapi import APIRouter, Depends, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from core.database import get_db
-from core.security import get_current_user
-from domain.user.models import User
-from domain.role.dependencies import require_permissions
 from domain.knowledge.schemas import (
-    KnowledgeArticleResponse,
     KnowledgeArticleCreate,
+    KnowledgeArticleResponse,
     KnowledgeArticleUpdate,
-    KnowledgeCategoryResponse,
     KnowledgeCategoryCreate,
-    KnowledgeCategoryUpdate
+    KnowledgeCategoryResponse,
+    KnowledgeCategoryUpdate,
 )
 from domain.knowledge.services import KnowledgeService
+from domain.role.dependencies import require_permissions
+from domain.user.models import User
 
 router = APIRouter(tags=["Knowledge OS"])
 
 # ── Categories ─────────────────────────────────────────────────
 
-@router.get("/v1/knowledge/categories", response_model=List[KnowledgeCategoryResponse])
+@router.get("/v1/knowledge/categories", response_model=list[KnowledgeCategoryResponse])
 async def list_categories(
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(require_permissions(["knowledge:read"]))
@@ -63,7 +62,7 @@ async def delete_category(
 
 # ── Articles ───────────────────────────────────────────────────
 
-@router.get("/v1/knowledge/articles", response_model=List[KnowledgeArticleResponse])
+@router.get("/v1/knowledge/articles", response_model=list[KnowledgeArticleResponse])
 async def list_articles(
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(require_permissions(["knowledge:read"]))

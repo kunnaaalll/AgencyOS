@@ -1,5 +1,7 @@
 from dataclasses import dataclass
+
 from events.base import BaseEvent
+
 
 @dataclass
 class LeadCreatedEvent(BaseEvent):

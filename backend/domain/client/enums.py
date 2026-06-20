@@ -1,5 +1,6 @@
 from enum import Enum
 
+
 class ClientStatus(str, Enum):
     ACTIVE = "ACTIVE"
     PAUSED = "PAUSED"

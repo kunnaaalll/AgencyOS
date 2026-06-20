@@ -1,17 +1,21 @@
 import uuid
-from typing import Sequence
-from fastapi import APIRouter, Depends, HTTPException, status
-from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select, func
 
-from core.database import get_db
+from fastapi import APIRouter, Depends, HTTPException, status
+from sqlalchemy import func, select
+from sqlalchemy.ext.asyncio import AsyncSession
+
 from api.deps import get_current_user
-from domain.user.models import User
+from core.database import get_db
 from domain.lead.models import Lead, LeadAnalysis
 from domain.lead.schemas import (
-    LeadCreate, LeadUpdate, LeadResponse,
-    LeadAnalysisCreate, LeadAnalysisResponse, LeadStats
+    LeadAnalysisCreate,
+    LeadAnalysisResponse,
+    LeadCreate,
+    LeadResponse,
+    LeadStats,
+    LeadUpdate,
 )
+from domain.user.models import User
 
 router = APIRouter(prefix="/v1", tags=["Leads"])
 
@@ -24,7 +28,7 @@ async def list_leads(
 ):
     if not current_user.has_permission("leads:read"):
         raise HTTPException(status_code=403, detail="Not enough permissions")
-    
+
     result = await db.execute(select(Lead).offset(skip).limit(limit))
     return result.scalars().all()
 
@@ -36,7 +40,7 @@ async def create_lead(
 ):
     if not current_user.has_permission("leads:create"):
         raise HTTPException(status_code=403, detail="Not enough permissions")
-    
+
     lead = Lead(**lead_in.model_dump())
     db.add(lead)
     await db.commit()
@@ -50,11 +54,11 @@ async def get_lead_stats(
 ):
     if not current_user.has_permission("leads:read"):
         raise HTTPException(status_code=403, detail="Not enough permissions")
-    
+
     total = await db.scalar(select(func.count()).select_from(Lead))
     qualified = await db.scalar(select(func.count()).select_from(Lead).where(Lead.status == "QUALIFIED"))
     high_priority = await db.scalar(select(func.count()).select_from(Lead).where(Lead.priority == "HIGH"))
-    
+
     return LeadStats(
         total_leads=total or 0,
         qualified_leads=qualified or 0,
@@ -69,7 +73,7 @@ async def get_lead(
 ):
     if not current_user.has_permission("leads:read"):
         raise HTTPException(status_code=403, detail="Not enough permissions")
-        
+
     lead = await db.get(Lead, id)
     if not lead:
         raise HTTPException(status_code=404, detail="Lead not found")
@@ -84,15 +88,15 @@ async def update_lead(
 ):
     if not current_user.has_permission("leads:update"):
         raise HTTPException(status_code=403, detail="Not enough permissions")
-        
+
     lead = await db.get(Lead, id)
     if not lead:
         raise HTTPException(status_code=404, detail="Lead not found")
-        
+
     update_data = lead_in.model_dump(exclude_unset=True)
     for field, value in update_data.items():
         setattr(lead, field, value)
-        
+
     await db.commit()
     await db.refresh(lead)
     return lead
@@ -105,11 +109,11 @@ async def delete_lead(
 ):
     if not current_user.has_permission("leads:delete"):
         raise HTTPException(status_code=403, detail="Not enough permissions")
-        
+
     lead = await db.get(Lead, id)
     if not lead:
         raise HTTPException(status_code=404, detail="Lead not found")
-        
+
     await db.delete(lead)
     await db.commit()
 
@@ -122,11 +126,11 @@ async def create_analysis(
 ):
     if not current_user.has_permission("analysis:create"):
         raise HTTPException(status_code=403, detail="Not enough permissions")
-        
+
     lead = await db.get(Lead, lead_id)
     if not lead:
         raise HTTPException(status_code=404, detail="Lead not found")
-        
+
     analysis = LeadAnalysis(lead_id=lead_id, **analysis_in.model_dump())
     db.add(analysis)
     await db.commit()
@@ -141,7 +145,7 @@ async def get_analysis(
 ):
     if not current_user.has_permission("analysis:read"):
         raise HTTPException(status_code=403, detail="Not enough permissions")
-        
+
     result = await db.execute(select(LeadAnalysis).where(LeadAnalysis.lead_id == lead_id))
     analysis = result.scalars().first()
     if not analysis:

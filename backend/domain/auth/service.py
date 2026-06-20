@@ -7,6 +7,7 @@ from jose import JWTError
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from core.config import settings
 from core.exceptions import InvalidTokenException, UnauthorizedException
 from core.security import (
     create_access_token,
@@ -14,7 +15,6 @@ from core.security import (
     decode_refresh_token,
     verify_password,
 )
-from core.config import settings
 from domain.auth.schemas import MeResponse, TokenResponse
 from domain.user.models import User
 

@@ -1,18 +1,17 @@
 import uuid
-from typing import List
+
 from fastapi import APIRouter, Depends, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from core.database import get_db
-from core.security import get_current_user
-from domain.user.models import User
-from domain.role.dependencies import require_permissions
-from domain.project.schemas import ProjectCreate, ProjectUpdate, ProjectResponse
+from domain.project.schemas import ProjectCreate, ProjectResponse, ProjectUpdate
 from domain.project.services import ProjectService
+from domain.role.dependencies import require_permissions
+from domain.user.models import User
 
 router = APIRouter(tags=["Projects"])
 
-@router.get("/api/v1/clients/{id}/projects", response_model=List[ProjectResponse])
+@router.get("/api/v1/clients/{id}/projects", response_model=list[ProjectResponse])
 async def list_client_projects(
     id: uuid.UUID,
     db: AsyncSession = Depends(get_db),

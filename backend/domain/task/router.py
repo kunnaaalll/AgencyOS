@@ -1,18 +1,17 @@
 import uuid
-from typing import List
+
 from fastapi import APIRouter, Depends, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from core.database import get_db
-from core.security import get_current_user
-from domain.user.models import User
 from domain.role.dependencies import require_permissions
-from domain.task.schemas import TaskCreate, TaskUpdate, TaskResponse
+from domain.task.schemas import TaskCreate, TaskResponse, TaskUpdate
 from domain.task.services import TaskService
+from domain.user.models import User
 
 router = APIRouter(tags=["Tasks"])
 
-@router.get("/api/v1/projects/{id}/tasks", response_model=List[TaskResponse])
+@router.get("/api/v1/projects/{id}/tasks", response_model=list[TaskResponse])
 async def list_project_tasks(
     id: uuid.UUID,
     db: AsyncSession = Depends(get_db),

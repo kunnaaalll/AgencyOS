@@ -1,5 +1,6 @@
 from enum import Enum
 
+
 class RevenueStatus(str, Enum):
     PENDING = "PENDING"
     RECEIVED = "RECEIVED"

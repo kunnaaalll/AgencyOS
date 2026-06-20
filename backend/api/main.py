@@ -3,8 +3,8 @@ AgencyOS V2 — FastAPI Application Factory
 """
 
 import uuid
+from collections.abc import AsyncGenerator
 from contextlib import asynccontextmanager
-from typing import AsyncGenerator
 
 import structlog
 from fastapi import FastAPI, Request

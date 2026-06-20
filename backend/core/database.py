@@ -3,20 +3,19 @@ AgencyOS V2 — Database Engine & Session Factory
 SQLAlchemy 2.0 async with connection pooling.
 """
 
+import uuid
 from collections.abc import AsyncGenerator
+from datetime import datetime
 
+from sqlalchemy import DateTime, func
 from sqlalchemy.ext.asyncio import (
     AsyncSession,
     async_sessionmaker,
     create_async_engine,
 )
 from sqlalchemy.orm import DeclarativeBase, MappedColumn, mapped_column
-from sqlalchemy import DateTime, func
-from datetime import datetime
-import uuid
 
 from core.config import settings
-
 
 # ── Engine ────────────────────────────────────────────────────
 engine = create_async_engine(

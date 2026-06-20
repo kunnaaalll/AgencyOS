@@ -1,10 +1,13 @@
 import uuid
 from datetime import datetime
-from sqlalchemy import String, DateTime, ForeignKey, Enum as SQLEnum, Text
+
+from sqlalchemy import DateTime, ForeignKey, String, Text
+from sqlalchemy import Enum as SQLEnum
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from core.database import Base
-from domain.task.enums import TaskStatus, TaskPriority
+from domain.task.enums import TaskPriority, TaskStatus
+
 
 class Task(Base):
     __tablename__ = "tasks"

@@ -3,9 +3,9 @@ AgencyOS V2 — FastAPI Dependency Injection
 Provides reusable dependencies for authentication and RBAC.
 """
 
-from typing import Callable
+from collections.abc import Callable
 
-from fastapi import Depends, HTTPException, status
+from fastapi import Depends
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from jose import JWTError
 from sqlalchemy import select

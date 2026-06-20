@@ -5,7 +5,6 @@ AgencyOS V2 — Custom Exceptions & Global Exception Handlers
 from fastapi import Request, status
 from fastapi.responses import ORJSONResponse
 
-
 # ── Base Exception ────────────────────────────────────────────
 
 class AgencyOSException(Exception):

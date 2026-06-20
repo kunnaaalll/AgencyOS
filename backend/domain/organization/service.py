@@ -7,7 +7,6 @@ import uuid
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from core.exceptions import ConflictException, NotFoundException
-from domain.organization.models import Organization
 from domain.organization.schemas import (
     OrganizationCreate,
     OrganizationResponse,

@@ -1,10 +1,13 @@
 import uuid
-from datetime import datetime, date
-from sqlalchemy import String, Integer, DateTime, Date, ForeignKey, Enum as SQLEnum, Text, Float, Boolean, Numeric
+from datetime import date
+
+from sqlalchemy import Boolean, Date, ForeignKey, Numeric, String, Text
+from sqlalchemy import Enum as SQLEnum
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from core.database import Base
-from domain.finance.enums import RevenueStatus, ExpenseStatus
+from domain.finance.enums import ExpenseStatus, RevenueStatus
+
 
 class Revenue(Base):
     __tablename__ = "revenues"
@@ -16,7 +19,7 @@ class Revenue(Base):
     invoice_number: Mapped[str | None] = mapped_column(String(255), nullable=True)
     received_date: Mapped[date | None] = mapped_column(Date, nullable=True)
     payment_method: Mapped[str | None] = mapped_column(String(255), nullable=True)
-    
+
     status: Mapped[RevenueStatus] = mapped_column(
         SQLEnum(RevenueStatus, name="revenuestatus_enum"), default=RevenueStatus.PENDING, nullable=False
     )
@@ -33,7 +36,7 @@ class Expense(Base):
     description: Mapped[str | None] = mapped_column(Text, nullable=True)
     vendor: Mapped[str | None] = mapped_column(String(255), nullable=True)
     expense_date: Mapped[date | None] = mapped_column(Date, nullable=True)
-    
+
     status: Mapped[ExpenseStatus] = mapped_column(
         SQLEnum(ExpenseStatus, name="expensestatus_enum"), default=ExpenseStatus.PENDING, nullable=False
     )

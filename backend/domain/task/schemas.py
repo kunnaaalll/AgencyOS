@@ -1,35 +1,36 @@
 import uuid
 from datetime import datetime
-from pydantic import BaseModel, ConfigDict
-from typing import Optional
 
-from domain.task.enums import TaskStatus, TaskPriority
+from pydantic import BaseModel, ConfigDict
+
+from domain.task.enums import TaskPriority, TaskStatus
+
 
 class TaskBase(BaseModel):
     title: str
-    description: Optional[str] = None
+    description: str | None = None
     status: TaskStatus = TaskStatus.TODO
     priority: TaskPriority = TaskPriority.MEDIUM
-    assigned_to: Optional[uuid.UUID] = None
-    due_date: Optional[datetime] = None
-    completed_at: Optional[datetime] = None
+    assigned_to: uuid.UUID | None = None
+    due_date: datetime | None = None
+    completed_at: datetime | None = None
 
 class TaskCreate(TaskBase):
     pass
 
 class TaskUpdate(BaseModel):
-    title: Optional[str] = None
-    description: Optional[str] = None
-    status: Optional[TaskStatus] = None
-    priority: Optional[TaskPriority] = None
-    assigned_to: Optional[uuid.UUID] = None
-    due_date: Optional[datetime] = None
-    completed_at: Optional[datetime] = None
+    title: str | None = None
+    description: str | None = None
+    status: TaskStatus | None = None
+    priority: TaskPriority | None = None
+    assigned_to: uuid.UUID | None = None
+    due_date: datetime | None = None
+    completed_at: datetime | None = None
 
 class TaskResponse(TaskBase):
     id: uuid.UUID
     project_id: uuid.UUID
     created_at: datetime
     updated_at: datetime
-    
+
     model_config = ConfigDict(from_attributes=True)
