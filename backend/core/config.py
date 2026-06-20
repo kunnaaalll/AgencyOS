@@ -21,7 +21,7 @@ class Settings(BaseSettings):
     # ── Application ───────────────────────────────────────────
     APP_ENV: Literal["development", "staging", "production"] = "development"
     APP_NAME: str = "AgencyOS"
-    APP_VERSION: str = "2.0.0"
+    APP_VERSION: str = "2.1.0"
     APP_HOST: str = "0.0.0.0"
     APP_PORT: int = 8000
     DEBUG: bool = False
@@ -43,8 +43,8 @@ class Settings(BaseSettings):
     # ── JWT ───────────────────────────────────────────────────
     JWT_SECRET_KEY: str
     JWT_ALGORITHM: str = "HS256"
-    JWT_ACCESS_TOKEN_EXPIRE_MINUTES: int = 30
-    JWT_REFRESH_TOKEN_EXPIRE_DAYS: int = 7
+    JWT_ACCESS_TOKEN_EXPIRE_MINUTES: int = 15  # Tightened from 30
+    JWT_REFRESH_TOKEN_EXPIRE_DAYS: int = 1  # Tightened from 7
 
     # ── MinIO ─────────────────────────────────────────────────
     MINIO_ENDPOINT: str = "minio:9000"
@@ -59,6 +59,18 @@ class Settings(BaseSettings):
 
     # ── CORS ──────────────────────────────────────────────────
     CORS_ORIGINS: str = "http://localhost:5173"
+
+    # ── Security ──────────────────────────────────────────────
+    RATE_LIMIT_PER_MINUTE: int = 100
+    CSRF_SECRET: str = ""
+    ALLOWED_HOSTS: str = "*"
+    PASSWORD_MIN_LENGTH: int = 12
+    LOGIN_MAX_ATTEMPTS: int = 5
+    LOGIN_LOCKOUT_MINUTES: int = 15
+
+    # ── Alerting ──────────────────────────────────────────────
+    TELEGRAM_BOT_TOKEN: str = ""
+    TELEGRAM_CHAT_ID: str = ""
 
     # ── Seed ──────────────────────────────────────────────────
     SEED_SUPERADMIN_EMAIL: str = "admin@agencyos.io"
@@ -81,6 +93,10 @@ class Settings(BaseSettings):
     @property
     def cors_origins_list(self) -> list[str]:
         return [origin.strip() for origin in self.CORS_ORIGINS.split(",")]
+
+    @property
+    def allowed_hosts_list(self) -> list[str]:
+        return [h.strip() for h in self.ALLOWED_HOSTS.split(",")]
 
     @property
     def is_development(self) -> bool:

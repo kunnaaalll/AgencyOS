@@ -51,6 +51,15 @@ class InvalidTokenException(AgencyOSException):
         )
 
 
+class RateLimitException(AgencyOSException):
+    def __init__(self, message: str = "Too many requests") -> None:
+        super().__init__(
+            message=message,
+            status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+            error_code="RATE_LIMITED",
+        )
+
+
 # ── Resource Exceptions ───────────────────────────────────────
 
 class NotFoundException(AgencyOSException):

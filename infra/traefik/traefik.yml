@@ -1,5 +1,5 @@
 # ============================================================
-# Traefik Static Configuration — AgencyOS V2
+# Traefik Static Configuration — AgencyOS V2.1 (Development)
 # ============================================================
 
 global:
@@ -12,10 +12,15 @@ log:
 
 accessLog:
   format: json
+  fields:
+    headers:
+      names:
+        X-Request-ID: keep
+        User-Agent: keep
 
 api:
   dashboard: true
-  insecure: true  # Development only
+  insecure: true  # Development only — disabled in production
 
 entryPoints:
   web:
@@ -27,7 +32,15 @@ providers:
   docker:
     endpoint: "unix:///var/run/docker.sock"
     exposedByDefault: false
-    network: agencyos
+    network: agencyos_agencyos
   file:
     filename: /etc/traefik/dynamic.yml
     watch: true
+
+# Metrics for Prometheus scraping
+metrics:
+  prometheus:
+    entryPoint: web
+    addEntryPointsLabels: true
+    addServicesLabels: true
+    addRoutersLabels: true

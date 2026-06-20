@@ -1,9 +1,11 @@
 # ============================================================
-# Traefik Dynamic Configuration — AgencyOS V2
+# Traefik Dynamic Configuration — AgencyOS V2.1
+# Security headers, rate limiting, CORS, compression
 # ============================================================
 
 http:
   middlewares:
+    # ── CORS ────────────────────────────────────────────────
     cors-headers:
       headers:
         accessControlAllowMethods:
@@ -14,24 +16,43 @@ http:
           - DELETE
           - PATCH
         accessControlAllowHeaders:
-          - "*"
+          - Authorization
+          - Content-Type
+          - X-Request-ID
+          - X-CSRF-Token
+          - Accept
+          - Origin
         accessControlAllowOriginList:
-          - "http://localhost:5173"
-          - "http://localhost:3000"
-        accessControlMaxAge: 100
+          - "${CORS_ORIGINS:-http://localhost:5173}"
+        accessControlMaxAge: 600
         addVaryHeader: true
 
+    # ── Security Headers ────────────────────────────────────
     secure-headers:
       headers:
         frameDeny: true
         browserXssFilter: true
         contentTypeNosniff: true
-        forceSTSHeader: false  # Enable in production
-        stsSeconds: 315360000
+        forceSTSHeader: true
+        stsSeconds: 31536000
         stsIncludeSubdomains: true
         stsPreload: true
+        referrerPolicy: "strict-origin-when-cross-origin"
+        contentSecurityPolicy: "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self' https://fonts.gstatic.com; connect-src 'self'; frame-ancestors 'none'; base-uri 'self'; form-action 'self'"
+        permissionsPolicy: "camera=(), microphone=(), geolocation=(), payment=()"
+        customResponseHeaders:
+          X-Robots-Tag: "noindex, nofollow"
 
+    # ── Rate Limiting ───────────────────────────────────────
     rate-limit:
       rateLimit:
         average: 100
         burst: 50
+        period: 1m
+
+    # ── Compression ─────────────────────────────────────────
+    compress:
+      compress:
+        excludedContentTypes:
+          - text/event-stream
+        minResponseBodyBytes: 1024

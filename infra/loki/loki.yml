@@ -1,6 +1,5 @@
 # ============================================================
-# Loki Configuration — AgencyOS V2
-# Placeholder — Full log aggregation in future phase
+# Loki Configuration — AgencyOS V2.1 (Production)
 # ============================================================
 
 auth_enabled: false
@@ -24,12 +23,28 @@ common:
 schema_config:
   configs:
     - from: 2024-01-01
-      store: boltdb-shipper
+      store: tsdb
       object_store: filesystem
-      schema: v11
+      schema: v13
       index:
         prefix: index_
         period: 24h
 
+# Retention — keep logs for 30 days
+limits_config:
+  retention_period: 720h
+  max_query_series: 500
+  max_query_lookback: 720h
+
+compactor:
+  working_directory: /loki/compactor
+  compaction_interval: 10m
+  retention_enabled: true
+  retention_delete_delay: 2h
+  retention_delete_worker_count: 150
+
 ruler:
-  alertmanager_url: http://localhost:9093
+  alertmanager_url: http://alertmanager:9093
+
+analytics:
+  reporting_enabled: false

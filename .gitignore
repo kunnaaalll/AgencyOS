@@ -2,7 +2,12 @@ agencyos-v2/
 
 # Environment files
 .env
+.env.production
 *.env.local
+*.key
+*.pem
+backups/*.sql*
+backups/*.tar*
 
 # Python
 __pycache__/

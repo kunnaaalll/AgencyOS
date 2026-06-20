@@ -1,10 +1,11 @@
 """
-AgencyOS V2 — FastAPI Dependency Injection
-Provides reusable dependencies for authentication and RBAC.
+AgencyOS V2.1 — FastAPI Dependency Injection
+Provides reusable dependencies for authentication, RBAC, and token validation.
 """
 
 from collections.abc import Callable
 
+import structlog
 from fastapi import Depends
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from jose import JWTError
@@ -14,7 +15,10 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from core.database import get_db
 from core.exceptions import ForbiddenException, InvalidTokenException, UnauthorizedException
 from core.security import decode_access_token
+from core.token_blacklist import is_token_revoked
 from domain.user.models import User
+
+logger = structlog.get_logger(__name__)
 
 security = HTTPBearer(auto_error=False)
 
@@ -25,7 +29,8 @@ async def get_current_user(
 ) -> User:
     """
     Extract and validate the Bearer token, returning the authenticated user.
-    Raises 401 if missing or invalid.
+    Checks token blacklist for revoked tokens.
+    Raises 401 if missing, invalid, or revoked.
     """
     if not credentials:
         raise UnauthorizedException("Missing authentication token")
@@ -34,6 +39,10 @@ async def get_current_user(
         payload = decode_access_token(credentials.credentials)
     except JWTError as e:
         raise InvalidTokenException(str(e)) from e
+
+    # Check if token has been revoked
+    if payload.jti and await is_token_revoked(payload.jti):
+        raise InvalidTokenException("Token has been revoked")
 
     result = await db.execute(select(User).where(User.id == payload.sub))
     user = result.scalar_one_or_none()

@@ -22,9 +22,13 @@ engine = create_async_engine(
     settings.DATABASE_URL,
     echo=settings.DEBUG,
     pool_pre_ping=True,
-    pool_size=10,
-    max_overflow=20,
+    pool_size=5 if settings.is_production else 10,
+    max_overflow=10 if settings.is_production else 20,
     pool_recycle=3600,
+    pool_timeout=30,
+    connect_args={
+        "command_timeout": 30,  # Statement timeout in seconds
+    },
 )
 
 # ── Session Factory ───────────────────────────────────────────

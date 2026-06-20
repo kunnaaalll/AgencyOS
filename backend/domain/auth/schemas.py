@@ -1,15 +1,17 @@
 """
-AgencyOS V2 — Auth Pydantic Schemas
+AgencyOS V2.1 — Auth Pydantic Schemas
 """
 
-from pydantic import BaseModel, EmailStr, Field
+from pydantic import BaseModel, EmailStr, Field, field_validator
+
+from core.security import validate_password_strength
 
 
 class LoginRequest(BaseModel):
     """Request body for POST /api/auth/login"""
 
     email: EmailStr
-    password: str = Field(..., min_length=8)
+    password: str = Field(..., min_length=1)
 
 
 class TokenResponse(BaseModel):
@@ -31,6 +33,21 @@ class LogoutRequest(BaseModel):
     """Request body for POST /api/auth/logout"""
 
     refresh_token: str
+
+
+class ChangePasswordRequest(BaseModel):
+    """Request body for POST /api/auth/change-password"""
+
+    current_password: str = Field(..., min_length=1)
+    new_password: str = Field(..., min_length=12)
+
+    @field_validator("new_password")
+    @classmethod
+    def validate_new_password(cls, v: str) -> str:
+        errors = validate_password_strength(v)
+        if errors:
+            raise ValueError("; ".join(errors))
+        return v
 
 
 class MeResponse(BaseModel):

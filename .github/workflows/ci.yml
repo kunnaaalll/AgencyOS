@@ -1,0 +1,235 @@
+# ============================================================
+# AgencyOS V2.1 — CI Pipeline
+# Runs on: push to main, pull requests
+# Stages: lint → type-check → test → build → security
+# ============================================================
+
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+env:
+  PYTHON_VERSION: "3.12"
+  NODE_VERSION: "20"
+
+jobs:
+  # ── Backend Lint ───────────────────────────────────────────
+  backend-lint:
+    name: Backend Lint
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./backend
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Install uv
+        run: pip install uv
+
+      - name: Install dependencies
+        run: uv pip install --system -e ".[dev]"
+
+      - name: Ruff check
+        run: ruff check .
+
+      - name: Ruff format check
+        run: ruff format --check .
+
+  # ── Frontend Lint ──────────────────────────────────────────
+  frontend-lint:
+    name: Frontend Lint
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./frontend
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: ESLint
+        run: npm run lint
+
+      - name: TypeScript check
+        run: npx tsc --noEmit
+
+  # ── Backend Tests ──────────────────────────────────────────
+  backend-test:
+    name: Backend Tests
+    runs-on: ubuntu-latest
+    needs: backend-lint
+    defaults:
+      run:
+        working-directory: ./backend
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_DB: agencyos_test
+          POSTGRES_USER: agencyos
+          POSTGRES_PASSWORD: test_password
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+      redis:
+        image: redis:7-alpine
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    env:
+      APP_ENV: development
+      POSTGRES_HOST: localhost
+      POSTGRES_PORT: 5432
+      POSTGRES_DB: agencyos_test
+      POSTGRES_USER: agencyos
+      POSTGRES_PASSWORD: test_password
+      DATABASE_URL: postgresql+asyncpg://agencyos:test_password@localhost:5432/agencyos_test
+      REDIS_HOST: localhost
+      REDIS_PORT: 6379
+      REDIS_PASSWORD: ""
+      REDIS_URL: redis://localhost:6379/0
+      JWT_SECRET_KEY: test_jwt_secret_key_minimum_32_characters_long_for_testing
+      MINIO_ENDPOINT: localhost:9000
+      MINIO_ACCESS_KEY: test_minio
+      MINIO_SECRET_KEY: test_minio_secret
+      MEILISEARCH_URL: http://localhost:7700
+      MEILISEARCH_MASTER_KEY: test_master_key
+      SEED_SUPERADMIN_PASSWORD: TestPassword123!
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Install uv
+        run: pip install uv
+
+      - name: Install dependencies
+        run: uv pip install --system -e ".[dev]"
+
+      - name: Run tests with coverage
+        run: pytest --cov=. --cov-report=xml --cov-report=term-missing --cov-fail-under=80 -v
+
+      - name: Upload coverage report
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: coverage-report
+          path: backend/coverage.xml
+
+  # ── Frontend Tests ─────────────────────────────────────────
+  frontend-test:
+    name: Frontend Tests
+    runs-on: ubuntu-latest
+    needs: frontend-lint
+    defaults:
+      run:
+        working-directory: ./frontend
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run tests
+        run: npx vitest run --reporter=verbose
+
+  # ── Build ──────────────────────────────────────────────────
+  build:
+    name: Docker Build
+    runs-on: ubuntu-latest
+    needs: [backend-test, frontend-test]
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build backend image
+        run: docker build -t agencyos-backend:ci --target production ./backend
+
+      - name: Build frontend image
+        run: docker build -t agencyos-frontend:ci --target production ./frontend
+
+      - name: Build worker image
+        run: docker build -t agencyos-worker:ci --target production -f ./backend/Dockerfile.worker ./backend
+
+  # ── Security Scanning ──────────────────────────────────────
+  security:
+    name: Security Scan
+    runs-on: ubuntu-latest
+    needs: build
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install Python deps
+        run: |
+          pip install uv
+          cd backend && uv pip install --system -e ".[dev]"
+
+      - name: Bandit (Python security)
+        run: cd backend && bandit -r . -x tests -f json -o bandit-report.json || true
+        continue-on-error: true
+
+      - name: Safety (Python dependency check)
+        run: cd backend && safety check --output json > safety-report.json || true
+        continue-on-error: true
+
+      - name: npm audit (Frontend)
+        run: cd frontend && npm ci && npm audit --audit-level=high || true
+        continue-on-error: true
+
+      - name: Trivy (Docker image scan)
+        uses: aquasecurity/trivy-action@master
+        with:
+          scan-type: 'fs'
+          scan-ref: '.'
+          format: 'table'
+          severity: 'CRITICAL,HIGH'
+        continue-on-error: true
+
+      - name: Upload security reports
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: security-reports
+          path: |
+            backend/bandit-report.json
+            backend/safety-report.json
