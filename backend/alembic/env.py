@@ -33,6 +33,11 @@ from domain.role.models import Role  # noqa: F401
 from domain.task.models import Task  # noqa: F401
 from domain.user.models import User  # noqa: F401
 
+from domain.automation.models import WorkflowExecution  # noqa: F401
+from domain.audit.models import AuditLog  # noqa: F401
+from domain.notifications.models import Notification  # noqa: F401
+from domain.backup.models import BackupRecord  # noqa: F401
+
 # Alembic Config object
 config = context.config
 

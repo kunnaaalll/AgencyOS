@@ -21,6 +21,12 @@ from domain.role.router import router as role_router
 from domain.task.router import router as task_router
 from domain.user.router import router as user_router
 
+from domain.monitoring.router import router as monitoring_router
+from domain.automation.router import router as automation_router
+from domain.audit.router import router as audit_router
+from domain.notifications.router import router as notifications_router
+from domain.backup.router import router as backup_router
+
 api_router = APIRouter(prefix="/api")
 
 # ── Health (no auth required) ─────────────────────────────────
@@ -43,3 +49,10 @@ api_router.include_router(finance_router)
 api_router.include_router(knowledge_router)
 api_router.include_router(documents_router)
 api_router.include_router(analytics_router)
+
+# ── System / Automation / Audit / Backups ─────────────────────
+api_router.include_router(monitoring_router)
+api_router.include_router(automation_router)
+api_router.include_router(audit_router)
+api_router.include_router(notifications_router)
+api_router.include_router(backup_router)

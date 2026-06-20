@@ -17,6 +17,7 @@ from core.exceptions import AgencyOSException, agencyos_exception_handler, gener
 from core.logging import configure_logging
 from core.minio import ensure_bucket_exists
 from events.listeners import register_listeners
+from core.audit import register_audit_listeners
 
 logger = structlog.get_logger(__name__)
 
@@ -32,6 +33,7 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
     )
 
     register_listeners()
+    register_audit_listeners()
 
     # Ensure MinIO bucket exists on startup
     try:

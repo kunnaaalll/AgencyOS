@@ -1,6 +1,7 @@
 // AgencyOS V2 — Sidebar Navigation
 
 import { Link, useRouterState } from '@tanstack/react-router'
+import { authStore } from '@/store/authStore'
 import {
   LayoutDashboard,
   Users,
@@ -13,7 +14,11 @@ import {
   BookOpen,
   FileBox,
   Key,
-  DollarSign
+  DollarSign,
+  MonitorDot,
+  ClipboardList,
+  DatabaseBackup,
+  Bell
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
@@ -38,6 +43,8 @@ const NAV_ITEMS: NavItem[] = [
 export function Sidebar() {
   const routerState = useRouterState()
   const currentPath = routerState.location.pathname
+  const userRole = authStore.state.user?.role?.name || ''
+  const isSuperAdmin = userRole === 'Super Admin'
 
   return (
     <aside
@@ -124,6 +131,62 @@ export function Sidebar() {
               </Link>
             )
           })}
+        </div>
+
+        {/* System / Automation OS */}
+        <div className="pt-4 pb-12">
+          <p className="px-3 text-xs font-semibold text-surface-600 uppercase tracking-wider mb-2">
+            Automation OS
+          </p>
+          <Link
+            to="/system/notifications"
+            className={cn(
+              'flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-150 group',
+              (currentPath === '/system/notifications' || currentPath.startsWith('/system/notifications/'))
+                ? 'bg-brand-600/20 text-brand-300 border border-brand-600/30'
+                : 'text-surface-300 hover:bg-surface-800 hover:text-white'
+            )}
+          >
+            <Bell
+              className={cn(
+                'w-4.5 h-4.5 flex-shrink-0 transition-colors',
+                (currentPath === '/system/notifications' || currentPath.startsWith('/system/notifications/')) ? 'text-brand-400' : 'text-surface-400 group-hover:text-surface-200'
+              )}
+            />
+            Notifications
+          </Link>
+          
+          {isSuperAdmin && (
+            <>
+              {[
+                { label: 'System Monitor', to: '/system/monitor', icon: MonitorDot },
+                { label: 'Audit Log', to: '/system/audit', icon: ClipboardList },
+                { label: 'Backups', to: '/system/backups', icon: DatabaseBackup },
+              ].map(({ label, to, icon: Icon }) => {
+                const isActive = currentPath === to || currentPath.startsWith(`${to}/`)
+                return (
+                  <Link
+                    key={to}
+                    to={to}
+                    className={cn(
+                      'flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-150 group',
+                      isActive
+                        ? 'bg-brand-600/20 text-brand-300 border border-brand-600/30'
+                        : 'text-surface-300 hover:bg-surface-800 hover:text-white'
+                    )}
+                  >
+                    <Icon
+                      className={cn(
+                        'w-4.5 h-4.5 flex-shrink-0 transition-colors',
+                        isActive ? 'text-brand-400' : 'text-surface-400 group-hover:text-surface-200'
+                      )}
+                    />
+                    {label}
+                  </Link>
+                )
+              })}
+            </>
+          )}
         </div>
       </nav>
 

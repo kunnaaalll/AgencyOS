@@ -3,12 +3,30 @@ import { useExecutiveSummary } from '../api'
 import { DateRangeFilter, DateRange } from '../components/DateRangeFilter'
 import { 
   TrendingUp, Users, DollarSign, Briefcase, Activity, 
-  ArrowUpRight, ArrowDownRight, Target, CheckCircle, Clock
+  ArrowUpRight, ArrowDownRight, Target, CheckCircle, Clock,
+  HeartPulse, AlertTriangle, Bell
 } from 'lucide-react'
+import { getSystemHealth, getNotifications } from '../../system/api'
+import { useQuery } from '@tanstack/react-query'
+import { authStore } from '@/store/authStore'
 
 export function ExecutiveDashboardPage() {
   const [dateRange, setDateRange] = useState<DateRange>('30d')
   const { data: summary, isLoading, error } = useExecutiveSummary()
+  
+  const userRole = authStore.state.user?.role?.name || ''
+  const isSuperAdmin = userRole === 'Super Admin'
+
+  const { data: systemHealth } = useQuery({
+    queryKey: ['system-health'],
+    queryFn: getSystemHealth,
+    enabled: isSuperAdmin
+  })
+
+  const { data: notifications } = useQuery({
+    queryKey: ['notifications'],
+    queryFn: getNotifications,
+  })
 
   if (isLoading) {
     return (
@@ -80,6 +98,45 @@ export function ExecutiveDashboardPage() {
               <p className="text-xs text-surface-400 mt-1">{forecast.hiring_reason}</p>
             </div>
           </div>
+        </div>
+
+        {/* Operational / System Mini-widgets */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          {isSuperAdmin && systemHealth && (
+            <>
+              <div className="bg-surface-900 border border-surface-700/50 rounded-2xl p-4 flex items-center gap-4">
+                <div className={`p-3 rounded-xl ${systemHealth.postgres_health && systemHealth.redis_health ? 'bg-green-500/10 text-green-400' : 'bg-red-500/10 text-red-400'}`}>
+                  <HeartPulse className="w-6 h-6" />
+                </div>
+                <div>
+                  <p className="text-sm font-medium text-surface-400">System Health</p>
+                  <p className="text-xl font-bold text-white">
+                    {systemHealth.postgres_health && systemHealth.redis_health ? 'All Systems Operational' : 'Degraded'}
+                  </p>
+                </div>
+              </div>
+              <div className="bg-surface-900 border border-surface-700/50 rounded-2xl p-4 flex items-center gap-4">
+                <div className={`p-3 rounded-xl ${systemHealth.failed_jobs > 0 ? 'bg-red-500/10 text-red-400' : 'bg-surface-800 text-surface-400'}`}>
+                  <AlertTriangle className="w-6 h-6" />
+                </div>
+                <div>
+                  <p className="text-sm font-medium text-surface-400">Failed Jobs</p>
+                  <p className="text-xl font-bold text-white">{systemHealth.failed_jobs}</p>
+                </div>
+              </div>
+            </>
+          )}
+          {notifications && (
+            <div className="bg-surface-900 border border-surface-700/50 rounded-2xl p-4 flex items-center gap-4">
+              <div className={`p-3 rounded-xl ${notifications.filter(n => !n.is_read).length > 0 ? 'bg-brand-500/10 text-brand-400' : 'bg-surface-800 text-surface-400'}`}>
+                <Bell className="w-6 h-6" />
+              </div>
+              <div>
+                <p className="text-sm font-medium text-surface-400">Unread Notifications</p>
+                <p className="text-xl font-bold text-white">{notifications.filter(n => !n.is_read).length}</p>
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Categories Grid */}

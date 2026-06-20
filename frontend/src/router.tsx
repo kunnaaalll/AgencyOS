@@ -227,6 +227,33 @@ const credentialsRoute = createRoute({
   component: CredentialPage,
 })
 
+// ── System Routes ─────────────────────────────────────────────
+import { SystemMonitorPage, AuditLogPage, NotificationsPage, BackupPage } from '@/features/system'
+
+const systemMonitorRoute = createRoute({
+  getParentRoute: () => protectedRoute,
+  path: '/system/monitor',
+  component: SystemMonitorPage,
+})
+
+const auditLogRoute = createRoute({
+  getParentRoute: () => protectedRoute,
+  path: '/system/audit',
+  component: AuditLogPage,
+})
+
+const notificationsRoute = createRoute({
+  getParentRoute: () => protectedRoute,
+  path: '/system/notifications',
+  component: NotificationsPage,
+})
+
+const backupsRoute = createRoute({
+  getParentRoute: () => protectedRoute,
+  path: '/system/backups',
+  component: BackupPage,
+})
+
 // ── Router Tree ───────────────────────────────────────────────
 const routeTree = rootRoute.addChildren([
   loginRoute,
@@ -256,6 +283,10 @@ const routeTree = rootRoute.addChildren([
     knowledgeEditRoute,
     documentsRoute,
     credentialsRoute,
+    systemMonitorRoute,
+    auditLogRoute,
+    notificationsRoute,
+    backupsRoute,
   ]),
 ])
 
