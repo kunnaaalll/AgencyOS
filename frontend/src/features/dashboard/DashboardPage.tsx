@@ -1,10 +1,10 @@
-// AgencyOS V2 — Dashboard Page
-
 import { useQuery } from '@tanstack/react-query'
 import api from '@/lib/api'
 import { HealthCard } from '@/components/health/HealthCard'
 import type { SystemHealth } from '@/types'
-import { RefreshCw, Activity } from 'lucide-react'
+import { RefreshCw, Activity, DollarSign, Calendar, Target, TrendingUp, XCircle } from 'lucide-react'
+import { crmApi } from '@/features/crm/api'
+import { PieChart, Pie, Cell, Tooltip as RechartsTooltip, ResponsiveContainer, BarChart, Bar, XAxis, YAxis, CartesianGrid } from 'recharts'
 
 const PLACEHOLDER_SERVICES = [
   { name: 'backend' },
@@ -14,24 +14,37 @@ const PLACEHOLDER_SERVICES = [
   { name: 'meilisearch' },
 ]
 
+const COLORS = ['#10B981', '#EF4444', '#F59E0B', '#3B82F6']
+
 export function DashboardPage() {
   const {
     data: health,
-    isLoading,
-    refetch,
-    isFetching,
-    dataUpdatedAt,
+    isLoading: isLoadingHealth,
+    refetch: refetchHealth,
+    isFetching: isFetchingHealth,
+    dataUpdatedAt: healthUpdatedAt,
   } = useQuery({
     queryKey: ['health'],
     queryFn: async (): Promise<SystemHealth> => {
       const { data } = await api.get<SystemHealth>('/health')
       return data
     },
-    refetchInterval: 30_000,  // Auto-refresh every 30s
+    refetchInterval: 30_000,
   })
 
-  const lastChecked = dataUpdatedAt
-    ? new Date(dataUpdatedAt).toLocaleTimeString()
+  const {
+    data: crmStats,
+    isLoading: isLoadingStats,
+    refetch: refetchStats,
+    isFetching: isFetchingStats,
+  } = useQuery({
+    queryKey: ['crmStats'],
+    queryFn: crmApi.getStats,
+    refetchInterval: 60_000,
+  })
+
+  const lastChecked = healthUpdatedAt
+    ? new Date(healthUpdatedAt).toLocaleTimeString()
     : null
 
   const overallStatus = health?.status ?? 'healthy'
@@ -41,14 +54,31 @@ export function DashboardPage() {
     offline:  { label: 'Major Outage', color: 'text-red-600', bg: 'bg-red-50', border: 'border-red-200' },
   }[overallStatus]
 
+  const handleRefresh = () => {
+    refetchHealth();
+    refetchStats();
+  }
+
+  const isFetching = isFetchingHealth || isFetchingStats;
+
+  const wonLostData = crmStats ? [
+    { name: 'Won', value: crmStats.won_opportunities },
+    { name: 'Lost', value: crmStats.lost_opportunities },
+  ] : [];
+
+  const pipelineData = crmStats ? [
+    { name: 'Total', value: crmStats.pipeline_value },
+    { name: 'Weighted', value: crmStats.weighted_pipeline_value },
+  ] : [];
+
   return (
-    <div className="max-w-6xl mx-auto space-y-6">
+    <div className="max-w-6xl mx-auto space-y-8 pb-10">
       {/* Page Header */}
       <div className="flex items-start justify-between">
         <div>
-          <h2 className="text-2xl font-bold text-surface-900">System Health</h2>
+          <h2 className="text-2xl font-bold text-surface-900">Dashboard</h2>
           <p className="text-surface-500 mt-0.5 text-sm">
-            Real-time connectivity status for all services
+            Overview of your pipeline and system health
           </p>
         </div>
 
@@ -59,8 +89,7 @@ export function DashboardPage() {
             </span>
           )}
           <button
-            id="health-refresh"
-            onClick={() => refetch()}
+            onClick={handleRefresh}
             disabled={isFetching}
             className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium text-surface-600 bg-white border border-surface-200 hover:bg-surface-50 hover:border-surface-300 transition-all disabled:opacity-60"
           >
@@ -70,53 +99,155 @@ export function DashboardPage() {
         </div>
       </div>
 
-      {/* Overall Status Banner */}
-      {!isLoading && health && (
-        <div className={`flex items-center gap-3 px-5 py-4 rounded-2xl border ${overallStatusConfig.bg} ${overallStatusConfig.border} animate-fade-in`}>
-          <Activity className={`w-5 h-5 ${overallStatusConfig.color}`} />
-          <div>
-            <p className={`font-semibold ${overallStatusConfig.color}`}>
-              {overallStatusConfig.label}
-            </p>
-            <p className="text-xs text-surface-500 mt-0.5">
-              {health.services.filter(s => s.status === 'healthy').length} of{' '}
-              {health.services.length} services are healthy
-            </p>
-          </div>
-        </div>
-      )}
+      {/* CRM Stats Section */}
+      <div>
+        <h3 className="text-lg font-semibold text-gray-800 mb-4">Pipeline Overview</h3>
+        {isLoadingStats ? (
+          <div className="text-center py-8 text-gray-500">Loading CRM stats...</div>
+        ) : crmStats ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+            <div className="bg-white p-5 rounded-xl border border-gray-200 shadow-sm">
+              <div className="flex justify-between items-start">
+                <div>
+                  <p className="text-sm font-medium text-gray-500 mb-1">Pipeline Value</p>
+                  <p className="text-2xl font-bold text-gray-900">${crmStats.pipeline_value.toLocaleString()}</p>
+                </div>
+                <div className="bg-blue-50 p-2 rounded-lg"><DollarSign className="w-5 h-5 text-blue-600" /></div>
+              </div>
+            </div>
+            
+            <div className="bg-white p-5 rounded-xl border border-gray-200 shadow-sm">
+              <div className="flex justify-between items-start">
+                <div>
+                  <p className="text-sm font-medium text-gray-500 mb-1">Weighted Value</p>
+                  <p className="text-2xl font-bold text-gray-900">${crmStats.weighted_pipeline_value.toLocaleString()}</p>
+                </div>
+                <div className="bg-indigo-50 p-2 rounded-lg"><Target className="w-5 h-5 text-indigo-600" /></div>
+              </div>
+            </div>
 
-      {/* Health Cards Grid */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-        {isLoading
-          ? PLACEHOLDER_SERVICES.map((s) => (
-              <HealthCard
-                key={s.name}
-                service={{ name: s.name, status: 'healthy', latency_ms: null }}
-                isLoading
-              />
-            ))
-          : (health?.services ?? []).map((service) => (
-              <HealthCard key={service.name} service={service} />
-            ))
-        }
+            <div className="bg-white p-5 rounded-xl border border-gray-200 shadow-sm">
+              <div className="flex justify-between items-start">
+                <div>
+                  <p className="text-sm font-medium text-gray-500 mb-1">Meetings</p>
+                  <p className="text-2xl font-bold text-gray-900">{crmStats.meetings_scheduled}</p>
+                </div>
+                <div className="bg-amber-50 p-2 rounded-lg"><Calendar className="w-5 h-5 text-amber-600" /></div>
+              </div>
+            </div>
+
+            <div className="bg-white p-5 rounded-xl border border-gray-200 shadow-sm">
+              <div className="flex justify-between items-start">
+                <div>
+                  <p className="text-sm font-medium text-gray-500 mb-1">Conversion Rate</p>
+                  <p className="text-2xl font-bold text-gray-900">{crmStats.conversion_rate}%</p>
+                </div>
+                <div className="bg-green-50 p-2 rounded-lg"><TrendingUp className="w-5 h-5 text-green-600" /></div>
+              </div>
+            </div>
+          </div>
+        ) : null}
+
+        {/* Charts */}
+        {crmStats && (
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm">
+              <h4 className="font-semibold text-gray-700 mb-4">Win / Loss Ratio</h4>
+              <div className="h-[250px] flex justify-center items-center">
+                {(crmStats.won_opportunities === 0 && crmStats.lost_opportunities === 0) ? (
+                   <p className="text-gray-400">No closed opportunities yet.</p>
+                ) : (
+                  <ResponsiveContainer width="100%" height="100%">
+                    <PieChart>
+                      <Pie
+                        data={wonLostData}
+                        cx="50%"
+                        cy="50%"
+                        innerRadius={60}
+                        outerRadius={80}
+                        paddingAngle={5}
+                        dataKey="value"
+                      >
+                        {wonLostData.map((entry, index) => (
+                          <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                        ))}
+                      </Pie>
+                      <RechartsTooltip />
+                    </PieChart>
+                  </ResponsiveContainer>
+                )}
+              </div>
+              <div className="flex justify-center gap-6 mt-2">
+                <div className="text-center">
+                  <p className="text-xl font-bold text-green-600">{crmStats.won_opportunities}</p>
+                  <p className="text-xs text-gray-500">Won</p>
+                </div>
+                <div className="text-center">
+                  <p className="text-xl font-bold text-red-500">{crmStats.lost_opportunities}</p>
+                  <p className="text-xs text-gray-500">Lost</p>
+                </div>
+              </div>
+            </div>
+
+            <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm">
+              <h4 className="font-semibold text-gray-700 mb-4">Pipeline Value</h4>
+              <div className="h-[250px]">
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart data={pipelineData} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
+                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#E5E7EB" />
+                    <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fill: '#6B7280' }} />
+                    <YAxis axisLine={false} tickLine={false} tick={{ fill: '#6B7280' }} tickFormatter={(value) => `$${value}`} />
+                    <RechartsTooltip cursor={{ fill: '#F3F4F6' }} formatter={(value: number) => [`$${value.toLocaleString()}`, 'Value']} />
+                    <Bar dataKey="value" fill="#3B82F6" radius={[4, 4, 0, 0]} maxBarSize={60}>
+                      {pipelineData.map((entry, index) => (
+                        <Cell key={`cell-${index}`} fill={index === 0 ? '#3B82F6' : '#8B5CF6'} />
+                      ))}
+                    </Bar>
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
 
-      {/* Quick Stats */}
-      {!isLoading && health && (
-        <div className="grid grid-cols-3 gap-4 pt-2">
-          {[
-            { label: 'Healthy', count: health.services.filter(s => s.status === 'healthy').length, color: 'text-green-600 bg-green-50' },
-            { label: 'Degraded', count: health.services.filter(s => s.status === 'degraded').length, color: 'text-amber-600 bg-amber-50' },
-            { label: 'Offline', count: health.services.filter(s => s.status === 'offline').length, color: 'text-red-600 bg-red-50' },
-          ].map(({ label, count, color }) => (
-            <div key={label} className={`rounded-xl p-4 text-center ${color}`}>
-              <p className="text-3xl font-bold">{count}</p>
-              <p className="text-sm font-medium mt-0.5">{label}</p>
+      <div className="h-px bg-gray-200 w-full my-8"></div>
+
+      {/* System Health Section */}
+      <div>
+        <h3 className="text-lg font-semibold text-gray-800 mb-4">System Health</h3>
+        {/* Overall Status Banner */}
+        {!isLoadingHealth && health && (
+          <div className={`flex items-center gap-3 px-5 py-4 rounded-2xl border ${overallStatusConfig.bg} ${overallStatusConfig.border} animate-fade-in mb-6`}>
+            <Activity className={`w-5 h-5 ${overallStatusConfig.color}`} />
+            <div>
+              <p className={`font-semibold ${overallStatusConfig.color}`}>
+                {overallStatusConfig.label}
+              </p>
+              <p className="text-xs text-surface-500 mt-0.5">
+                {health.services.filter(s => s.status === 'healthy').length} of{' '}
+                {health.services.length} services are healthy
+              </p>
             </div>
-          ))}
+          </div>
+        )}
+
+        {/* Health Cards Grid */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          {isLoadingHealth
+            ? PLACEHOLDER_SERVICES.map((s) => (
+                <HealthCard
+                  key={s.name}
+                  service={{ name: s.name, status: 'healthy', latency_ms: null }}
+                  isLoading
+                />
+              ))
+            : (health?.services ?? []).map((service) => (
+                <HealthCard key={service.name} service={service} />
+              ))
+          }
         </div>
-      )}
+      </div>
     </div>
   )
 }

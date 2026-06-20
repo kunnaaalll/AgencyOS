@@ -16,6 +16,9 @@ from core.database import Base
 from domain.organization.models import Organization  # noqa: F401
 from domain.role.models import Role  # noqa: F401
 from domain.user.models import User  # noqa: F401
+from domain.lead.models import Lead, LeadAnalysis  # noqa: F401
+from domain.discovery.models import DiscoveryJob  # noqa: F401
+from domain.crm.models import Opportunity, Activity, Meeting  # noqa: F401
 
 # Alembic Config object
 config = context.config

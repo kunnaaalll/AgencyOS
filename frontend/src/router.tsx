@@ -70,6 +70,50 @@ const usersRoute = createRoute({
   component: UsersPage,
 })
 
+// ── Leads Routes ──────────────────────────────────────────────
+import { LeadsListPage } from '@/features/leads/pages/LeadsListPage'
+import { LeadDetailPage } from '@/features/leads/pages/LeadDetailPage'
+import { LeadAnalysisPage } from '@/features/leads/pages/LeadAnalysisPage'
+
+const leadsRoute = createRoute({
+  getParentRoute: () => protectedRoute,
+  path: '/leads',
+  component: LeadsListPage,
+})
+
+const leadDetailRoute = createRoute({
+  getParentRoute: () => protectedRoute,
+  path: '/leads/$id',
+  component: LeadDetailPage,
+})
+
+const leadAnalysisRoute = createRoute({
+  getParentRoute: () => protectedRoute,
+  path: '/leads/$id/analysis',
+  component: LeadAnalysisPage,
+})
+
+// ── CRM Routes ────────────────────────────────────────────────
+import { CRMBoardPage, OpportunityDetailPage, MeetingsPage } from '@/features/crm'
+
+const crmBoardRoute = createRoute({
+  getParentRoute: () => protectedRoute,
+  path: '/crm',
+  component: CRMBoardPage,
+})
+
+const opportunityDetailRoute = createRoute({
+  getParentRoute: () => protectedRoute,
+  path: '/crm/opportunities/$id',
+  component: OpportunityDetailPage,
+})
+
+const meetingsRoute = createRoute({
+  getParentRoute: () => protectedRoute,
+  path: '/crm/meetings',
+  component: MeetingsPage,
+})
+
 // ── Router Tree ───────────────────────────────────────────────
 const routeTree = rootRoute.addChildren([
   loginRoute,
@@ -77,6 +121,12 @@ const routeTree = rootRoute.addChildren([
     indexRoute,
     dashboardRoute,
     usersRoute,
+    leadsRoute,
+    leadDetailRoute,
+    leadAnalysisRoute,
+    crmBoardRoute,
+    opportunityDetailRoute,
+    meetingsRoute,
   ]),
 ])
 

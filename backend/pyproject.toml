@@ -109,3 +109,5 @@ omit = [
 [tool.coverage.report]
 show_missing = true
 skip_covered = true
+[tool.hatch.build.targets.wheel]
+packages = ["api", "core", "domain", "events", "repositories", "scripts", "services", "utils", "workers"]
