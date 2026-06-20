@@ -1,6 +1,6 @@
 # AgencyOS V2
 
-> **Phase 1 — Core Platform Foundation**
+> **Production Ready (Phase 13 Completed)**
 
 A production-grade agency operations platform built on a clean, extensible monorepo architecture.
 
@@ -113,6 +113,17 @@ make format        # Auto-format code
 
 ---
 
+## Production Deployment
+
+AgencyOS V2 is fully hardened for production. See the [Production Runbook](./runbook.md) for detailed instructions on:
+- Infrastructure setup (Docker, Traefik, Let's Encrypt)
+- Security hardening (Argon2, Brute-force protection, JWT revocation)
+- Observability (Prometheus, Grafana, Loki)
+- Automated Backups and Disaster Recovery
+- CI/CD Pipelines
+
+---
+
 ## Architecture Decisions
 
 See [`docs/architecture.md`](docs/architecture.md) for detailed architecture documentation.
@@ -121,12 +132,16 @@ See [`docs/architecture.md`](docs/architecture.md) for detailed architecture doc
 
 ## Phase Roadmap
 
-- [x] **Phase 1** — Core Platform Foundation *(current)*
-- [ ] Phase 2 — CRM & Pipeline
-- [ ] Phase 3 — Lead Intelligence Engine
-- [ ] Phase 4 — Outreach Engine
-- [ ] Phase 5 — Proposal Engine
-- [ ] Phase 6 — Client OS
-- [ ] Phase 7 — Finance OS
-- [ ] Phase 8 — Analytics OS
-- [ ] Phase 9 — AI Features
+- [x] Phase 1 — Core Platform Foundation
+- [x] Phase 2 — CRM & Pipeline
+- [x] Phase 3 — Lead Intelligence Engine
+- [x] Phase 4 — Outreach Engine
+- [x] Phase 5 — Proposal Engine
+- [x] Phase 6 — Client OS
+- [x] Phase 7 — Finance OS
+- [x] Phase 8 — Analytics OS
+- [x] Phase 9 — Observability & Error Tracking
+- [x] Phase 10 — Email Engine & Lead Automation
+- [x] Phase 11 — Reporting & Revenue Dashboards
+- [x] Phase 12 — Final Polish & Documentation
+- [x] **Phase 13** — Production Deployment & Security Hardening
