@@ -93,6 +93,9 @@ ROLES: list[dict] = [
         "permissions": [
             "finance:read",
             "finance:write",
+            "finance:create",
+            "finance:update",
+            "finance:delete",
             "invoices:read",
             "invoices:write",
             "invoices:delete",

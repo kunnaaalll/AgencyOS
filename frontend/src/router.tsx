@@ -135,6 +135,35 @@ const projectBoardRoute = createRoute({
   component: ProjectBoardPage,
 })
 
+// ── Finance OS Routes ─────────────────────────────────────────
+import { 
+  FinanceDashboardPage, RevenuePage, ExpensesPage, FounderPage 
+} from '@/features/finance'
+
+const financeDashboardRoute = createRoute({
+  getParentRoute: () => protectedRoute,
+  path: '/finance',
+  component: FinanceDashboardPage,
+})
+
+const financeRevenueRoute = createRoute({
+  getParentRoute: () => protectedRoute,
+  path: '/finance/revenue',
+  component: RevenuePage,
+})
+
+const financeExpensesRoute = createRoute({
+  getParentRoute: () => protectedRoute,
+  path: '/finance/expenses',
+  component: ExpensesPage,
+})
+
+const financeFoundersRoute = createRoute({
+  getParentRoute: () => protectedRoute,
+  path: '/finance/founders',
+  component: FounderPage,
+})
+
 // ── Router Tree ───────────────────────────────────────────────
 const routeTree = rootRoute.addChildren([
   loginRoute,
@@ -151,6 +180,10 @@ const routeTree = rootRoute.addChildren([
     clientsRoute,
     clientDetailRoute,
     projectBoardRoute,
+    financeDashboardRoute,
+    financeRevenueRoute,
+    financeExpensesRoute,
+    financeFoundersRoute,
   ]),
 ])
 

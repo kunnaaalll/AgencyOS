@@ -5,6 +5,7 @@ import type { SystemHealth } from '@/types'
 import { RefreshCw, Activity, DollarSign, Calendar, Target, TrendingUp, XCircle } from 'lucide-react'
 import { crmApi } from '@/features/crm/api'
 import { clientsApi } from '@/features/clients/api'
+import { financeApi } from '@/features/finance/api'
 import { PieChart, Pie, Cell, Tooltip as RechartsTooltip, ResponsiveContainer, BarChart, Bar, XAxis, YAxis, CartesianGrid } from 'recharts'
 
 const PLACEHOLDER_SERVICES = [
@@ -55,6 +56,17 @@ export function DashboardPage() {
     refetchInterval: 60_000,
   })
 
+  const {
+    data: financeStats,
+    isLoading: isLoadingFinance,
+    refetch: refetchFinance,
+    isFetching: isFetchingFinance,
+  } = useQuery({
+    queryKey: ['financeStats'],
+    queryFn: financeApi.getSummary,
+    refetchInterval: 60_000,
+  })
+
   const lastChecked = healthUpdatedAt
     ? new Date(healthUpdatedAt).toLocaleTimeString()
     : null
@@ -70,9 +82,10 @@ export function DashboardPage() {
     refetchHealth();
     refetchStats();
     refetchClientStats();
+    refetchFinance();
   }
 
-  const isFetching = isFetchingHealth || isFetchingStats || isFetchingClientStats;
+  const isFetching = isFetchingHealth || isFetchingStats || isFetchingClientStats || isFetchingFinance;
 
   const wonLostData = crmStats ? [
     { name: 'Won', value: crmStats.won_opportunities },
@@ -111,6 +124,48 @@ export function DashboardPage() {
           </button>
         </div>
       </div>
+
+      {/* Finance Stats Section */}
+      <div>
+        <h3 className="text-lg font-semibold text-gray-800 mb-4">Financial Overview</h3>
+        {isLoadingFinance ? (
+          <div className="text-center py-8 text-gray-500">Loading finance stats...</div>
+        ) : financeStats ? (
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+            <div className="bg-white p-5 rounded-xl border border-gray-200 shadow-sm">
+              <div className="flex justify-between items-start">
+                <div>
+                  <p className="text-sm font-medium text-gray-500 mb-1">MRR</p>
+                  <p className="text-2xl font-bold text-gray-900">${financeStats.mrr.toLocaleString()}</p>
+                </div>
+                <div className="bg-blue-50 p-2 rounded-lg"><TrendingUp className="w-5 h-5 text-blue-600" /></div>
+              </div>
+            </div>
+            
+            <div className="bg-white p-5 rounded-xl border border-gray-200 shadow-sm">
+              <div className="flex justify-between items-start">
+                <div>
+                  <p className="text-sm font-medium text-gray-500 mb-1">Net Profit</p>
+                  <p className="text-2xl font-bold text-gray-900">${financeStats.net_profit.toLocaleString()}</p>
+                </div>
+                <div className="bg-green-50 p-2 rounded-lg"><DollarSign className="w-5 h-5 text-green-600" /></div>
+              </div>
+            </div>
+
+            <div className="bg-white p-5 rounded-xl border border-gray-200 shadow-sm">
+              <div className="flex justify-between items-start">
+                <div>
+                  <p className="text-sm font-medium text-gray-500 mb-1">Cash Reserve</p>
+                  <p className="text-2xl font-bold text-gray-900">${financeStats.reserve_fund.toLocaleString()}</p>
+                </div>
+                <div className="bg-indigo-50 p-2 rounded-lg"><DollarSign className="w-5 h-5 text-indigo-600" /></div>
+              </div>
+            </div>
+          </div>
+        ) : null}
+      </div>
+
+      <div className="h-px bg-gray-200 w-full my-8"></div>
 
       {/* Client Stats Section */}
       <div>
