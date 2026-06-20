@@ -11,6 +11,7 @@ from domain.auth.router import router as auth_router
 from domain.client.router import router as client_router
 from domain.crm.router import router as crm_router
 from domain.discovery.router import router as discovery_router
+from domain.analysis.router import router as analysis_router
 from domain.documents.router import router as documents_router
 from domain.finance.router import router as finance_router
 from domain.knowledge.router import router as knowledge_router
@@ -41,6 +42,7 @@ api_router.include_router(org_router)
 api_router.include_router(role_router)
 api_router.include_router(lead_router)
 api_router.include_router(discovery_router)
+api_router.include_router(analysis_router)
 api_router.include_router(crm_router)
 api_router.include_router(client_router)
 api_router.include_router(project_router)

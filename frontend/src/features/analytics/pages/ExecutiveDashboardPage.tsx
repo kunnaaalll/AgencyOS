@@ -35,6 +35,27 @@ export function ExecutiveDashboardPage() {
     queryFn: discoveryApi.getRuns,
   })
 
+  // Analysis Metrics
+  const { data: analyses } = useQuery({
+    queryKey: ['analysis-list'],
+    queryFn: async () => {
+      const response = await fetch('/api/v1/analysis', {
+        headers: { 'Authorization': `Bearer ${authStore.state.token}` }
+      });
+      return response.json();
+    },
+  })
+
+  const analysisMetrics = useMemo(() => {
+    if (!analyses || !Array.isArray(analyses) || analyses.length === 0) {
+      return { total: 0, avgWebsiteScore: 0, avgSeoScore: 0 };
+    }
+    const total = analyses.length;
+    const avgWebsiteScore = analyses.reduce((acc, curr) => acc + (curr.website_score || 0), 0) / total;
+    const avgSeoScore = analyses.reduce((acc, curr) => acc + (curr.seo_score || 0), 0) / total;
+    return { total, avgWebsiteScore, avgSeoScore };
+  }, [analyses]);
+
   const discoveryMetrics = useMemo(() => {
     if (!runs) return { runsToday: 0, discovered: 0, validated: 0, promoted: 0 };
     const today = new Date().toISOString().split('T')[0];
@@ -177,6 +198,13 @@ export function ExecutiveDashboardPage() {
             <MetricRow label="Qualification Rate" value={`${growth.lead_qualification_rate.toFixed(1)}%`} />
             <MetricRow label="Active Clients" value={growth.active_clients} />
             <MetricRow label="Churn Rate" value={`${growth.churn_rate.toFixed(1)}%`} />
+          </SectionCard>
+
+          {/* Analysis Metrics */}
+          <SectionCard title="Website Analysis" href="/analysis">
+            <MetricRow label="Websites Analyzed" value={analysisMetrics.total} />
+            <MetricRow label="Avg Website Score" value={analysisMetrics.avgWebsiteScore.toFixed(1)} />
+            <MetricRow label="Avg SEO Score" value={analysisMetrics.avgSeoScore.toFixed(1)} />
           </SectionCard>
 
           {/* Revenue Metrics */}

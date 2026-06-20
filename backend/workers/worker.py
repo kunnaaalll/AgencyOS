@@ -18,6 +18,7 @@ from core.config import settings
 # from workers.tasks.enrichment import enrich_contact_task
 
 from workers.jobs.discovery import discover_businesses, validate_business, enrich_business
+from workers.jobs.analysis import analyze_website_job
 
 async def dummy_task(ctx: dict) -> None:
     pass
@@ -27,6 +28,7 @@ FUNCTIONS: list = [
     discover_businesses,
     validate_business,
     enrich_business,
+    analyze_website_job,
 ]
 
 
