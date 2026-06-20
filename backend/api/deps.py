@@ -95,3 +95,23 @@ def require_any_permission(*permissions: str) -> Callable:
         return current_user
 
     return permission_checker
+
+
+def require_roles(roles: list) -> Callable:
+    """
+    Dependency factory: require the current user to have one of the specified roles.
+    """
+
+    async def role_checker(
+        current_user: User = Depends(get_current_user),
+    ) -> User:
+        if current_user.role is None:
+            raise ForbiddenException("No role assigned")
+
+        role_values = [r.value if hasattr(r, "value") else str(r) for r in roles]
+        if current_user.role.name not in role_values:
+            raise ForbiddenException(f"Permission denied. Required one of roles: {', '.join(role_values)}")
+
+        return current_user
+
+    return role_checker

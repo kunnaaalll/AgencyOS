@@ -1,6 +1,6 @@
 import structlog
 
-from core.database import async_session_maker
+from core.database import AsyncSessionFactory
 from domain.client.enums import ClientStatus, HealthStatus
 from domain.client.schemas import ClientCreate
 from domain.client.services import ClientService
@@ -20,7 +20,7 @@ async def handle_opportunity_won(event: OpportunityWonEvent) -> None:
     """
     logger.info("Handling OpportunityWonEvent", opportunity_id=event.opportunity_id)
 
-    async with async_session_maker() as db:
+    async with AsyncSessionFactory() as db:
         try:
             # 1. Fetch Opportunity data to populate Client
             import uuid

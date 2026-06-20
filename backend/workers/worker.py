@@ -17,8 +17,11 @@ from core.config import settings
 # from workers.tasks.email import send_email_task
 # from workers.tasks.enrichment import enrich_contact_task
 
+async def dummy_task(ctx: dict) -> None:
+    pass
+
 FUNCTIONS: list = [
-    # Placeholder — add task functions here as they're implemented
+    dummy_task,
 ]
 
 

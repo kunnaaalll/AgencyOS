@@ -63,8 +63,11 @@ async def check_all_services() -> SystemHealth:
                 message=str(e)[:200],
             )
 
+    async def check_backend():
+        return True
+
     results = await asyncio.gather(
-        check_service("backend", lambda: True),  # Always healthy if we're running
+        check_service("backend", check_backend),  # Always healthy if we're running
         check_service("postgresql", check_database_connection),
         check_service("redis", check_redis_connection),
         check_service("minio", check_minio_connection),

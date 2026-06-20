@@ -28,8 +28,6 @@ services:
       - "${TRAEFIK_DASHBOARD_PORT:-8080}:8080"
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock:ro
-      - ./infra/traefik/traefik.yml:/etc/traefik/traefik.yml:ro
-      - ./infra/traefik/dynamic.yml:/etc/traefik/dynamic.yml:ro
       - traefik_certs:/certs
     networks:
       - agencyos
@@ -140,8 +138,6 @@ services:
     restart: unless-stopped
     env_file:
       - .env
-    volumes:
-      - ./backend:/app
     ports:
       - "${APP_PORT:-8000}:8000"
     networks:
@@ -178,8 +174,6 @@ services:
     command: arq workers.worker.WorkerSettings
     env_file:
       - .env
-    volumes:
-      - ./backend:/app
     networks:
       - agencyos
     depends_on:
@@ -198,9 +192,6 @@ services:
     restart: unless-stopped
     environment:
       VITE_API_URL: http://localhost:8000
-    volumes:
-      - ./frontend:/app
-      - /app/node_modules
     ports:
       - "5173:5173"
     networks:
