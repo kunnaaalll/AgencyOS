@@ -20,7 +20,7 @@ const columns = [
   columnHelper.accessor('business_name', {
     header: 'Business',
     cell: info => (
-      <Link to={`/leads/${info.row.original.id}`} className="font-medium text-blue-600 hover:underline">
+      <Link to="/leads/$id" params={{ id: info.row.original.id }} className="font-medium text-blue-600 hover:underline">
         {info.getValue()}
       </Link>
     ),

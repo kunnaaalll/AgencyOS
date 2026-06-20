@@ -1,7 +1,7 @@
 import { useQuery } from '@tanstack/react-query'
 import { useParams, Link } from '@tanstack/react-router'
 import { fetchLeadById, fetchLeadAnalysisById } from '../api'
-import { ArrowLeft, CheckCircle2, AlertTriangle, XCircle, TrendingUp, BarChart3, Search, Instagram, Star, MousePointerClick, Activity } from 'lucide-react'
+import { ArrowLeft, CheckCircle2, AlertTriangle, XCircle, TrendingUp, BarChart3, Search, Star, MousePointerClick, Activity } from 'lucide-react'
 
 export function LeadAnalysisPage() {
   const { id } = useParams({ strict: false }) as { id: string }
@@ -25,7 +25,7 @@ export function LeadAnalysisPage() {
     return (
       <div className="p-8 text-center">
         <p className="text-red-500 mb-4">No analysis available for this lead.</p>
-        <Link to={`/leads/${id}`} className="text-blue-600 hover:underline">
+        <Link to="/leads/$id" params={{ id }} className="text-blue-600 hover:underline">
           Return to lead details
         </Link>
       </div>
@@ -35,7 +35,7 @@ export function LeadAnalysisPage() {
   const scores = [
     { label: 'Website Quality', score: analysis.website_score, icon: Globe, max: 20 },
     { label: 'SEO', score: analysis.seo_score, icon: Search, max: 20 },
-    { label: 'Instagram', score: analysis.instagram_score, icon: Instagram, max: 15 },
+    { label: 'Instagram', score: analysis.instagram_score, icon: Globe, max: 15 },
     { label: 'Google Reviews', score: analysis.reviews_score, icon: Star, max: 15 },
     { label: 'CTA Quality', score: analysis.cta_score, icon: MousePointerClick, max: 10 },
     { label: 'Business Activity', score: analysis.digital_maturity_score, icon: Activity, max: 10 },
@@ -45,7 +45,7 @@ export function LeadAnalysisPage() {
   return (
     <div className="max-w-5xl mx-auto space-y-6">
       <div className="flex items-center gap-4">
-        <Link to={`/leads/${id}`} className="p-2 hover:bg-surface-100 rounded-full transition-colors">
+        <Link to="/leads/$id" params={{ id }} className="p-2 hover:bg-surface-100 rounded-full transition-colors">
           <ArrowLeft className="w-5 h-5 text-surface-500" />
         </Link>
         <div>

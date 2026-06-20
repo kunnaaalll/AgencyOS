@@ -1,11 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams } from '@tanstack/react-router';
 import { crmApi } from '../api';
 import { Opportunity, Activity, Meeting } from '../types';
-import { format } from 'date-fns';
 
 export function OpportunityDetailPage() {
-  const { id } = useParams<{ id: string }>();
+  const { id } = useParams({ strict: false }) as { id: string };
   const [opportunity, setOpportunity] = useState<Opportunity | null>(null);
   const [activities, setActivities] = useState<Activity[]>([]);
   const [meetings, setMeetings] = useState<Meeting[]>([]);
@@ -65,7 +64,7 @@ export function OpportunityDetailPage() {
             <div>
               <p className="text-sm text-gray-500">Expected Close Date</p>
               <p className="font-medium text-gray-900">
-                {opportunity.expected_close_date ? format(new Date(opportunity.expected_close_date), 'MMMM d, yyyy') : 'Not set'}
+                {opportunity.expected_close_date ? new Date(opportunity.expected_close_date).toLocaleDateString() : 'Not set'}
               </p>
             </div>
             <div>
@@ -102,7 +101,7 @@ export function OpportunityDetailPage() {
                       {activity.description && <p className="text-gray-600 text-sm mt-1">{activity.description}</p>}
                     </div>
                     <div className="text-right text-xs text-gray-500">
-                      <p>{format(new Date(activity.created_at), 'MMM d, h:mm a')}</p>
+                      <p>{new Date(activity.created_at).toLocaleString()}</p>
                       {activity.completed_at && <p className="text-green-600 mt-1 flex items-center justify-end gap-1">✓ Completed</p>}
                     </div>
                   </div>
@@ -129,7 +128,7 @@ export function OpportunityDetailPage() {
                   <div className="flex justify-between items-center mb-2">
                     <span className="font-semibold text-gray-900">{meeting.meeting_type} Meeting</span>
                     <span className="text-sm font-medium text-blue-600">
-                      {format(new Date(meeting.scheduled_at), 'MMM d, yyyy h:mm a')}
+                      {new Date(meeting.scheduled_at).toLocaleString()}
                     </span>
                   </div>
                   <div className="text-sm text-gray-600 grid grid-cols-2 gap-2">
@@ -154,12 +153,12 @@ export function OpportunityDetailPage() {
             <div className="relative pl-6">
               <span className="absolute -left-[9px] top-1 w-4 h-4 rounded-full bg-blue-500 border-2 border-white"></span>
               <p className="text-sm font-medium text-gray-900">Opportunity Created</p>
-              <p className="text-xs text-gray-500 mt-0.5">{format(new Date(opportunity.created_at), 'MMM d, yyyy h:mm a')}</p>
+              <p className="text-xs text-gray-500 mt-0.5">{new Date(opportunity.created_at).toLocaleString()}</p>
             </div>
             <div className="relative pl-6">
               <span className="absolute -left-[9px] top-1 w-4 h-4 rounded-full bg-gray-300 border-2 border-white"></span>
               <p className="text-sm font-medium text-gray-900">Moved to {opportunity.pipeline_stage}</p>
-              <p className="text-xs text-gray-500 mt-0.5">{format(new Date(opportunity.updated_at), 'MMM d, yyyy h:mm a')}</p>
+              <p className="text-xs text-gray-500 mt-0.5">{new Date(opportunity.updated_at).toLocaleString()}</p>
             </div>
           </div>
         </div>

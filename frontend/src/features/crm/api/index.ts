@@ -1,4 +1,4 @@
-import { api } from '@/lib/api';
+import api from '@/lib/api';
 import { Opportunity, Activity, Meeting, CRMStats } from '../types';
 
 export const crmApi = {

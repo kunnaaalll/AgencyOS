@@ -114,6 +114,27 @@ const meetingsRoute = createRoute({
   component: MeetingsPage,
 })
 
+// ── Client OS Routes ──────────────────────────────────────────
+import { ClientsListPage, ClientDetailPage, ProjectBoardPage } from '@/features/clients'
+
+const clientsRoute = createRoute({
+  getParentRoute: () => protectedRoute,
+  path: '/clients',
+  component: ClientsListPage,
+})
+
+const clientDetailRoute = createRoute({
+  getParentRoute: () => protectedRoute,
+  path: '/clients/$id',
+  component: ClientDetailPage,
+})
+
+const projectBoardRoute = createRoute({
+  getParentRoute: () => protectedRoute,
+  path: '/projects/$id/board',
+  component: ProjectBoardPage,
+})
+
 // ── Router Tree ───────────────────────────────────────────────
 const routeTree = rootRoute.addChildren([
   loginRoute,
@@ -127,6 +148,9 @@ const routeTree = rootRoute.addChildren([
     crmBoardRoute,
     opportunityDetailRoute,
     meetingsRoute,
+    clientsRoute,
+    clientDetailRoute,
+    projectBoardRoute,
   ]),
 ])
 

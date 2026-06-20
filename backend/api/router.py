@@ -13,6 +13,9 @@ from domain.user.router import router as user_router
 from domain.lead.router import router as lead_router
 from domain.discovery.router import router as discovery_router
 from domain.crm.router import router as crm_router
+from domain.client.router import router as client_router
+from domain.project.router import router as project_router
+from domain.task.router import router as task_router
 
 api_router = APIRouter(prefix="/api")
 
@@ -29,3 +32,6 @@ api_router.include_router(role_router)
 api_router.include_router(lead_router)
 api_router.include_router(discovery_router)
 api_router.include_router(crm_router)
+api_router.include_router(client_router)
+api_router.include_router(project_router)
+api_router.include_router(task_router)

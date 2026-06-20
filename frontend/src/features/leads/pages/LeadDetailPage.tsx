@@ -1,7 +1,7 @@
 import { useQuery } from '@tanstack/react-query'
 import { useParams, Link } from '@tanstack/react-router'
 import { fetchLeadById } from '../api'
-import { Building2, Globe, MapPin, Phone, Mail, Instagram, Linkedin, ArrowLeft, BarChart } from 'lucide-react'
+import { MapPin, Globe, Phone, Mail, Link as LinkIcon, Building2, ArrowLeft, BarChart } from 'lucide-react'
 
 export function LeadDetailPage() {
   const { id } = useParams({ strict: false }) as { id: string }
@@ -39,8 +39,9 @@ export function LeadDetailPage() {
         </div>
         <div className="ml-auto">
           <Link
-            to={`/leads/${id}/analysis`}
-            className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+            to="/leads/$id/analysis"
+            params={{ id: id as string }}
+            className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700 transition-colors"
           >
             <BarChart className="w-4 h-4" />
             View Analysis
@@ -100,7 +101,7 @@ export function LeadDetailPage() {
               </div>
             </div>
             <div className="flex items-center gap-3 text-surface-600">
-              <Instagram className="w-5 h-5 text-surface-400" />
+              <LinkIcon className="w-5 h-5 text-surface-400" />
               <div>
                 <p className="text-sm text-surface-500">Instagram</p>
                 {lead.instagram_url ? (
@@ -111,7 +112,7 @@ export function LeadDetailPage() {
               </div>
             </div>
             <div className="flex items-center gap-3 text-surface-600">
-              <Linkedin className="w-5 h-5 text-surface-400" />
+              <LinkIcon className="w-5 h-5 text-surface-400" />
               <div>
                 <p className="text-sm text-surface-500">LinkedIn</p>
                 {lead.linkedin_url ? (

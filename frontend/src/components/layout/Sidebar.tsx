@@ -8,6 +8,8 @@ import {
   ShieldCheck,
   Activity,
   Zap,
+  Briefcase,
+  Target,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
@@ -20,6 +22,9 @@ interface NavItem {
 
 const NAV_ITEMS: NavItem[] = [
   { to: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
+  { to: '/leads', label: 'Leads', icon: Target },
+  { to: '/crm', label: 'CRM', icon: Building2 },
+  { to: '/clients', label: 'Clients', icon: Briefcase },
   { to: '/users', label: 'Users', icon: Users },
 ]
 
@@ -82,8 +87,6 @@ export function Sidebar() {
             Coming Soon
           </p>
           {[
-            { label: 'CRM', icon: Building2 },
-            { label: 'RBAC', icon: ShieldCheck },
             { label: 'Analytics', icon: Activity },
           ].map(({ label, icon: Icon }) => (
             <div
@@ -93,7 +96,7 @@ export function Sidebar() {
               <Icon className="w-4.5 h-4.5 flex-shrink-0 text-surface-700" />
               {label}
               <span className="ml-auto text-xs bg-surface-800 text-surface-600 px-1.5 py-0.5 rounded-md">
-                Phase 2
+                Phase 5
               </span>
             </div>
           ))}

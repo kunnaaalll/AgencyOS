@@ -1,0 +1,63 @@
+import api from '@/lib/api';
+import { Client, Project, Task, ClientStats } from '../types';
+
+export const clientsApi = {
+  // Clients
+  getClients: async () => {
+    const { data } = await api.get<Client[]>('/api/v1/clients');
+    return data;
+  },
+  getClient: async (id: string) => {
+    const { data } = await api.get<Client>(`/api/v1/clients/${id}`);
+    return data;
+  },
+  createClient: async (payload: Partial<Client>) => {
+    const { data } = await api.post<Client>('/api/v1/clients', payload);
+    return data;
+  },
+  updateClient: async (id: string, payload: Partial<Client>) => {
+    const { data } = await api.patch<Client>(`/api/v1/clients/${id}`, payload);
+    return data;
+  },
+  deleteClient: async (id: string) => {
+    await api.delete(`/api/v1/clients/${id}`);
+  },
+  getStats: async () => {
+    const { data } = await api.get<ClientStats>('/api/v1/clients/stats');
+    return data;
+  },
+
+  // Projects
+  getProjects: async (clientId: string) => {
+    const { data } = await api.get<Project[]>(`/api/v1/clients/${clientId}/projects`);
+    return data;
+  },
+  createProject: async (clientId: string, payload: Partial<Project>) => {
+    const { data } = await api.post<Project>(`/api/v1/clients/${clientId}/projects`, payload);
+    return data;
+  },
+  updateProject: async (id: string, payload: Partial<Project>) => {
+    const { data } = await api.patch<Project>(`/api/v1/projects/${id}`, payload);
+    return data;
+  },
+  deleteProject: async (id: string) => {
+    await api.delete(`/api/v1/projects/${id}`);
+  },
+
+  // Tasks
+  getTasks: async (projectId: string) => {
+    const { data } = await api.get<Task[]>(`/api/v1/projects/${projectId}/tasks`);
+    return data;
+  },
+  createTask: async (projectId: string, payload: Partial<Task>) => {
+    const { data } = await api.post<Task>(`/api/v1/projects/${projectId}/tasks`, payload);
+    return data;
+  },
+  updateTask: async (id: string, payload: Partial<Task>) => {
+    const { data } = await api.patch<Task>(`/api/v1/tasks/${id}`, payload);
+    return data;
+  },
+  deleteTask: async (id: string) => {
+    await api.delete(`/api/v1/tasks/${id}`);
+  },
+};

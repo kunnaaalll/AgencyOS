@@ -4,6 +4,7 @@ import { HealthCard } from '@/components/health/HealthCard'
 import type { SystemHealth } from '@/types'
 import { RefreshCw, Activity, DollarSign, Calendar, Target, TrendingUp, XCircle } from 'lucide-react'
 import { crmApi } from '@/features/crm/api'
+import { clientsApi } from '@/features/clients/api'
 import { PieChart, Pie, Cell, Tooltip as RechartsTooltip, ResponsiveContainer, BarChart, Bar, XAxis, YAxis, CartesianGrid } from 'recharts'
 
 const PLACEHOLDER_SERVICES = [
@@ -43,6 +44,17 @@ export function DashboardPage() {
     refetchInterval: 60_000,
   })
 
+  const {
+    data: clientStats,
+    isLoading: isLoadingClientStats,
+    refetch: refetchClientStats,
+    isFetching: isFetchingClientStats,
+  } = useQuery({
+    queryKey: ['clientStats'],
+    queryFn: clientsApi.getStats,
+    refetchInterval: 60_000,
+  })
+
   const lastChecked = healthUpdatedAt
     ? new Date(healthUpdatedAt).toLocaleTimeString()
     : null
@@ -57,9 +69,10 @@ export function DashboardPage() {
   const handleRefresh = () => {
     refetchHealth();
     refetchStats();
+    refetchClientStats();
   }
 
-  const isFetching = isFetchingHealth || isFetchingStats;
+  const isFetching = isFetchingHealth || isFetchingStats || isFetchingClientStats;
 
   const wonLostData = crmStats ? [
     { name: 'Won', value: crmStats.won_opportunities },
@@ -98,6 +111,58 @@ export function DashboardPage() {
           </button>
         </div>
       </div>
+
+      {/* Client Stats Section */}
+      <div>
+        <h3 className="text-lg font-semibold text-gray-800 mb-4">Client Operations</h3>
+        {isLoadingClientStats ? (
+          <div className="text-center py-8 text-gray-500">Loading client stats...</div>
+        ) : clientStats ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+            <div className="bg-white p-5 rounded-xl border border-gray-200 shadow-sm">
+              <div className="flex justify-between items-start">
+                <div>
+                  <p className="text-sm font-medium text-gray-500 mb-1">Active Clients</p>
+                  <p className="text-2xl font-bold text-gray-900">{clientStats.active_clients}</p>
+                </div>
+                <div className="bg-blue-50 p-2 rounded-lg"><Target className="w-5 h-5 text-blue-600" /></div>
+              </div>
+            </div>
+            
+            <div className="bg-white p-5 rounded-xl border border-gray-200 shadow-sm">
+              <div className="flex justify-between items-start">
+                <div>
+                  <p className="text-sm font-medium text-gray-500 mb-1">Monthly Retainer</p>
+                  <p className="text-2xl font-bold text-gray-900">${clientStats.monthly_retainer_revenue.toLocaleString()}</p>
+                </div>
+                <div className="bg-green-50 p-2 rounded-lg"><DollarSign className="w-5 h-5 text-green-600" /></div>
+              </div>
+            </div>
+
+            <div className="bg-white p-5 rounded-xl border border-gray-200 shadow-sm">
+              <div className="flex justify-between items-start">
+                <div>
+                  <p className="text-sm font-medium text-gray-500 mb-1">At Risk Clients</p>
+                  <p className="text-2xl font-bold text-gray-900">{clientStats.at_risk_clients}</p>
+                </div>
+                <div className="bg-red-50 p-2 rounded-lg"><XCircle className="w-5 h-5 text-red-600" /></div>
+              </div>
+            </div>
+
+            <div className="bg-white p-5 rounded-xl border border-gray-200 shadow-sm">
+              <div className="flex justify-between items-start">
+                <div>
+                  <p className="text-sm font-medium text-gray-500 mb-1">Renewals Due</p>
+                  <p className="text-2xl font-bold text-gray-900">{clientStats.renewals_due}</p>
+                </div>
+                <div className="bg-amber-50 p-2 rounded-lg"><Calendar className="w-5 h-5 text-amber-600" /></div>
+              </div>
+            </div>
+          </div>
+        ) : null}
+      </div>
+
+      <div className="h-px bg-gray-200 w-full my-8"></div>
 
       {/* CRM Stats Section */}
       <div>
@@ -197,7 +262,7 @@ export function DashboardPage() {
                     <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#E5E7EB" />
                     <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fill: '#6B7280' }} />
                     <YAxis axisLine={false} tickLine={false} tick={{ fill: '#6B7280' }} tickFormatter={(value) => `$${value}`} />
-                    <RechartsTooltip cursor={{ fill: '#F3F4F6' }} formatter={(value: number) => [`$${value.toLocaleString()}`, 'Value']} />
+                    <RechartsTooltip cursor={{ fill: '#F3F4F6' }} formatter={(value: any) => [`$${value.toLocaleString()}`, 'Value']} />
                     <Bar dataKey="value" fill="#3B82F6" radius={[4, 4, 0, 0]} maxBarSize={60}>
                       {pipelineData.map((entry, index) => (
                         <Cell key={`cell-${index}`} fill={index === 0 ? '#3B82F6' : '#8B5CF6'} />

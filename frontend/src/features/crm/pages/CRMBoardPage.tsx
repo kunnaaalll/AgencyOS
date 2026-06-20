@@ -18,7 +18,7 @@ import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { PipelineStage, Opportunity } from '../types';
 import { crmApi } from '../api';
-import { format } from 'date-fns';
+
 
 const STAGES = [
   PipelineStage.NEW,
@@ -60,7 +60,7 @@ function SortableItem({ id, opportunity }: SortableItemProps) {
       </div>
       {opportunity.expected_close_date && (
         <div className="text-xs text-gray-400">
-          Closes: {format(new Date(opportunity.expected_close_date), 'MMM d, yyyy')}
+          Closes: {new Date(opportunity.expected_close_date).toLocaleDateString()}
         </div>
       )}
     </div>
