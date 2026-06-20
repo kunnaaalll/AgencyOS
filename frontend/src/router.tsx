@@ -120,6 +120,29 @@ const leadAnalysisRoute = createRoute({
   component: LeadAnalysisPage,
 })
 
+// ── Discovery Routes ──────────────────────────────────────────
+import { DiscoveryRunsPage } from '@/features/discovery/pages/DiscoveryRunsPage'
+import { DiscoveryRunDetailPage } from '@/features/discovery/pages/DiscoveryRunDetailPage'
+import { RawBusinessesPage } from '@/features/discovery/pages/RawBusinessesPage'
+
+const discoveryRunsRoute = createRoute({
+  getParentRoute: () => protectedRoute,
+  path: '/discovery/runs',
+  component: DiscoveryRunsPage,
+})
+
+const discoveryRunDetailRoute = createRoute({
+  getParentRoute: () => protectedRoute,
+  path: '/discovery/runs/$id',
+  component: DiscoveryRunDetailPage,
+})
+
+const discoveryBusinessesRoute = createRoute({
+  getParentRoute: () => protectedRoute,
+  path: '/discovery/businesses',
+  component: RawBusinessesPage,
+})
+
 // ── CRM Routes ────────────────────────────────────────────────
 import { CRMBoardPage, OpportunityDetailPage, MeetingsPage } from '@/features/crm'
 
@@ -268,6 +291,9 @@ const routeTree = rootRoute.addChildren([
     leadsRoute,
     leadDetailRoute,
     leadAnalysisRoute,
+    discoveryRunsRoute,
+    discoveryRunDetailRoute,
+    discoveryBusinessesRoute,
     crmBoardRoute,
     opportunityDetailRoute,
     meetingsRoute,

@@ -1,10 +1,11 @@
-import { useState } from 'react'
+import { useState, useMemo } from 'react'
 import { useExecutiveSummary } from '../api'
+import { discoveryApi } from '@/features/discovery/api/discoveryApi'
 import { DateRangeFilter, DateRange } from '../components/DateRangeFilter'
 import { 
   TrendingUp, Users, DollarSign, Briefcase, Activity, 
   ArrowUpRight, ArrowDownRight, Target, CheckCircle, Clock,
-  HeartPulse, AlertTriangle, Bell
+  HeartPulse, AlertTriangle, Bell, Search
 } from 'lucide-react'
 import { getSystemHealth, getNotifications } from '../../system/api'
 import { useQuery } from '@tanstack/react-query'
@@ -27,6 +28,32 @@ export function ExecutiveDashboardPage() {
     queryKey: ['notifications'],
     queryFn: getNotifications,
   })
+
+  // Discovery Metrics
+  const { data: runs } = useQuery({
+    queryKey: ['discovery-runs'],
+    queryFn: discoveryApi.getRuns,
+  })
+
+  const discoveryMetrics = useMemo(() => {
+    if (!runs) return { runsToday: 0, discovered: 0, validated: 0, promoted: 0 };
+    const today = new Date().toISOString().split('T')[0];
+    let runsToday = 0;
+    let discovered = 0;
+    let validated = 0;
+    let promoted = 0;
+
+    runs.forEach(run => {
+      if (run.created_at.startsWith(today)) {
+        runsToday++;
+      }
+      discovered += run.businesses_discovered;
+      validated += run.businesses_validated;
+      promoted += run.businesses_created;
+    });
+
+    return { runsToday, discovered, validated, promoted };
+  }, [runs]);
 
   if (isLoading) {
     return (
@@ -84,20 +111,13 @@ export function ExecutiveDashboardPage() {
             color="text-brand-400" 
             bg="bg-brand-500/10" 
           />
-          <div className="bg-surface-900 border border-surface-700/50 rounded-2xl p-5 flex flex-col justify-between relative overflow-hidden">
-            <div className="flex justify-between items-start mb-4">
-              <p className="text-sm font-medium text-surface-400">Hiring Recommendation</p>
-              <div className={`p-2 rounded-xl ${forecast.hiring_recommendation ? 'bg-amber-500/10' : 'bg-surface-800'}`}>
-                <Briefcase className={`w-5 h-5 ${forecast.hiring_recommendation ? 'text-amber-400' : 'text-surface-500'}`} />
-              </div>
-            </div>
-            <div>
-              <h3 className={`text-xl font-bold ${forecast.hiring_recommendation ? 'text-amber-400' : 'text-white'}`}>
-                {forecast.hiring_recommendation ? 'Recommend Hiring' : 'Hold Hiring'}
-              </h3>
-              <p className="text-xs text-surface-400 mt-1">{forecast.hiring_reason}</p>
-            </div>
-          </div>
+          <ForecastCard 
+            title="Discovery Runs Today" 
+            value={discoveryMetrics.runsToday} 
+            icon={Search} 
+            color="text-indigo-400" 
+            bg="bg-indigo-500/10" 
+          />
         </div>
 
         {/* Operational / System Mini-widgets */}
@@ -142,6 +162,14 @@ export function ExecutiveDashboardPage() {
         {/* Categories Grid */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           
+          {/* Discovery Metrics */}
+          <SectionCard title="Lead Discovery" href="/discovery/runs">
+            <MetricRow label="Runs Today" value={discoveryMetrics.runsToday} />
+            <MetricRow label="Businesses Discovered" value={discoveryMetrics.discovered} />
+            <MetricRow label="Businesses Validated" value={discoveryMetrics.validated} />
+            <MetricRow label="Businesses Promoted" value={discoveryMetrics.promoted} />
+          </SectionCard>
+
           {/* Growth Metrics */}
           <SectionCard title="Growth Metrics" href="/analytics/growth">
             <MetricRow label="Total Leads" value={growth.total_leads} />
@@ -165,14 +193,6 @@ export function ExecutiveDashboardPage() {
             <MetricRow label="Weighted Pipeline" value={`$${sales.weighted_pipeline_value.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`} />
             <MetricRow label="Win Rate" value={`${growth.win_rate.toFixed(1)}%`} />
             <MetricRow label="Avg Deal Size" value={`$${sales.average_deal_size.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`} />
-          </SectionCard>
-
-          {/* Delivery Metrics */}
-          <SectionCard title="Delivery Metrics" href="/analytics/delivery">
-            <MetricRow label="Open Tasks" value={delivery.open_tasks} />
-            <MetricRow label="Completed Tasks" value={delivery.completed_tasks} />
-            <MetricRow label="Project Completion" value={`${delivery.project_completion_rate.toFixed(1)}%`} />
-            <MetricRow label="Renewals Due" value={delivery.renewals_due} />
           </SectionCard>
 
         </div>

@@ -18,6 +18,7 @@ FROM base AS development
 # Install all dependencies including dev
 COPY pyproject.toml .
 RUN uv pip install --system -e ".[dev]"
+RUN playwright install --with-deps chromium
 
 # Copy source
 COPY . .
@@ -34,6 +35,7 @@ FROM base AS production
 # Install production dependencies only
 COPY pyproject.toml .
 RUN uv pip install --system .
+RUN playwright install --with-deps chromium
 
 # Copy source
 COPY . .

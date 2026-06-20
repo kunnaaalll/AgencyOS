@@ -17,11 +17,16 @@ from core.config import settings
 # from workers.tasks.email import send_email_task
 # from workers.tasks.enrichment import enrich_contact_task
 
+from workers.jobs.discovery import discover_businesses, validate_business, enrich_business
+
 async def dummy_task(ctx: dict) -> None:
     pass
 
 FUNCTIONS: list = [
     dummy_task,
+    discover_businesses,
+    validate_business,
+    enrich_business,
 ]
 
 

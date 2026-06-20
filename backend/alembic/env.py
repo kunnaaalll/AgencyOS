@@ -16,7 +16,7 @@ from alembic import context
 from core.database import Base
 from domain.client.models import Client  # noqa: F401
 from domain.crm.models import Activity, Meeting, Opportunity  # noqa: F401
-from domain.discovery.models import DiscoveryJob  # noqa: F401
+from domain.discovery.models import DiscoveryRun, RawBusiness  # noqa: F401
 from domain.documents.models import CredentialRecord, Document  # noqa: F401
 from domain.finance.models import (  # noqa: F401
     Distribution,
