@@ -19,6 +19,17 @@ from core.config import settings
 
 from workers.jobs.discovery import discover_businesses, validate_business, enrich_business
 from workers.jobs.analysis import analyze_website_job
+from workers.jobs.qualification_ai import qualify_lead_job
+
+import structlog
+
+logger = structlog.get_logger()
+
+async def startup(ctx):
+    logger.info("Worker starting up...")
+
+async def shutdown(ctx):
+    logger.info("Worker shutting down...")
 
 async def dummy_task(ctx: dict) -> None:
     pass
@@ -29,6 +40,7 @@ FUNCTIONS: list = [
     validate_business,
     enrich_business,
     analyze_website_job,
+    qualify_lead_job,
 ]
 
 

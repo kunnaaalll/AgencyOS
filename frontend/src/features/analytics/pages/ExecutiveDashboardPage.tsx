@@ -46,6 +46,17 @@ export function ExecutiveDashboardPage() {
     },
   })
 
+  // Qualification Metrics
+  const { data: qualifications } = useQuery({
+    queryKey: ['qualifications-list'],
+    queryFn: async () => {
+      const response = await fetch('/api/v1/qualification', {
+        headers: { 'Authorization': `Bearer ${authStore.state.token}` }
+      });
+      return response.json();
+    },
+  })
+
   const analysisMetrics = useMemo(() => {
     if (!analyses || !Array.isArray(analyses) || analyses.length === 0) {
       return { total: 0, avgWebsiteScore: 0, avgSeoScore: 0 };
@@ -75,6 +86,28 @@ export function ExecutiveDashboardPage() {
 
     return { runsToday, discovered, validated, promoted };
   }, [runs]);
+
+  const qualificationMetrics = useMemo(() => {
+    if (!qualifications || !Array.isArray(qualifications) || qualifications.length === 0) {
+      return { highPriority: 0, avgOpportunityScore: 0, qualified: 0 };
+    }
+    const total = qualifications.length;
+    let highPriority = 0;
+    let qualified = 0;
+    let scoreSum = 0;
+
+    qualifications.forEach(q => {
+      if (q.priority === 'HIGH') highPriority++;
+      if (q.qualification_status === 'QUALIFIED') qualified++;
+      scoreSum += q.opportunity_score;
+    });
+
+    return { 
+      highPriority, 
+      avgOpportunityScore: scoreSum / total, 
+      qualified 
+    };
+  }, [qualifications]);
 
   if (isLoading) {
     return (
@@ -205,6 +238,14 @@ export function ExecutiveDashboardPage() {
             <MetricRow label="Websites Analyzed" value={analysisMetrics.total} />
             <MetricRow label="Avg Website Score" value={analysisMetrics.avgWebsiteScore.toFixed(1)} />
             <MetricRow label="Avg SEO Score" value={analysisMetrics.avgSeoScore.toFixed(1)} />
+          </SectionCard>
+
+          {/* Qualification Metrics */}
+          <SectionCard title="AI Qualification" href="/qualifications">
+            <MetricRow label="Total AI Qualifications" value={qualifications?.length || 0} />
+            <MetricRow label="High Priority Leads" value={qualificationMetrics.highPriority} />
+            <MetricRow label="Qualified Leads" value={qualificationMetrics.qualified} />
+            <MetricRow label="Avg Opportunity Score" value={qualificationMetrics.avgOpportunityScore.toFixed(1)} />
           </SectionCard>
 
           {/* Revenue Metrics */}

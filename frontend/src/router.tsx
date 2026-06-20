@@ -159,6 +159,22 @@ const analysisDetailRoute = createRoute({
   component: AnalysisDetailPage,
 })
 
+// ── Qualification Routes ──────────────────────────────────────
+import { QualificationListPage } from '@/features/qualification/pages/QualificationListPage'
+import { QualificationDetailPage } from '@/features/qualification/pages/QualificationDetailPage'
+
+const qualificationListRoute = createRoute({
+  getParentRoute: () => protectedRoute,
+  path: '/qualifications',
+  component: QualificationListPage,
+})
+
+const qualificationDetailRoute = createRoute({
+  getParentRoute: () => protectedRoute,
+  path: '/qualifications/$leadId',
+  component: QualificationDetailPage,
+})
+
 // ── CRM Routes ────────────────────────────────────────────────
 import { CRMBoardPage, OpportunityDetailPage, MeetingsPage } from '@/features/crm'
 
@@ -312,6 +328,8 @@ const routeTree = rootRoute.addChildren([
     discoveryBusinessesRoute,
     analysisListRoute,
     analysisDetailRoute,
+    qualificationListRoute,
+    qualificationDetailRoute,
     crmBoardRoute,
     opportunityDetailRoute,
     meetingsRoute,
