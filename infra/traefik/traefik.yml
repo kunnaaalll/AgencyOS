@@ -1,0 +1,33 @@
+# ============================================================
+# Traefik Static Configuration — AgencyOS V2
+# ============================================================
+
+global:
+  checkNewVersion: false
+  sendAnonymousUsage: false
+
+log:
+  level: INFO
+  format: json
+
+accessLog:
+  format: json
+
+api:
+  dashboard: true
+  insecure: true  # Development only
+
+entryPoints:
+  web:
+    address: ":80"
+  websecure:
+    address: ":443"
+
+providers:
+  docker:
+    endpoint: "unix:///var/run/docker.sock"
+    exposedByDefault: false
+    network: agencyos
+  file:
+    filename: /etc/traefik/dynamic.yml
+    watch: true

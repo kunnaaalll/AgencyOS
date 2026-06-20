@@ -1,0 +1,56 @@
+agencyos-v2/
+
+# Environment files
+.env
+*.env.local
+
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+.Python
+*.egg-info/
+dist/
+build/
+.eggs/
+*.egg
+.venv/
+venv/
+env/
+.pytest_cache/
+.ruff_cache/
+htmlcov/
+.coverage
+*.cover
+
+# Node
+node_modules/
+.npm
+*.tgz
+
+# Build output
+dist/
+build/
+.next/
+out/
+
+# Editor
+.vscode/
+.idea/
+*.swp
+*.swo
+.DS_Store
+Thumbs.db
+
+# Docker
+*.pid
+
+# Logs
+logs/
+*.log
+
+# OS
+.DS_Store
+.AppleDouble
+.LSOverride

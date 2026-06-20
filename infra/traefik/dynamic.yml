@@ -1,0 +1,37 @@
+# ============================================================
+# Traefik Dynamic Configuration — AgencyOS V2
+# ============================================================
+
+http:
+  middlewares:
+    cors-headers:
+      headers:
+        accessControlAllowMethods:
+          - GET
+          - OPTIONS
+          - PUT
+          - POST
+          - DELETE
+          - PATCH
+        accessControlAllowHeaders:
+          - "*"
+        accessControlAllowOriginList:
+          - "http://localhost:5173"
+          - "http://localhost:3000"
+        accessControlMaxAge: 100
+        addVaryHeader: true
+
+    secure-headers:
+      headers:
+        frameDeny: true
+        browserXssFilter: true
+        contentTypeNosniff: true
+        forceSTSHeader: false  # Enable in production
+        stsSeconds: 315360000
+        stsIncludeSubdomains: true
+        stsPreload: true
+
+    rate-limit:
+      rateLimit:
+        average: 100
+        burst: 50

@@ -1,0 +1,36 @@
+# ============================================================
+# Prometheus Configuration — AgencyOS V2
+# Placeholder — Full dashboards in future phase
+# ============================================================
+
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+  scrape_timeout: 10s
+
+# Alertmanager configuration (placeholder)
+# alerting:
+#   alertmanagers:
+#     - static_configs:
+#         - targets: ['alertmanager:9093']
+
+# Rules files (placeholder)
+# rule_files:
+#   - "alert_rules.yml"
+
+scrape_configs:
+  # Prometheus self-monitoring
+  - job_name: "prometheus"
+    static_configs:
+      - targets: ["localhost:9090"]
+
+  # FastAPI backend (placeholder — metrics endpoint TBD)
+  # - job_name: "agencyos-backend"
+  #   static_configs:
+  #     - targets: ["backend:8000"]
+  #   metrics_path: /metrics
+
+  # Node Exporter (placeholder)
+  # - job_name: "node"
+  #   static_configs:
+  #     - targets: ["node-exporter:9100"]
