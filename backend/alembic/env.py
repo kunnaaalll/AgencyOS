@@ -23,6 +23,8 @@ from domain.client.models import Client  # noqa: F401
 from domain.project.models import Project  # noqa: F401
 from domain.task.models import Task  # noqa: F401
 from domain.finance.models import Revenue, Expense, Founder, Distribution, FinanceSettings  # noqa: F401
+from domain.knowledge.models import KnowledgeArticle, KnowledgeCategory  # noqa: F401
+from domain.documents.models import Document, CredentialRecord  # noqa: F401
 
 # Alembic Config object
 config = context.config

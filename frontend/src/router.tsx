@@ -164,6 +164,42 @@ const financeFoundersRoute = createRoute({
   component: FounderPage,
 })
 
+// ── Knowledge OS Routes ───────────────────────────────────────
+import { KnowledgePage, KnowledgeEditorPage } from '@/features/knowledge'
+
+const knowledgeRoute = createRoute({
+  getParentRoute: () => protectedRoute,
+  path: '/knowledge',
+  component: KnowledgePage,
+})
+
+const knowledgeNewRoute = createRoute({
+  getParentRoute: () => protectedRoute,
+  path: '/knowledge/new',
+  component: KnowledgeEditorPage,
+})
+
+const knowledgeEditRoute = createRoute({
+  getParentRoute: () => protectedRoute,
+  path: '/knowledge/$id/edit',
+  component: KnowledgeEditorPage,
+})
+
+// ── Document Vault Routes ─────────────────────────────────────
+import { DocumentVaultPage, CredentialPage } from '@/features/documents'
+
+const documentsRoute = createRoute({
+  getParentRoute: () => protectedRoute,
+  path: '/documents',
+  component: DocumentVaultPage,
+})
+
+const credentialsRoute = createRoute({
+  getParentRoute: () => protectedRoute,
+  path: '/credentials',
+  component: CredentialPage,
+})
+
 // ── Router Tree ───────────────────────────────────────────────
 const routeTree = rootRoute.addChildren([
   loginRoute,
@@ -184,6 +220,11 @@ const routeTree = rootRoute.addChildren([
     financeRevenueRoute,
     financeExpensesRoute,
     financeFoundersRoute,
+    knowledgeRoute,
+    knowledgeNewRoute,
+    knowledgeEditRoute,
+    documentsRoute,
+    credentialsRoute,
   ]),
 ])
 

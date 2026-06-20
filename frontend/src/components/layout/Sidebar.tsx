@@ -10,6 +10,9 @@ import {
   Zap,
   Briefcase,
   Target,
+  BookOpen,
+  FileBox,
+  Key,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
@@ -25,6 +28,9 @@ const NAV_ITEMS: NavItem[] = [
   { to: '/leads', label: 'Leads', icon: Target },
   { to: '/crm', label: 'CRM', icon: Building2 },
   { to: '/clients', label: 'Clients', icon: Briefcase },
+  { to: '/knowledge', label: 'Knowledge OS', icon: BookOpen },
+  { to: '/documents', label: 'Document Vault', icon: FileBox },
+  { to: '/credentials', label: 'Credentials', icon: Key },
   { to: '/users', label: 'Users', icon: Users },
 ]
 
