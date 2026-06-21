@@ -43,9 +43,12 @@ export function DiscoveryRunsPage() {
               onChange={(e) => setSource(e.target.value)}
               className="w-full border rounded p-2"
             >
-              <option value="google_maps">Google Maps</option>
-              <option value="google_search">Google Search</option>
-              <option value="reddit">Reddit</option>
+              <option value="google_maps">🗺 Google Maps</option>
+              <option value="google_search">🔍 Google Search</option>
+              <option value="justdial">📞 JustDial</option>
+              <option value="indiamart">🏭 IndiaMart</option>
+              <option value="clutch">⭐ Clutch</option>
+              <option value="reddit">💬 Reddit</option>
             </select>
           </div>
           <div className="flex-1">

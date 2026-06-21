@@ -124,6 +124,8 @@ const leadAnalysisRoute = createRoute({
 import { DiscoveryRunsPage } from '@/features/discovery/pages/DiscoveryRunsPage'
 import { DiscoveryRunDetailPage } from '@/features/discovery/pages/DiscoveryRunDetailPage'
 import { RawBusinessesPage } from '@/features/discovery/pages/RawBusinessesPage'
+import { BulkDiscoveryPage } from '@/features/discovery/pages/BulkDiscoveryPage'
+import { DiscoveryMetricsPage } from '@/features/discovery/pages/DiscoveryMetricsPage'
 
 const discoveryRunsRoute = createRoute({
   getParentRoute: () => protectedRoute,
@@ -141,6 +143,18 @@ const discoveryBusinessesRoute = createRoute({
   getParentRoute: () => protectedRoute,
   path: '/discovery/businesses',
   component: RawBusinessesPage,
+})
+
+const discoveryBulkRoute = createRoute({
+  getParentRoute: () => protectedRoute,
+  path: '/discovery/bulk',
+  component: BulkDiscoveryPage,
+})
+
+const discoveryMetricsRoute = createRoute({
+  getParentRoute: () => protectedRoute,
+  path: '/discovery/metrics',
+  component: DiscoveryMetricsPage,
 })
 
 // ── Analysis Routes ───────────────────────────────────────────
@@ -342,6 +356,8 @@ const routeTree = rootRoute.addChildren([
     discoveryRunsRoute,
     discoveryRunDetailRoute,
     discoveryBusinessesRoute,
+    discoveryBulkRoute,
+    discoveryMetricsRoute,
     analysisListRoute,
     analysisDetailRoute,
     qualificationListRoute,
