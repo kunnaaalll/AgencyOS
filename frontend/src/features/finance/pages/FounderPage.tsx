@@ -26,7 +26,7 @@ export function FounderPage() {
   if (isLoading) return <div className="p-8">Loading founders...</div>
 
   const formatCurrency = (val: number) => 
-    new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(val || 0)
+    new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR' }).format(val || 0)
 
   return (
     <div className="space-y-6">

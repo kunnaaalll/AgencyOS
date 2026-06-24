@@ -24,6 +24,7 @@ class AIQualificationCreate(AIQualificationBase):
 class AIQualificationResponse(AIQualificationBase):
     id: str
     created_at: datetime
+    business_name: str | None = None
 
     model_config = ConfigDict(from_attributes=True)
 

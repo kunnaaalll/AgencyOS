@@ -42,9 +42,9 @@ export function RawBusinessesPage() {
           <tbody>
             {isLoading ? (
               <tr><td colSpan={8} className="p-4 text-center">Loading...</td></tr>
-            ) : businesses?.length === 0 ? (
+            ) : businesses?.items?.length === 0 ? (
               <tr><td colSpan={8} className="p-4 text-center">No businesses discovered yet.</td></tr>
-            ) : businesses?.map(business => (
+            ) : businesses?.items?.map((business: any) => (
               <tr key={business.id} className="border-b hover:bg-gray-50">
                 <td className="p-4 font-medium">{business.business_name}</td>
                 <td className="p-4 capitalize">{business.industry || '-'}</td>

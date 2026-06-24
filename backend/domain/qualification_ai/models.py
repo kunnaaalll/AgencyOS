@@ -1,8 +1,9 @@
 from datetime import datetime
+import uuid
 from uuid import uuid4
 
 from sqlalchemy import Column, DateTime, Float, ForeignKey, Integer, String, Enum as SQLEnum, JSON, Text
-from sqlalchemy.orm import relationship
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from core.database import Base
 from domain.qualification_ai.enums import Priority, QualificationStatus
@@ -10,10 +11,8 @@ from domain.qualification_ai.enums import Priority, QualificationStatus
 
 class AIQualification(Base):
     __tablename__ = "ai_qualifications"
-
-    id = Column(String(36), primary_key=True, default=lambda: str(uuid4()))
-    lead_id = Column(String(36), ForeignKey("leads.id", ondelete="CASCADE"), nullable=False, index=True)
-    website_analysis_id = Column(String(36), ForeignKey("website_analyses.id", ondelete="SET NULL"), nullable=True)
+    lead_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("leads.id", ondelete="CASCADE"), nullable=False, index=True)
+    website_analysis_id: Mapped[uuid.UUID | None] = mapped_column(ForeignKey("website_analyses.id", ondelete="SET NULL"), nullable=True)
     
     priority = Column(SQLEnum(Priority), nullable=False, default=Priority.MEDIUM)
     opportunity_score = Column(Integer, nullable=False, default=0)
@@ -31,3 +30,7 @@ class AIQualification(Base):
     lead = relationship("Lead", backref="ai_qualifications")
     # Assuming WebsiteAnalysis model uses website_analyses table and is imported in a way that relationship string works
     website_analysis = relationship("WebsiteAnalysis", backref="ai_qualifications")
+
+    @property
+    def business_name(self) -> str | None:
+        return self.lead.business_name if getattr(self, "lead", None) else None

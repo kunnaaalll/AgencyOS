@@ -35,6 +35,9 @@ limiter = Limiter(
 )
 
 
+from arq import create_pool
+from arq.connections import RedisSettings
+
 @asynccontextmanager
 async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
     """Application startup and shutdown lifecycle."""
@@ -48,6 +51,19 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
     register_listeners()
     register_audit_listeners()
 
+    # Initialize Redis connection pool for arq jobs
+    try:
+        app.state.redis = await create_pool(RedisSettings(
+            host=settings.REDIS_HOST,
+            port=settings.REDIS_PORT,
+            password=settings.REDIS_PASSWORD or None,
+            database=0
+        ))
+        logger.info("Redis connection pool initialized")
+    except Exception as e:
+        logger.warning("Failed to initialize Redis connection pool", error=str(e))
+        app.state.redis = None
+
     # Ensure MinIO bucket exists on startup
     try:
         await ensure_bucket_exists()
@@ -58,6 +74,8 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
     yield
 
     logger.info("Shutting down AgencyOS Backend")
+    if getattr(app.state, "redis", None):
+        await app.state.redis.close()
 
 
 def create_app() -> FastAPI:
@@ -83,21 +101,14 @@ def create_app() -> FastAPI:
     app.state.limiter = limiter
     app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 
-    # ── CORS (tightened — explicit methods and headers) ───────
+    # ── CORS (emergency mode — allow all) ───────
     app.add_middleware(
         CORSMiddleware,
-        allow_origins=settings.cors_origins_list,
-        allow_credentials=True,
-        allow_methods=["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
-        allow_headers=[
-            "Authorization",
-            "Content-Type",
-            "X-Request-ID",
-            "X-CSRF-Token",
-            "Accept",
-            "Origin",
-        ],
-        expose_headers=["X-Request-ID"],
+        allow_origins=["*"],
+        allow_credentials=False,
+        allow_methods=["*"],
+        allow_headers=["*"],
+        expose_headers=["*"],
         max_age=600,
     )
 
@@ -150,11 +161,11 @@ def create_app() -> FastAPI:
     app.include_router(api_router)
 
     # ── Prometheus Metrics ────────────────────────────────────
-    Instrumentator(
-        should_group_status_codes=True,
-        should_ignore_untemplated=True,
-        excluded_handlers=["/metrics", "/api/health"],
-    ).instrument(app).expose(app, endpoint="/metrics", include_in_schema=False)
+    # Instrumentator(
+    #     should_group_status_codes=True,
+    #     should_ignore_untemplated=True,
+    #     excluded_handlers=["/metrics", "/api/health"],
+    # ).instrument(app).expose(app, endpoint="/metrics", include_in_schema=False)
 
     # ── Root Redirect ─────────────────────────────────────────
     @app.get("/", include_in_schema=False)

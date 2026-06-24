@@ -30,6 +30,7 @@ class OutreachDraftResponse(OutreachDraftBase):
     id: str
     created_at: datetime
     updated_at: datetime
+    business_name: str | None = None
 
     model_config = ConfigDict(from_attributes=True)
 

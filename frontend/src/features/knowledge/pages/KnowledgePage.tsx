@@ -4,14 +4,16 @@ import { Link } from '@tanstack/react-router';
 import { Plus, Search, BookOpen, Clock, Tag } from 'lucide-react';
 import { KnowledgeAPI } from '../api';
 import { KnowledgeArticle } from '../types';
+import { useDemoQuery } from '@/lib/useDemoQuery';
+import { mockKnowledgeArticles } from '@/mocks';
 
 export function KnowledgePage() {
   const [searchTerm, setSearchTerm] = useState('');
   
-  const { data: articles = [], isLoading } = useQuery({
+  const { data: articles = [], isLoading } = useDemoQuery({
     queryKey: ['knowledge_articles'],
     queryFn: KnowledgeAPI.getArticles,
-  });
+  }, mockKnowledgeArticles);
 
   const filteredArticles = articles.filter(article => 
     article.title.toLowerCase().includes(searchTerm.toLowerCase())

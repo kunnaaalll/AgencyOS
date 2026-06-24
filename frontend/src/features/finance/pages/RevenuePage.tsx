@@ -19,19 +19,19 @@ export function RevenuePage() {
   if (isLoading) return <div className="p-8">Loading revenue records...</div>
 
   const formatCurrency = (val: number) => 
-    new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(val || 0)
+    new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR' }).format(val || 0)
 
   return (
-    <div className="space-y-6">
+    <div className="max-w-[1400px] mx-auto px-6 pb-24 space-y-10 mt-8">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Revenue</h1>
-          <p className="text-muted-foreground mt-1">Track all incoming client payments and invoices.</p>
+          <h1 className="text-claude-display-lg text-ink">Revenue</h1>
+          <p className="text-muted text-claude-body-md mt-2">Track all incoming client payments and invoices.</p>
         </div>
-        <Button>Record Revenue</Button>
+        <Button className="rounded-md bg-primary text-primary-foreground hover:bg-primary-active">Record Revenue</Button>
       </div>
 
-      <Card>
+      <Card className="bg-surface-card border-border rounded-xl shadow-sm">
         <Table>
           <TableHeader>
             <TableRow>

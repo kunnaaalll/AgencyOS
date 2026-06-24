@@ -2,12 +2,14 @@ import React from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { outreachApi } from '../api/outreachApi';
 import { Link } from '@tanstack/react-router';
+import { useDemoQuery } from '@/lib/useDemoQuery';
+import { mockOutreachDrafts } from '@/mocks';
 
 export const OutreachListPage: React.FC = () => {
-  const { data: drafts, isLoading, error } = useQuery({
+  const { data: drafts, isLoading, error } = useDemoQuery({
     queryKey: ['outreach_drafts'],
     queryFn: outreachApi.getDrafts,
-  });
+  }, mockOutreachDrafts);
 
   if (isLoading) return <div className="p-8">Loading outreach drafts...</div>;
   if (error) return <div className="p-8 text-red-500">Failed to load outreach drafts.</div>;
@@ -22,10 +24,9 @@ export const OutreachListPage: React.FC = () => {
         <table className="min-w-full divide-y divide-gray-200">
           <thead className="bg-gray-50">
             <tr>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Lead ID</th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Business Name</th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Channel</th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Model Used</th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Created</th>
               <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
             </tr>
@@ -34,7 +35,7 @@ export const OutreachListPage: React.FC = () => {
             {drafts?.map((d) => (
               <tr key={d.id}>
                 <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                  {d.lead_id}
+                  {d.business_name || d.lead_id}
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                   {d.channel}
@@ -48,9 +49,6 @@ export const OutreachListPage: React.FC = () => {
                   }`}>
                     {d.status}
                   </span>
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                  {d.model_used || '-'}
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                   {new Date(d.created_at).toLocaleDateString()}

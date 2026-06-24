@@ -22,7 +22,7 @@ from sqlalchemy.dialects import postgresql
 
 def upgrade() -> None:
     # Drop old table if exists
-    op.drop_table('discovery_jobs', checkfirst=True)
+    op.drop_table('discovery_jobs', )
     
     # Create new tables
     op.create_table('discovery_runs',

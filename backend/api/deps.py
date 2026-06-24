@@ -44,7 +44,8 @@ async def get_current_user(
     if payload.jti and await is_token_revoked(payload.jti):
         raise InvalidTokenException("Token has been revoked")
 
-    result = await db.execute(select(User).where(User.id == payload.sub))
+    from sqlalchemy.orm import selectinload
+    result = await db.execute(select(User).options(selectinload(User.role)).where(User.id == payload.sub))
     user = result.scalar_one_or_none()
 
     if not user:

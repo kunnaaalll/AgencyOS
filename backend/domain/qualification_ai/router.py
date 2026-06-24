@@ -45,6 +45,8 @@ async def run_qualification(
     return {"message": "AI qualification job enqueued successfully"}
 
 
+from sqlalchemy.orm import joinedload
+
 @router.get("/{lead_id}", response_model=AIQualificationResponse)
 async def get_qualification(
     lead_id: str,
@@ -53,7 +55,10 @@ async def get_qualification(
 ) -> Any:
     """Get AI qualification results for a specific lead."""
     result = await db.execute(
-        select(AIQualification).where(AIQualification.lead_id == lead_id).order_by(AIQualification.created_at.desc())
+        select(AIQualification)
+        .options(joinedload(AIQualification.lead))
+        .where(AIQualification.lead_id == lead_id)
+        .order_by(AIQualification.created_at.desc())
     )
     qualification = result.scalars().first()
     
@@ -69,5 +74,9 @@ async def list_qualifications(
     _ = Depends(require_permission("qualification:read"))
 ) -> Any:
     """List all AI qualifications."""
-    result = await db.execute(select(AIQualification).order_by(AIQualification.created_at.desc()))
+    result = await db.execute(
+        select(AIQualification)
+        .options(joinedload(AIQualification.lead))
+        .order_by(AIQualification.created_at.desc())
+    )
     return result.scalars().all()

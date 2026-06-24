@@ -4,32 +4,32 @@ import { KnowledgeArticle, KnowledgeCategory } from '../types';
 export const KnowledgeAPI = {
   // Articles
   getArticles: async (): Promise<KnowledgeArticle[]> => {
-    const { data } = await api.get('/api/v1/knowledge/articles');
+    const { data } = await api.get('/v1/knowledge/articles');
     return data;
   },
   getArticle: async (id: string): Promise<KnowledgeArticle> => {
-    const { data } = await api.get(`/api/v1/knowledge/articles/${id}`);
+    const { data } = await api.get(`/v1/knowledge/articles/${id}`);
     return data;
   },
   createArticle: async (article: Partial<KnowledgeArticle>): Promise<KnowledgeArticle> => {
-    const { data } = await api.post('/api/v1/knowledge/articles', article);
+    const { data } = await api.post('/v1/knowledge/articles', article);
     return data;
   },
   updateArticle: async (id: string, article: Partial<KnowledgeArticle>): Promise<KnowledgeArticle> => {
-    const { data } = await api.patch(`/api/v1/knowledge/articles/${id}`, article);
+    const { data } = await api.patch(`/v1/knowledge/articles/${id}`, article);
     return data;
   },
   deleteArticle: async (id: string): Promise<void> => {
-    await api.delete(`/api/v1/knowledge/articles/${id}`);
+    await api.delete(`/v1/knowledge/articles/${id}`);
   },
 
   // Categories
   getCategories: async (): Promise<KnowledgeCategory[]> => {
-    const { data } = await api.get('/api/v1/knowledge/categories');
+    const { data } = await api.get('/v1/knowledge/categories');
     return data;
   },
   createCategory: async (category: Partial<KnowledgeCategory>): Promise<KnowledgeCategory> => {
-    const { data } = await api.post('/api/v1/knowledge/categories', category);
+    const { data } = await api.post('/v1/knowledge/categories', category);
     return data;
   },
 };

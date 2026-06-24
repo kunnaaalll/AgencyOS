@@ -1,0 +1,1 @@
+export const mockAnalyticsData = { traffic: 15000, conversions: 450, bounceRate: 42 };

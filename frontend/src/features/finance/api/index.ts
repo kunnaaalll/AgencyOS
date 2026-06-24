@@ -1,4 +1,4 @@
-import { api } from '@/lib/api'
+import api from '@/lib/api'
 import type { 
   Revenue, Expense, Founder, Distribution, FinanceSummary, Forecast 
 } from '../types'

@@ -146,7 +146,7 @@ class GoogleMapsSource(BaseDiscoverySource):
             review_el = soup.select_one("div.F7nice span[aria-label*='review']")
             review_count = None
             if review_el:
-                text = review_el.get_attribute("aria-label") or review_el.get_text()
+                text = review_el.get("aria-label") or review_el.get_text()
                 match = re.search(r"[\d,]+", text)
                 if match:
                     try:

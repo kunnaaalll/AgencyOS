@@ -182,7 +182,7 @@ export function DiscoveryMetricsPage() {
       </div>
 
       {/* Rate Metrics */}
-      <div className="grid grid-cols-3 gap-4 mb-8">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
         {[
           { label: 'Validation Rate', value: m?.validation_success_rate ?? 0, color: 'emerald', icon: '✅' },
           { label: 'Duplicate Rate', value: m?.duplicate_rate ?? 0, color: 'amber', icon: '🔁' },

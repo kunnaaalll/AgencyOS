@@ -1,7 +1,7 @@
 import logging
 from uuid import UUID
 
-from core.database import AsyncSessionLocal
+from core.database import AsyncSessionFactory
 from domain.analysis.events import WebsiteAnalyzedEvent
 from domain.analysis.models import WebsiteAnalysis
 from events.bus import EventBus
@@ -15,7 +15,7 @@ async def analyze_website_job(ctx: dict, lead_id: str, website_url: str) -> None
 
     try:
         lead_uuid = UUID(lead_id)
-        async with AsyncSessionLocal() as session:
+        async with AsyncSessionFactory() as session:
             service = WebsiteAnalysisService(session)
             
             # Run analysis

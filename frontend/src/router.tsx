@@ -21,8 +21,8 @@ import { AppLayout } from '@/components/layout/AppLayout'
 
 // ── Auth Guard ────────────────────────────────────────────────
 function requireAuth() {
-  const isAuthenticated = authStore.state.isAuthenticated
-  if (!isAuthenticated) {
+  const state = authStore.state
+  if (!state.isAuthenticated) {
     throw redirect({ to: '/login' })
   }
 }
@@ -85,12 +85,6 @@ const financeAnalyticsRoute = createRoute({
   component: FinanceAnalyticsPage,
 })
 
-const deliveryAnalyticsRoute = createRoute({
-  getParentRoute: () => protectedRoute,
-  path: '/analytics/delivery',
-  component: DeliveryAnalyticsPage,
-})
-
 const usersRoute = createRoute({
   getParentRoute: () => protectedRoute,
   path: '/users',
@@ -101,11 +95,32 @@ const usersRoute = createRoute({
 import { LeadsListPage } from '@/features/leads/pages/LeadsListPage'
 import { LeadDetailPage } from '@/features/leads/pages/LeadDetailPage'
 import { LeadAnalysisPage } from '@/features/leads/pages/LeadAnalysisPage'
+import { HotLeadsPage } from '@/features/portal/HotLeadsPage'
+import { MyLeadsPage } from '@/features/portal/MyLeadsPage'
+import { OperationsPage } from '@/features/operations/OperationsPage'
+
+const operationsRoute = createRoute({
+  getParentRoute: () => protectedRoute,
+  path: '/operations',
+  component: OperationsPage,
+})
 
 const leadsRoute = createRoute({
   getParentRoute: () => protectedRoute,
   path: '/leads',
   component: LeadsListPage,
+})
+
+const hotLeadsRoute = createRoute({
+  getParentRoute: () => protectedRoute,
+  path: '/leads/hot',
+  component: HotLeadsPage,
+})
+
+const myLeadsRoute = createRoute({
+  getParentRoute: () => protectedRoute,
+  path: '/leads/my',
+  component: MyLeadsPage,
 })
 
 const leadDetailRoute = createRoute({
@@ -339,18 +354,29 @@ const backupsRoute = createRoute({
   component: BackupPage,
 })
 
+// ── Profile Route ─────────────────────────────────────────────
+import { MyProfilePage } from '@/features/profile/pages/MyProfilePage'
+
+const myProfileRoute = createRoute({
+  getParentRoute: () => protectedRoute,
+  path: '/profile',
+  component: MyProfilePage,
+})
+
 // ── Router Tree ───────────────────────────────────────────────
 const routeTree = rootRoute.addChildren([
   loginRoute,
   protectedRoute.addChildren([
     indexRoute,
     dashboardRoute,
+    operationsRoute,
     growthAnalyticsRoute,
     salesAnalyticsRoute,
     financeAnalyticsRoute,
-    deliveryAnalyticsRoute,
     usersRoute,
     leadsRoute,
+    hotLeadsRoute,
+    myLeadsRoute,
     leadDetailRoute,
     leadAnalysisRoute,
     discoveryRunsRoute,
@@ -383,6 +409,7 @@ const routeTree = rootRoute.addChildren([
     auditLogRoute,
     notificationsRoute,
     backupsRoute,
+    myProfileRoute,
   ]),
 ])
 

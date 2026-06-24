@@ -9,10 +9,9 @@ from domain.outreach.models import OutreachDraft
 from domain.outreach.enums import OutreachChannel, DraftStatus
 from domain.outreach.schemas import AIOutreachOutputSchema
 from domain.monitoring.models import TokenUsageLog
-from core.events import EventBus
+from events.bus import EventBus
+from core.config import settings
 
-# Fallback sequence as per plan
-MODELS = ["gemini/gemini-pro", "groq/llama3-70b-8192", "openrouter/auto"]
 
 class OutreachGenerationService:
     def __init__(self, db: AsyncSession):
@@ -34,31 +33,23 @@ class OutreachGenerationService:
         
         prompt = self._build_prompt(lead, analysis, qualification, channel)
         
-        # Fallback sequence
-        response_content = None
-        model_used = None
+        model_used = "freellmapi/auto"
         usage = None
         
-        for model in MODELS:
-            try:
-                response = await acompletion(
-                    model=model,
-                    messages=[
-                        {"role": "system", "content": "You are an expert sales AI preparing outreach drafts. Output ONLY valid JSON matching the exact schema requested, with no markdown formatting or extra text."},
-                        {"role": "user", "content": prompt}
-                    ],
-                    response_format={"type": "json_object"}
-                )
-                response_content = response.choices[0].message.content
-                model_used = model
-                usage = response.usage
-                break
-            except Exception as e:
-                print(f"Model {model} failed: {str(e)}")
-                continue
-                
-        if not response_content:
-            raise Exception("All fallback AI models failed to generate outreach.")
+        try:
+            response = await acompletion(
+                model="openai/auto",
+                api_base=settings.FREELLM_API_BASE,
+                messages=[
+                    {"role": "system", "content": "You are an expert sales AI preparing outreach drafts. Output ONLY valid JSON matching the exact schema requested, with no markdown formatting or extra text."},
+                    {"role": "user", "content": prompt}
+                ],
+                response_format={"type": "json_object"}
+            )
+            response_content = response.choices[0].message.content
+            usage = response.usage
+        except Exception as e:
+            raise Exception(f"AI generation failed via FreeLLM API: {str(e)}")
             
         execution_time_ms = (time.time() - start_time) * 1000
         tokens_used = usage.total_tokens if usage else 0

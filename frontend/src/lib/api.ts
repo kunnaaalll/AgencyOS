@@ -21,13 +21,32 @@ api.interceptors.request.use((config) => {
   return config
 })
 
+import { DEMO_MODE } from '../config/demo'
+
+const toast = {
+  error: (msg: string) => console.warn(`[Toast] ${msg}`)
+}
+
 // ── Response Interceptor: Handle 401 / Token Refresh ─────────
 api.interceptors.response.use(
   (response) => response,
   async (error: AxiosError) => {
+    console.log('INTERCEPTOR ERROR:', error.response?.status, error.config?.url);
+    if (DEMO_MODE) {
+      console.error('API Error intercepted in Demo Mode:', error)
+      toast.error('Using demo data')
+      return Promise.resolve({ data: {} })
+    }
+
+    // Do not intercept 401 for login endpoint to allow the component to handle the error
+    const url = error.config?.url || '';
+    if (url.includes('/auth/login')) {
+      return Promise.reject(error)
+    }
+
     const originalRequest = error.config as typeof error.config & { _retry?: boolean }
 
-    if (error.response?.status === 401 && !originalRequest._retry) {
+    if (error.response?.status === 401 && originalRequest && !originalRequest._retry) {
       originalRequest._retry = true
       const refreshToken = localStorage.getItem('refresh_token')
 
@@ -47,12 +66,14 @@ api.interceptors.response.use(
           return api(originalRequest)
         } catch {
           // Refresh failed — clear auth and redirect to login
+          console.error('API INTERCEPTOR REDIRECTING TO LOGIN (Refresh Failed)')
           localStorage.removeItem('access_token')
           localStorage.removeItem('refresh_token')
-          window.location.href = '/login'
+          // window.location.href = '/login'
         }
       } else {
-        window.location.href = '/login'
+        console.error('API INTERCEPTOR REDIRECTING TO LOGIN (No Refresh Token)', error.config?.url)
+        // window.location.href = '/login'
       }
     }
 

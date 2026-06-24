@@ -1,11 +1,18 @@
 // AgencyOS V2 — Login Page
 
+import { useRef } from 'react'
 import { useForm } from 'react-hook-form'
+import { Hexagon } from 'lucide-react'
 import { useLogin } from './authApi'
 import type { LoginRequest } from '@/types'
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import gsap from 'gsap'
+import { useGSAP } from '@gsap/react'
 
 export function LoginPage() {
   const { mutate: login, isPending, error } = useLogin()
+  const containerRef = useRef<HTMLDivElement>(null)
 
   const {
     register,
@@ -14,111 +21,156 @@ export function LoginPage() {
   } = useForm<LoginRequest>()
 
   const onSubmit = (data: LoginRequest) => {
-    login(data)
+    console.log('Form submitting...', data);
+    login(data, {
+      onError: (err) => console.log('Login mutation error:', err),
+      onSuccess: () => console.log('Login mutation success')
+    })
   }
 
   const errorMessage =
     (error as { response?: { data?: { error?: { message?: string } } } })?.response?.data?.error
       ?.message ?? 'Login failed. Please check your credentials.'
 
-  return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-surface-900 via-surface-800 to-brand-950 relative overflow-hidden">
-      {/* Background orbs */}
-      <div className="absolute inset-0 pointer-events-none">
-        <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-brand-600/20 rounded-full blur-3xl animate-pulse-soft" />
-        <div className="absolute bottom-1/4 right-1/4 w-64 h-64 bg-brand-400/10 rounded-full blur-3xl animate-pulse-soft" style={{ animationDelay: '1s' }} />
-      </div>
+  useGSAP(() => {
+    // Apple-like smooth staggered entrance
+    gsap.fromTo('.gsap-fade-up', 
+      { opacity: 0, y: 20 },
+      { opacity: 1, y: 0, duration: 0.8, stagger: 0.1, ease: "power3.out", delay: 0.1 }
+    )
+    
+    // Floating logo animation
+    gsap.to('.gsap-float', {
+      y: -5,
+      duration: 3,
+      repeat: -1,
+      yoyo: true,
+      ease: "sine.inOut"
+    })
+  }, { scope: containerRef })
 
-      {/* Login Card */}
-      <div className="relative w-full max-w-md mx-4 animate-fade-in">
-        {/* Logo */}
-        <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-brand-600 mb-4 shadow-lg shadow-brand-600/30">
-            <svg className="w-9 h-9 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
-                d="M13 10V3L4 14h7v7l9-11h-7z" />
-            </svg>
+  return (
+    <div ref={containerRef} className="min-h-screen flex items-center justify-center bg-[var(--color-canvas)] relative overflow-hidden">
+      
+      {/* Login Card Container */}
+      <div className="relative w-full max-w-[420px] mx-4 perspective-1000">
+        
+        {/* Logo Section */}
+        <div className="text-center mb-10 gsap-fade-up flex flex-col items-center">
+          <div className="inline-flex items-center justify-center w-[80px] h-[80px] rounded-2xl bg-[var(--color-surface-card)] border border-[var(--color-hairline)] mb-6 shadow-sm gsap-float overflow-hidden">
+            <img src="/logo.png" alt="AgencyOS Logo" className="w-full h-full object-cover mix-blend-multiply dark:mix-blend-normal" />
           </div>
-          <h1 className="text-3xl font-bold text-white tracking-tight">AgencyOS</h1>
-          <p className="text-surface-400 mt-1 text-sm">Sign in to your workspace</p>
+          <h1 className="text-claude-display-lg text-[var(--color-ink)] mb-2">AgencyOS</h1>
+          <p className="text-claude-body-md text-[var(--color-muted)]">Sign in to your workspace.</p>
         </div>
 
         {/* Card */}
-        <div className="glass rounded-2xl p-8 shadow-2xl">
-          <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
+        <div className="bg-[var(--color-surface-card)] rounded-2xl p-8 shadow-sm border border-[var(--color-hairline)] gsap-fade-up">
+          <form onSubmit={(e) => { e.preventDefault(); void handleSubmit(onSubmit)(e); }} className="space-y-6">
             {/* Email */}
-            <div>
-              <label className="block text-sm font-medium text-surface-700 mb-1.5">
+            <div className="space-y-2">
+              <label className="block text-claude-body-sm font-semibold text-[var(--color-ink)] tracking-wide uppercase">
                 Email address
               </label>
-              <input
+              <Input
                 id="email"
                 type="email"
                 autoComplete="email"
                 placeholder="you@agency.com"
-                className="w-full px-4 py-3 rounded-xl border border-surface-200 bg-white/70 text-surface-900 placeholder:text-surface-400 focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent transition-all"
                 {...register('email', {
                   required: 'Email is required',
                   pattern: { value: /\S+@\S+\.\S+/, message: 'Invalid email' },
                 })}
               />
               {errors.email && (
-                <p className="mt-1 text-xs text-red-500">{errors.email.message}</p>
+                <p className="text-claude-body-sm text-[var(--color-error)]">{errors.email.message}</p>
               )}
             </div>
 
             {/* Password */}
-            <div>
-              <label className="block text-sm font-medium text-surface-700 mb-1.5">
+            <div className="space-y-2">
+              <label className="block text-claude-body-sm font-semibold text-[var(--color-ink)] tracking-wide uppercase">
                 Password
               </label>
-              <input
+              <Input
                 id="password"
                 type="password"
                 autoComplete="current-password"
                 placeholder="••••••••"
-                className="w-full px-4 py-3 rounded-xl border border-surface-200 bg-white/70 text-surface-900 placeholder:text-surface-400 focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent transition-all"
                 {...register('password', {
                   required: 'Password is required',
                   minLength: { value: 8, message: 'Password must be at least 8 characters' },
                 })}
               />
               {errors.password && (
-                <p className="mt-1 text-xs text-red-500">{errors.password.message}</p>
+                <p className="text-claude-body-sm text-[var(--color-error)]">{errors.password.message}</p>
               )}
             </div>
 
             {/* API Error */}
             {error && (
-              <div className="px-4 py-3 rounded-xl bg-red-50 border border-red-200">
-                <p className="text-sm text-red-600">{errorMessage}</p>
+              <div className="px-4 py-3 rounded-lg bg-[var(--color-error)]/10 border border-[var(--color-error)]/20">
+                <p className="text-claude-body-sm text-[var(--color-error)]">{errorMessage}</p>
               </div>
             )}
 
             {/* Submit */}
-            <button
-              id="login-submit"
-              type="submit"
-              disabled={isPending}
-              className="w-full py-3 px-6 rounded-xl font-semibold text-white bg-brand-600 hover:bg-brand-700 focus:outline-none focus:ring-2 focus:ring-brand-500 focus:ring-offset-2 disabled:opacity-60 disabled:cursor-not-allowed transition-all duration-200 shadow-md shadow-brand-600/30 hover:shadow-lg hover:shadow-brand-600/40 hover:-translate-y-0.5 active:translate-y-0"
-            >
-              {isPending ? (
-                <span className="flex items-center justify-center gap-2">
-                  <svg className="animate-spin h-4 w-4" fill="none" viewBox="0 0 24 24">
-                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
-                  </svg>
-                  Signing in...
-                </span>
-              ) : (
-                'Sign in'
-              )}
-            </button>
+            <div className="pt-2">
+              <Button
+                variant="primary"
+                size="lg"
+                type="submit"
+                disabled={isPending}
+                className="w-full font-semibold"
+              >
+                {isPending ? (
+                  <span className="flex items-center justify-center gap-2">
+                    <svg className="animate-spin h-5 w-5" fill="none" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                    </svg>
+                    Signing in...
+                  </span>
+                ) : (
+                  'Sign In'
+                )}
+              </Button>
+            </div>
           </form>
         </div>
 
+        {/* Mock Login Actions */}
+        <div className="mt-6 flex gap-4 gsap-fade-up">
+          <Button
+            variant="outline"
+            type="button"
+            className="w-full bg-white/50 border-white/40 hover:bg-white"
+            onClick={() => {
+              import('@/store/authStore').then(({ mockLogin }) => {
+                mockLogin('admin')
+                window.location.href = '/dashboard'
+              })
+            }}
+          >
+            Mock Admin
+          </Button>
+          <Button
+            variant="outline"
+            type="button"
+            className="w-full bg-white/50 border-white/40 hover:bg-white"
+            onClick={() => {
+              import('@/store/authStore').then(({ mockLogin }) => {
+                mockLogin('co-founder')
+                window.location.href = '/dashboard'
+              })
+            }}
+          >
+            Mock Co-Founder
+          </Button>
+        </div>
+
         {/* Footer */}
-        <p className="text-center text-surface-500 text-xs mt-6">
+        <p className="text-center text-[var(--color-muted)] text-claude-body-sm mt-8 gsap-fade-up">
           AgencyOS V2 · Core Platform
         </p>
       </div>

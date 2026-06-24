@@ -2,16 +2,18 @@ import React, { useState, useRef } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { UploadCloud, File, Download, Trash2, Search, FileText, FileImage, Shield } from 'lucide-react';
 import { DocumentsAPI } from '../api';
+import { useDemoQuery } from '@/lib/useDemoQuery';
+import { mockDocuments } from '@/mocks';
 
 export function DocumentVaultPage() {
   const [searchTerm, setSearchTerm] = useState('');
   const fileInputRef = useRef<HTMLInputElement>(null);
   const queryClient = useQueryClient();
 
-  const { data: documents = [], isLoading } = useQuery({
+  const { data: documents = [], isLoading } = useDemoQuery({
     queryKey: ['documents'],
     queryFn: DocumentsAPI.getDocuments,
-  });
+  }, mockDocuments);
 
   const uploadMutation = useMutation({
     mutationFn: (file: File) => {

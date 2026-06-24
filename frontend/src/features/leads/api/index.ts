@@ -48,21 +48,21 @@ export interface LeadAnalysis {
 }
 
 export const fetchLeads = async (): Promise<Lead[]> => {
-  const { data } = await api.get('/api/v1/leads')
+  const { data } = await api.get('/v1/leads')
   return data
 }
 
 export const fetchLeadStats = async (): Promise<LeadStats> => {
-  const { data } = await api.get('/api/v1/leads/stats')
+  const { data } = await api.get('/v1/leads/stats')
   return data
 }
 
 export const fetchLeadById = async (id: string): Promise<Lead> => {
-  const { data } = await api.get(`/api/v1/leads/${id}`)
+  const { data } = await api.get(`/v1/leads/${id}`)
   return data
 }
 
 export const fetchLeadAnalysisById = async (leadId: string): Promise<LeadAnalysis> => {
-  const { data } = await api.get(`/api/v1/analysis/${leadId}`)
+  const { data } = await api.get(`/analysis/${leadId}`)
   return data
 }

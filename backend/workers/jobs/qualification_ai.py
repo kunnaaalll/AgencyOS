@@ -3,7 +3,7 @@ from arq.connections import ArqRedis
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 
-from core.database import async_session_maker
+from core.database import AsyncSessionFactory
 from domain.lead.models import Lead
 from domain.analysis.models import WebsiteAnalysis
 from services.qualification_ai.service import AIQualificationService
@@ -13,7 +13,7 @@ logger = structlog.get_logger()
 async def qualify_lead_job(ctx: dict, lead_id: str) -> dict:
     logger.info(f"Starting AI Qualification job for lead_id={lead_id}")
     
-    async with async_session_maker() as db:
+    async with AsyncSessionFactory() as db:
         try:
             # Get the lead
             result = await db.execute(select(Lead).where(Lead.id == lead_id))

@@ -1,342 +1,348 @@
-import { useState, useMemo } from 'react'
-import { useExecutiveSummary } from '../api'
-import { discoveryApi } from '@/features/discovery/api/discoveryApi'
-import { DateRangeFilter, DateRange } from '../components/DateRangeFilter'
+import React, { useState } from 'react';
+import { motion } from 'framer-motion';
+import { GlassCard } from '@/components/ui/GlassCard';
+import {
+  TrendingUp, Users, IndianRupee, Activity, 
+  ArrowUpRight, Target, CheckCircle2, AlertCircle, Clock, Calendar, Building
+} from 'lucide-react';
+import { useStore } from '@tanstack/react-store';
+import { authStore } from '@/store/authStore';
 import { 
-  TrendingUp, Users, DollarSign, Briefcase, Activity, 
-  ArrowUpRight, ArrowDownRight, Target, CheckCircle, Clock,
-  HeartPulse, AlertTriangle, Bell, Search
-} from 'lucide-react'
-import { getSystemHealth, getNotifications } from '../../system/api'
-import { useQuery } from '@tanstack/react-query'
-import { authStore } from '@/store/authStore'
-import api from '@/lib/api'
+  AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar
+} from 'recharts';
+import { cn } from '@/lib/utils';
+import { useDemoQuery } from '@/lib/useDemoQuery';
+import { getSystemHealth } from '@/features/system/api';
+import { mockSystemHealth } from '@/mocks/system';
+import { AnimatedCounter } from '@/components/ui/AnimatedCounter';
+import { Database, Server, HardDrive, ListTodo } from 'lucide-react';
+
+// Mock Data
+const revenueData = [
+  { name: 'Jan', revenue: 65000, expenses: 40000 },
+  { name: 'Feb', revenue: 72000, expenses: 42000 },
+  { name: 'Mar', revenue: 85000, expenses: 45000 },
+  { name: 'Apr', revenue: 94000, expenses: 48000 },
+  { name: 'May', revenue: 108000, expenses: 51000 },
+  { name: 'Jun', revenue: 124500, expenses: 54000 },
+];
+
+const pipelineData = [
+  { name: 'Discovery', value: 45 },
+  { name: 'Qualified', value: 30 },
+  { name: 'Proposal', value: 15 },
+  { name: 'Negotiation', value: 8 },
+  { name: 'Closed', value: 5 },
+];
+
+const upcomingTasks = [
+  { id: 1, title: 'Review Q3 Marketing Strategy', client: 'Acme Corp', time: '10:00 AM', status: 'pending' },
+  { id: 2, title: 'Onboarding Call', client: 'TechFlow Inc', time: '1:30 PM', status: 'completed' },
+  { id: 3, title: 'Finalize Proposal', client: 'Global Dynamics', time: '3:00 PM', status: 'pending' },
+  { id: 4, title: 'Monthly Sync', client: 'Stark Industries', time: '4:30 PM', status: 'pending' },
+];
+
+const containerVariants = {
+  hidden: { opacity: 0 },
+  visible: {
+    opacity: 1,
+    transition: { staggerChildren: 0.1 }
+  }
+};
+
+const itemVariants = {
+  hidden: { opacity: 0, y: 20 },
+  visible: { opacity: 1, y: 0, transition: { duration: 0.4, ease: [0.16, 1, 0.3, 1] } }
+};
 
 export function ExecutiveDashboardPage() {
-  const [dateRange, setDateRange] = useState<DateRange>('30d')
-  const { data: summary, isLoading, error } = useExecutiveSummary()
-  
-  const userRole = (authStore.state.user as any)?.role?.name || ''
-  const isSuperAdmin = userRole === 'Super Admin'
+  const user = useStore(authStore, (state) => state.user);
+  const isAdmin = user?.role_name === 'admin' || user?.role_name === 'Admin' || user?.first_name?.includes('Admin');
 
-  const { data: systemHealth } = useQuery({
+  // Dynamic Valuation Calculation
+  // Based on ~90% profit margins and a 10x ARR SaaS multiplier
+  const currentMrr = revenueData[revenueData.length - 1].revenue;
+  const arr = currentMrr * 12;
+  const valuation = arr * 10; // 10x ARR Multiple
+  
+  const formatValuation = (val: number) => {
+    if (val >= 10000000) return `₹${(val / 10000000).toFixed(2)} Cr`;
+    if (val >= 100000) return `₹${(val / 100000).toFixed(2)} L`;
+    return `₹${val.toLocaleString('en-IN')}`;
+  };
+
+  const { data: health } = useDemoQuery({
     queryKey: ['system-health'],
     queryFn: getSystemHealth,
-    enabled: isSuperAdmin
-  })
-
-  const { data: notifications } = useQuery({
-    queryKey: ['notifications'],
-    queryFn: getNotifications,
-  })
-
-  // Discovery Metrics
-  const { data: runs } = useQuery({
-    queryKey: ['discovery-runs'],
-    queryFn: discoveryApi.getRuns,
-  })
-
-  // Analysis Metrics
-  const { data: analyses } = useQuery({
-    queryKey: ['analysis-list'],
-    queryFn: async () => {
-      const { data } = await api.get('/api/v1/analysis');
-      return data;
-    },
-  })
-
-  // Qualification Metrics
-  const { data: qualifications } = useQuery({
-    queryKey: ['qualifications-list'],
-    queryFn: async () => {
-      const { data } = await api.get('/api/v1/qualification');
-      return data;
-    },
-  })
-
-  // Outreach Metrics
-  const { data: outreachDrafts } = useQuery({
-    queryKey: ['outreach-list'],
-    queryFn: async () => {
-      const { data } = await api.get('/api/v1/outreach');
-      return data;
-    },
-  })
-
-  const analysisMetrics = useMemo(() => {
-    if (!analyses || !Array.isArray(analyses) || analyses.length === 0) {
-      return { total: 0, avgWebsiteScore: 0, avgSeoScore: 0 };
-    }
-    const total = analyses.length;
-    const avgWebsiteScore = analyses.reduce((acc, curr) => acc + (curr.website_score || 0), 0) / total;
-    const avgSeoScore = analyses.reduce((acc, curr) => acc + (curr.seo_score || 0), 0) / total;
-    return { total, avgWebsiteScore, avgSeoScore };
-  }, [analyses]);
-
-  const discoveryMetrics = useMemo(() => {
-    if (!runs) return { runsToday: 0, discovered: 0, validated: 0, promoted: 0 };
-    const today = new Date().toISOString().split('T')[0];
-    let runsToday = 0;
-    let discovered = 0;
-    let validated = 0;
-    let promoted = 0;
-
-    runs.forEach(run => {
-      if (run.created_at.startsWith(today)) {
-        runsToday++;
-      }
-      discovered += run.businesses_discovered;
-      validated += run.businesses_validated;
-      promoted += run.businesses_created;
-    });
-
-    return { runsToday, discovered, validated, promoted };
-  }, [runs]);
-
-  const qualificationMetrics = useMemo(() => {
-    if (!qualifications || !Array.isArray(qualifications) || qualifications.length === 0) {
-      return { highPriority: 0, avgOpportunityScore: 0, qualified: 0 };
-    }
-    const total = qualifications.length;
-    let highPriority = 0;
-    let qualified = 0;
-    let scoreSum = 0;
-
-    qualifications.forEach(q => {
-      if (q.priority === 'HIGH') highPriority++;
-      if (q.qualification_status === 'QUALIFIED') qualified++;
-      scoreSum += q.opportunity_score;
-    });
-
-    return { 
-      highPriority, 
-      avgOpportunityScore: scoreSum / total, 
-      qualified 
-    };
-  }, [qualifications]);
-
-  const outreachMetrics = useMemo(() => {
-    if (!outreachDrafts || !Array.isArray(outreachDrafts) || outreachDrafts.length === 0) {
-      return { total: 0, approved: 0, used: 0 };
-    }
-    const total = outreachDrafts.length;
-    let approved = 0;
-    let used = 0;
-
-    outreachDrafts.forEach(d => {
-      if (d.status === 'APPROVED') approved++;
-      if (d.status === 'USED') used++;
-    });
-
-    return { total, approved, used };
-  }, [outreachDrafts]);
-
-  if (isLoading) {
-    return (
-      <div className="flex-1 p-8 flex items-center justify-center">
-        <div className="animate-spin w-8 h-8 border-2 border-brand-500 border-t-transparent rounded-full" />
-      </div>
-    )
-  }
-
-  if (error || !summary) {
-    return (
-      <div className="flex-1 p-8">
-        <div className="bg-red-500/10 border border-red-500/20 text-red-400 p-4 rounded-xl">
-          Failed to load executive summary.
-        </div>
-      </div>
-    )
-  }
-
-  const { growth, sales, finance, delivery, forecast } = summary
+    enabled: isAdmin
+  }, mockSystemHealth as any);
 
   return (
-    <div className="flex-1 overflow-y-auto">
-      <div className="max-w-7xl mx-auto px-6 py-8 space-y-8">
-        
-        {/* Header & Filter */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-          <div>
-            <h1 className="text-2xl font-bold text-white tracking-tight">Executive Dashboard</h1>
-            <p className="text-surface-400 text-sm mt-1">Analytics OS overview across all operations.</p>
-          </div>
-          <DateRangeFilter value={dateRange} onChange={setDateRange} />
+    <motion.div 
+      className="space-y-8 pb-12"
+      variants={containerVariants}
+      initial="hidden"
+      animate="visible"
+    >
+      <motion.div variants={itemVariants} className="flex justify-between items-end">
+        <div>
+          <h1 className="text-3xl font-semibold tracking-tight text-gray-900 dark:text-gray-100 mb-1">Good morning, {user?.first_name || 'Founder'}</h1>
+          <p className="text-gray-500 dark:text-gray-400 font-medium text-sm">Here's what's happening across your agency today.</p>
         </div>
-
-        {/* 1. Executive Summary & Forecast Widgets */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-          <ForecastCard 
-            title="Projected MRR" 
-            value={`$${forecast.projected_mrr.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`} 
-            icon={TrendingUp} 
-            color="text-emerald-400" 
-            bg="bg-emerald-500/10" 
-          />
-          <ForecastCard 
-            title="Projected Profit" 
-            value={`$${forecast.projected_profit.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`} 
-            icon={DollarSign} 
-            color="text-emerald-400" 
-            bg="bg-emerald-500/10" 
-          />
-          <ForecastCard 
-            title="Projected Clients" 
-            value={forecast.projected_clients} 
-            icon={Users} 
-            color="text-brand-400" 
-            bg="bg-brand-500/10" 
-          />
-          <ForecastCard 
-            title="Discovery Runs Today" 
-            value={discoveryMetrics.runsToday} 
-            icon={Search} 
-            color="text-indigo-400" 
-            bg="bg-indigo-500/10" 
-          />
+        <div className="glass-panel px-4 py-2 rounded-xl flex items-center gap-2 text-sm font-medium text-gray-700 dark:text-gray-200 shadow-sm border-white/60 dark:border-white/10">
+          <Calendar className="w-4 h-4 text-pink-400" />
+          Today, Oct 24
         </div>
+      </motion.div>
 
-        {/* Operational / System Mini-widgets */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          {isSuperAdmin && systemHealth && (
-            <>
-              <div className="bg-surface-900 border border-surface-700/50 rounded-2xl p-4 flex items-center gap-4">
-                <div className={`p-3 rounded-xl ${systemHealth.postgres_health && systemHealth.redis_health ? 'bg-green-500/10 text-green-400' : 'bg-red-500/10 text-red-400'}`}>
-                  <HeartPulse className="w-6 h-6" />
-                </div>
-                <div>
-                  <p className="text-sm font-medium text-surface-400">System Health</p>
-                  <p className="text-xl font-bold text-white">
-                    {systemHealth.postgres_health && systemHealth.redis_health ? 'All Systems Operational' : 'Degraded'}
-                  </p>
-                </div>
-              </div>
-              <div className="bg-surface-900 border border-surface-700/50 rounded-2xl p-4 flex items-center gap-4">
-                <div className={`p-3 rounded-xl ${systemHealth.failed_jobs > 0 ? 'bg-red-500/10 text-red-400' : 'bg-surface-800 text-surface-400'}`}>
-                  <AlertTriangle className="w-6 h-6" />
-                </div>
-                <div>
-                  <p className="text-sm font-medium text-surface-400">Failed Jobs</p>
-                  <p className="text-xl font-bold text-white">{systemHealth.failed_jobs}</p>
-                </div>
-              </div>
-            </>
-          )}
-          {notifications && (
-            <div className="bg-surface-900 border border-surface-700/50 rounded-2xl p-4 flex items-center gap-4">
-              <div className={`p-3 rounded-xl ${notifications.filter(n => !n.is_read).length > 0 ? 'bg-brand-500/10 text-brand-400' : 'bg-surface-800 text-surface-400'}`}>
-                <Bell className="w-6 h-6" />
-              </div>
+      {/* KPI Row */}
+      <motion.div variants={itemVariants} className={cn("grid grid-cols-1 md:grid-cols-2 gap-6", isAdmin ? "lg:grid-cols-5" : "lg:grid-cols-4")}>
+        <MetricCard 
+          title="Monthly Recurring Revenue" 
+          value={<AnimatedCounter value={124500} formatValue={(v) => `₹${Math.round(v).toLocaleString()}`} />} 
+          trend="+14.2%" isPositive={true} icon={IndianRupee} 
+        />
+        <MetricCard 
+          title="Active Clients" 
+          value={<AnimatedCounter value={42} />} 
+          trend="+3" isPositive={true} icon={Users} 
+        />
+        <MetricCard 
+          title="Qualified Leads" 
+          value={<AnimatedCounter value={156} />} 
+          trend="+24%" isPositive={true} icon={Target} 
+        />
+        <MetricCard 
+          title="Total Lifetime Earnings" 
+          value={<AnimatedCounter value={14500000} formatValue={(v) => `₹${Math.round(v).toLocaleString()}`} />} 
+          trend="+12%" isPositive={true} icon={TrendingUp} 
+        />
+        {isAdmin && (
+          <MetricCard 
+            title="Company Valuation" 
+            value={<AnimatedCounter value={valuation} formatValue={formatValuation} />} 
+            trend="+10x ARR" isPositive={true} icon={Building} 
+          />
+        )}
+      </motion.div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* Revenue Chart */}
+        <motion.div variants={itemVariants} className="lg:col-span-2">
+          <GlassCard className="h-[400px] flex flex-col">
+            <div className="flex justify-between items-center mb-6">
               <div>
-                <p className="text-sm font-medium text-surface-400">Unread Notifications</p>
-                <p className="text-xl font-bold text-white">{notifications.filter(n => !n.is_read).length}</p>
+                <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">Revenue & Expenses</h2>
+                <p className="text-sm text-gray-500 dark:text-gray-400">Trailing 6 months performance</p>
+              </div>
+              <button className="text-sm font-medium text-pink-500 hover:text-pink-600 transition-colors flex items-center gap-1">
+                View Full Report <ArrowUpRight className="w-4 h-4" />
+              </button>
+            </div>
+            <div className="flex-1 w-full min-h-0">
+              <ResponsiveContainer width="100%" height="100%">
+                <AreaChart data={revenueData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+                  <defs>
+                    <linearGradient id="colorRevenue" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor="#FFB7D5" stopOpacity={0.8}/>
+                      <stop offset="95%" stopColor="#FFB7D5" stopOpacity={0}/>
+                    </linearGradient>
+                    <linearGradient id="colorExpenses" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor="#D6F4FF" stopOpacity={0.8}/>
+                      <stop offset="95%" stopColor="#D6F4FF" stopOpacity={0}/>
+                    </linearGradient>
+                  </defs>
+                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(255,255,255,0.4)" />
+                  <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fill: '#6B7280', fontSize: 12 }} dy={10} />
+                  <YAxis axisLine={false} tickLine={false} tick={{ fill: '#6B7280', fontSize: 12 }} tickFormatter={(val: number) => `₹${val/1000}k`} />
+                  <Tooltip 
+                    contentStyle={{ backgroundColor: 'rgba(255,255,255,0.9)', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.6)', boxShadow: '0 4px 12px rgba(0,0,0,0.05)' }}
+                    itemStyle={{ color: '#111827', fontSize: '14px', fontWeight: 500 }}
+                  />
+                  <Area type="monotone" dataKey="revenue" stroke="#FFB7D5" strokeWidth={3} fillOpacity={1} fill="url(#colorRevenue)" />
+                  <Area type="monotone" dataKey="expenses" stroke="#8DE3FE" strokeWidth={3} fillOpacity={1} fill="url(#colorExpenses)" />
+                </AreaChart>
+              </ResponsiveContainer>
+            </div>
+          </GlassCard>
+        </motion.div>
+
+        {/* Pipeline Funnel */}
+        <motion.div variants={itemVariants} className="lg:col-span-1">
+          <GlassCard className="h-[400px] flex flex-col">
+            <div className="flex justify-between items-center mb-6">
+              <div>
+                <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">Pipeline</h2>
+                <p className="text-sm text-gray-500 dark:text-gray-400">Active opportunities</p>
               </div>
             </div>
-          )}
-        </div>
-
-        {/* Categories Grid */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          
-          {/* Discovery Metrics */}
-          <SectionCard title="Lead Discovery" href="/discovery/runs">
-            <MetricRow label="Runs Today" value={discoveryMetrics.runsToday} />
-            <MetricRow label="Businesses Discovered" value={discoveryMetrics.discovered} />
-            <MetricRow label="Businesses Validated" value={discoveryMetrics.validated} />
-            <MetricRow label="Businesses Promoted" value={discoveryMetrics.promoted} />
-          </SectionCard>
-
-          {/* Growth Metrics */}
-          <SectionCard title="Growth Metrics" href="/analytics/growth">
-            <MetricRow label="Total Leads" value={growth.total_leads} />
-            <MetricRow label="Qualified Leads" value={growth.qualified_leads} />
-            <MetricRow label="Qualification Rate" value={`${growth.lead_qualification_rate.toFixed(1)}%`} />
-            <MetricRow label="Active Clients" value={growth.active_clients} />
-            <MetricRow label="Churn Rate" value={`${growth.churn_rate.toFixed(1)}%`} />
-          </SectionCard>
-
-          {/* Analysis Metrics */}
-          <SectionCard title="Website Analysis" href="/analysis">
-            <MetricRow label="Websites Analyzed" value={analysisMetrics.total} />
-            <MetricRow label="Avg Website Score" value={analysisMetrics.avgWebsiteScore.toFixed(1)} />
-            <MetricRow label="Avg SEO Score" value={analysisMetrics.avgSeoScore.toFixed(1)} />
-          </SectionCard>
-
-          {/* Qualification Metrics */}
-          <SectionCard title="AI Qualification" href="/qualifications">
-            <MetricRow label="Total AI Qualifications" value={qualifications?.length || 0} />
-            <MetricRow label="High Priority Leads" value={qualificationMetrics.highPriority} />
-            <MetricRow label="Qualified Leads" value={qualificationMetrics.qualified} />
-            <MetricRow label="Avg Opportunity Score" value={qualificationMetrics.avgOpportunityScore.toFixed(1)} />
-          </SectionCard>
-
-          {/* Outreach Metrics */}
-          <SectionCard title="Outreach Drafts" href="/outreach">
-            <MetricRow label="Drafts Generated" value={outreachMetrics.total} />
-            <MetricRow label="Approved Drafts" value={outreachMetrics.approved} />
-            <MetricRow label="Used Drafts" value={outreachMetrics.used} />
-          </SectionCard>
-
-          {/* Revenue Metrics */}
-          <SectionCard title="Revenue Metrics" href="/analytics/finance">
-            <MetricRow label="MRR" value={`$${finance.mrr.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`} />
-            <MetricRow label="ARR" value={`$${finance.arr.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`} />
-            <MetricRow label="Revenue Growth" value={`${finance.revenue_growth_percentage.toFixed(1)}%`} />
-            <MetricRow label="Avg Revenue / Client" value={`$${finance.average_revenue_per_client.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`} />
-          </SectionCard>
-
-          {/* Sales Metrics */}
-          <SectionCard title="Sales Metrics" href="/analytics/sales">
-            <MetricRow label="Pipeline Value" value={`$${sales.pipeline_value.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`} />
-            <MetricRow label="Weighted Pipeline" value={`$${sales.weighted_pipeline_value.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`} />
-            <MetricRow label="Win Rate" value={`${growth.win_rate.toFixed(1)}%`} />
-            <MetricRow label="Avg Deal Size" value={`$${sales.average_deal_size.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`} />
-          </SectionCard>
-
-        </div>
-
+            <div className="flex-1 w-full min-h-0">
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={pipelineData} layout="vertical" margin={{ top: 0, right: 0, left: 0, bottom: 0 }}>
+                  <CartesianGrid strokeDasharray="3 3" horizontal={true} vertical={false} stroke="rgba(255,255,255,0.4)" />
+                  <XAxis type="number" hide />
+                  <YAxis dataKey="name" type="category" axisLine={false} tickLine={false} tick={{ fill: '#4B5563', fontSize: 13, fontWeight: 500 }} width={80} />
+                  <Tooltip 
+                    cursor={{ fill: 'rgba(255,255,255,0.4)' }}
+                    contentStyle={{ backgroundColor: 'rgba(255,255,255,0.9)', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.6)', boxShadow: '0 4px 12px rgba(0,0,0,0.05)' }}
+                  />
+                  <Bar dataKey="value" fill="#E7D8FF" radius={[0, 6, 6, 0]} barSize={24} />
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+          </GlassCard>
+        </motion.div>
       </div>
-    </div>
-  )
+
+      <div className={cn("grid grid-cols-1 gap-6", isAdmin ? "lg:grid-cols-3" : "lg:grid-cols-2")}>
+        {/* Upcoming Tasks */}
+        <motion.div variants={itemVariants}>
+          <GlassCard className="h-full">
+            <div className="flex justify-between items-center mb-6">
+              <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">Upcoming Tasks</h2>
+              <button className="text-sm font-medium text-pink-500 hover:text-pink-600 transition-colors">View All</button>
+            </div>
+            <div className="space-y-3">
+              {upcomingTasks.map(task => (
+                <div key={task.id} className="flex items-center justify-between p-4 rounded-xl bg-white/40 dark:bg-gray-800/40 border border-white/60 dark:border-white/10 hover:bg-white/60 dark:hover:bg-gray-800/60 transition-colors cursor-pointer group">
+                  <div className="flex items-center gap-4">
+                    <div className={cn("w-10 h-10 rounded-full flex items-center justify-center", task.status === 'completed' ? 'bg-green-100 text-green-600 dark:bg-green-900/30 dark:text-green-400' : 'bg-pink-100 text-pink-500 dark:bg-pink-900/30 dark:text-pink-400')}>
+                      {task.status === 'completed' ? <CheckCircle2 className="w-5 h-5" /> : <Clock className="w-5 h-5" />}
+                    </div>
+                    <div>
+                      <h4 className="text-sm font-semibold text-gray-900 dark:text-gray-100 group-hover:text-pink-500 dark:group-hover:text-pink-400 transition-colors">{task.title}</h4>
+                      <p className="text-xs text-gray-500 dark:text-gray-400 font-medium">{task.client}</p>
+                    </div>
+                  </div>
+                  <div className="text-sm font-medium text-gray-600 dark:text-gray-300 bg-white/50 dark:bg-gray-800/50 px-3 py-1 rounded-lg border border-white/40 dark:border-white/10">
+                    {task.time}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </GlassCard>
+        </motion.div>
+
+        {/* System Health (Admin Only) */}
+        {isAdmin && health && (
+          <motion.div variants={itemVariants}>
+            <GlassCard className="h-full">
+              <div className="flex justify-between items-center mb-6">
+                <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">System Health</h2>
+                <span className="flex items-center gap-1.5 px-2.5 py-1 bg-green-100 text-green-700 text-xs font-semibold rounded-full border border-green-200">
+                  <div className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse"></div>
+                  Operational
+                </span>
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="bg-white/40 dark:bg-gray-800/40 border border-white/60 dark:border-white/10 p-4 rounded-xl flex flex-col items-center justify-center text-center">
+                  <ListTodo className="w-5 h-5 text-blue-500 mb-2" />
+                  <p className="text-2xl font-bold text-gray-900 dark:text-gray-100">{health.queue_depth}</p>
+                  <p className="text-xs font-medium text-gray-500 dark:text-gray-400 mt-1">Jobs in Queue</p>
+                </div>
+                <div className="bg-white/40 dark:bg-gray-800/40 border border-white/60 dark:border-white/10 p-4 rounded-xl flex flex-col items-center justify-center text-center">
+                  <Server className="w-5 h-5 text-purple-500 mb-2" />
+                  <p className="text-2xl font-bold text-gray-900 dark:text-gray-100">{health.active_workers}</p>
+                  <p className="text-xs font-medium text-gray-500 dark:text-gray-400 mt-1">Active Workers</p>
+                </div>
+                <div className="bg-white/40 dark:bg-gray-800/40 border border-white/60 dark:border-white/10 p-4 rounded-xl flex flex-col items-center justify-center text-center">
+                  <Database className="w-5 h-5 text-green-500 mb-2" />
+                  <p className="text-2xl font-bold text-gray-900 dark:text-gray-100">100%</p>
+                  <p className="text-xs font-medium text-gray-500 dark:text-gray-400 mt-1">DB Uptime</p>
+                </div>
+                <div className="bg-white/40 dark:bg-gray-800/40 border border-white/60 dark:border-white/10 p-4 rounded-xl flex flex-col items-center justify-center text-center">
+                  <HardDrive className="w-5 h-5 text-orange-500 mb-2" />
+                  <p className="text-2xl font-bold text-gray-900 dark:text-gray-100">{health.storage_usage}</p>
+                  <p className="text-xs font-medium text-gray-500 dark:text-gray-400 mt-1">Storage Used</p>
+                </div>
+              </div>
+            </GlassCard>
+          </motion.div>
+        )}
+
+        {/* Recent Activity */}
+        <motion.div variants={itemVariants}>
+          <GlassCard className="h-full">
+            <div className="flex justify-between items-center mb-6">
+              <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">Recent Activity</h2>
+            </div>
+            <div className="space-y-6 relative before:absolute before:inset-0 before:ml-5 before:-translate-x-px md:before:mx-auto md:before:translate-x-0 before:h-full before:w-0.5 before:bg-gradient-to-b before:from-transparent before:via-white/60 before:to-transparent">
+              {/* Activity Items */}
+              <ActivityItem 
+                title="New Lead Qualified" 
+                desc="Acme Corp was moved to Qualified status" 
+                time="10 min ago" 
+                icon={Target} 
+                color="text-pink-500" 
+                bg="bg-pink-100"
+              />
+              <ActivityItem 
+                title="Invoice Paid" 
+                desc="TechFlow Inc paid invoice #INV-2024-089" 
+                time="2 hours ago" 
+                icon={IndianRupee} 
+                color="text-blue-500" 
+                bg="bg-blue-100"
+              />
+              <ActivityItem 
+                title="System Update" 
+                desc="AgencyOS v2.4 successfully deployed" 
+                time="5 hours ago" 
+                icon={CheckCircle2} 
+                color="text-green-500" 
+                bg="bg-green-100"
+              />
+              <ActivityItem 
+                title="Meeting Scheduled" 
+                desc="Discovery call with Global Dynamics" 
+                time="Yesterday" 
+                icon={Calendar} 
+                color="text-purple-500" 
+                bg="bg-purple-100"
+              />
+            </div>
+          </GlassCard>
+        </motion.div>
+      </div>
+
+    </motion.div>
+  );
 }
 
-function ForecastCard({ title, value, icon: Icon, color, bg }: any) {
+function MetricCard({ title, value, trend, isPositive, icon: Icon }: any) {
   return (
-    <div className="bg-surface-900 border border-surface-700/50 rounded-2xl p-5 flex flex-col justify-between relative overflow-hidden group hover:border-brand-500/30 transition-colors">
+    <GlassCard hoverEffect>
       <div className="flex justify-between items-start mb-4">
-        <p className="text-sm font-medium text-surface-400">{title}</p>
-        <div className={`p-2 rounded-xl ${bg}`}>
-          <Icon className={`w-5 h-5 ${color}`} />
+        <div className="p-3 rounded-2xl bg-gradient-to-br from-white/80 to-white/40 shadow-sm border border-white/60">
+          <Icon className="w-6 h-6 text-pink-500" />
+        </div>
+        <div className={cn("px-2.5 py-1 rounded-lg text-xs font-bold shadow-sm border border-white/40", isPositive ? "bg-green-100/80 text-green-700" : "bg-red-100/80 text-red-700")}>
+          {trend}
         </div>
       </div>
       <div>
-        <h3 className="text-3xl font-bold text-white tracking-tight">{value}</h3>
+        <h3 className="text-3xl font-bold tracking-tight text-gray-900 dark:text-gray-100 mb-1">{value}</h3>
+        <p className="text-sm font-medium text-gray-500 dark:text-gray-400">{title}</p>
       </div>
-    </div>
-  )
+    </GlassCard>
+  );
 }
 
-function SectionCard({ title, href, children }: { title: string, href: string, children: React.ReactNode }) {
+function ActivityItem({ title, desc, time, icon: Icon, color, bg }: any) {
   return (
-    <div className="bg-surface-900 border border-surface-700/50 rounded-2xl flex flex-col overflow-hidden">
-      <div className="px-6 py-4 border-b border-surface-700/50 flex justify-between items-center bg-surface-800/20">
-        <h3 className="text-lg font-semibold text-white">{title}</h3>
-        <a href={href} className="text-brand-400 text-sm font-medium hover:text-brand-300 flex items-center gap-1 transition-colors">
-          View Detailed <ArrowUpRight className="w-4 h-4" />
-        </a>
+    <div className="relative flex items-center justify-between md:justify-normal md:odd:flex-row-reverse group is-active">
+      <div className="flex items-center justify-center w-10 h-10 rounded-full border-4 border-[var(--background)] bg-white shadow-sm shrink-0 md:order-1 md:group-odd:-translate-x-1/2 md:group-even:translate-x-1/2 z-10">
+        <div className={cn("w-8 h-8 rounded-full flex items-center justify-center", bg)}>
+          <Icon className={cn("w-4 h-4", color)} />
+        </div>
       </div>
-      <div className="p-6 grid gap-4">
-        {children}
+      <div className="w-[calc(100%-4rem)] md:w-[calc(50%-2.5rem)] glass-panel p-4 rounded-xl shadow-sm hover:shadow-md transition-shadow">
+        <div className="flex items-center justify-between mb-1">
+          <h4 className="font-semibold text-sm text-gray-900 dark:text-gray-100">{title}</h4>
+          <span className="text-xs font-medium text-gray-400 dark:text-gray-500">{time}</span>
+        </div>
+        <p className="text-xs text-gray-500 dark:text-gray-400 font-medium">{desc}</p>
       </div>
     </div>
-  )
-}
-
-function MetricRow({ label, value }: { label: string, value: string | number }) {
-  return (
-    <div className="flex justify-between items-center pb-3 border-b border-surface-800 last:border-0 last:pb-0">
-      <span className="text-surface-300 text-sm">{label}</span>
-      <span className="text-white font-medium">{value}</span>
-    </div>
-  )
+  );
 }

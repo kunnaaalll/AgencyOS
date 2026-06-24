@@ -1,0 +1,1 @@
+export const mockProjectsData = Array.from({length: 10}).map((_, i) => ({ id: 'proj-'+i, name: 'Website Revamp ' + i, status: 'In Progress' }));

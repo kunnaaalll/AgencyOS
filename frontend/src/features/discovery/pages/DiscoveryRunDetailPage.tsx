@@ -23,7 +23,7 @@ export function DiscoveryRunDetailPage() {
         <h1 className="text-2xl font-bold">Discovery Run Details</h1>
       </div>
 
-      <div className="grid grid-cols-2 gap-6 mb-8">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
         <div className="bg-white p-6 rounded-lg shadow">
           <h2 className="text-lg font-semibold mb-4">Run Information</h2>
           <div className="space-y-2">

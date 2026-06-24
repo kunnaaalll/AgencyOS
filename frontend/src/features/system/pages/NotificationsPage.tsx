@@ -1,12 +1,14 @@
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
+import { useMutation, useQueryClient } from '@tanstack/react-query'
+import { useDemoQuery } from '@/lib/useDemoQuery'
 import { getNotifications, markNotificationRead } from '../api'
+import { mockNotificationsList } from '@/mocks'
 
 export function NotificationsPage() {
   const queryClient = useQueryClient()
-  const { data: notifications, isLoading } = useQuery({
+  const { data: notifications, isLoading } = useDemoQuery({
     queryKey: ['notifications'],
     queryFn: getNotifications,
-  })
+  }, mockNotificationsList)
 
   const { mutate: markRead } = useMutation({
     mutationFn: markNotificationRead,

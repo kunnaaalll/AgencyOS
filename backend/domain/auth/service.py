@@ -241,14 +241,16 @@ class AuthService:
     # ── Private Helpers ───────────────────────────────────────
 
     async def _get_user_by_email(self, email: str) -> User | None:
+        from sqlalchemy.orm import selectinload
         result = await self.db.execute(
-            select(User).where(User.email == email.lower().strip())
+            select(User).options(selectinload(User.role)).where(User.email == email.lower().strip())
         )
         return result.scalar_one_or_none()
 
     async def _get_user_by_id(self, user_id: str) -> User | None:
+        from sqlalchemy.orm import selectinload
         result = await self.db.execute(
-            select(User).where(User.id == user_id)
+            select(User).options(selectinload(User.role)).where(User.id == user_id)
         )
         return result.scalar_one_or_none()
 

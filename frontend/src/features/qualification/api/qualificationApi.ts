@@ -14,21 +14,22 @@ export interface QualificationResponse {
   confidence: number;
   model_used: string | null;
   created_at: string;
+  business_name?: string | null;
 }
 
 export const qualificationApi = {
   getQualifications: async (): Promise<QualificationResponse[]> => {
-    const { data } = await api.get('/api/v1/qualification');
+    const { data } = await api.get('/qualification');
     return data;
   },
 
   getQualificationByLeadId: async (leadId: string): Promise<QualificationResponse> => {
-    const { data } = await api.get(`/api/v1/qualification/lead/${leadId}`);
+    const { data } = await api.get(`/qualification/lead/${leadId}`);
     return data;
   },
 
   generateQualification: async (leadId: string): Promise<{ message: string, job_id?: string }> => {
-    const { data } = await api.post('/api/v1/qualification/generate', { lead_id: leadId });
+    const { data } = await api.post('/qualification/generate', { lead_id: leadId });
     return data;
   }
 };

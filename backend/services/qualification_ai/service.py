@@ -8,10 +8,9 @@ from domain.qualification_ai.models import AIQualification
 from domain.qualification_ai.schemas import AIOutputSchema
 from domain.monitoring.models import TokenUsageLog
 from domain.lead.events import LeadQualifiedEvent
-from core.events import EventBus
+from events.bus import EventBus
+from core.config import settings
 
-# Assuming settings or config has these fallback models
-MODELS = ["gemini/gemini-pro", "groq/llama3-70b-8192", "openrouter/auto"]
 
 class AIQualificationService:
     def __init__(self, db: AsyncSession):
@@ -27,31 +26,23 @@ class AIQualificationService:
         
         prompt = self._build_prompt(lead, analysis)
         
-        # Fallback sequence
-        response_content = None
-        model_used = None
+        model_used = "freellmapi/auto"
         usage = None
         
-        for model in MODELS:
-            try:
-                response = await acompletion(
-                    model=model,
-                    messages=[
-                        {"role": "system", "content": "You are an expert AI business qualification engine. Output ONLY valid JSON matching the exact schema requested, with no markdown formatting or extra text."},
-                        {"role": "user", "content": prompt}
-                    ],
-                    response_format={"type": "json_object"}
-                )
-                response_content = response.choices[0].message.content
-                model_used = model
-                usage = response.usage
-                break
-            except Exception as e:
-                print(f"Model {model} failed: {str(e)}")
-                continue
-                
-        if not response_content:
-            raise Exception("All fallback AI models failed to qualify the lead.")
+        try:
+            response = await acompletion(
+                model="openai/auto",
+                api_base=settings.FREELLM_API_BASE,
+                messages=[
+                    {"role": "system", "content": "You are an expert AI business qualification engine. Output ONLY valid JSON matching the exact schema requested, with no markdown formatting or extra text."},
+                    {"role": "user", "content": prompt}
+                ],
+                response_format={"type": "json_object"}
+            )
+            response_content = response.choices[0].message.content
+            usage = response.usage
+        except Exception as e:
+            raise Exception(f"AI qualification failed via FreeLLM API: {str(e)}")
             
         execution_time_ms = (time.time() - start_time) * 1000
         tokens_used = usage.total_tokens if usage else 0

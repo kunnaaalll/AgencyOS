@@ -13,6 +13,7 @@ export interface OutreachDraftResponse {
   tokens_used: number;
   created_at: string;
   updated_at: string;
+  business_name?: string | null;
 }
 
 export interface OutreachDraftUpdate {
@@ -24,12 +25,12 @@ export interface OutreachDraftUpdate {
 
 export const outreachApi = {
   getDrafts: async (leadId?: string): Promise<OutreachDraftResponse[]> => {
-    const { data } = await api.get('/api/v1/outreach', { params: { lead_id: leadId } });
+    const { data } = await api.get('/outreach', { params: { lead_id: leadId } });
     return data;
   },
 
   getDraftById: async (draftId: string): Promise<OutreachDraftResponse> => {
-    const { data } = await api.get(`/api/v1/outreach/${draftId}`);
+    const { data } = await api.get(`/outreach/${draftId}`);
     return data;
   },
 
@@ -37,7 +38,7 @@ export const outreachApi = {
     leadId: string, 
     channel: 'EMAIL' | 'LINKEDIN' | 'WHATSAPP' | 'CALL'
   ): Promise<{ message: string, job_id?: string }> => {
-    const { data } = await api.post('/api/v1/outreach/generate', {
+    const { data } = await api.post('/outreach/generate', {
       lead_id: leadId,
       channel: channel
     });
@@ -48,7 +49,7 @@ export const outreachApi = {
     draftId: string, 
     updateData: { status?: 'DRAFT' | 'APPROVED' | 'REJECTED' | 'USED', message?: string, subject?: string }
   ): Promise<OutreachDraftResponse> => {
-    const { data } = await api.patch(`/api/v1/outreach/${draftId}`, updateData);
+    const { data } = await api.patch(`/outreach/${draftId}`, updateData);
     return data;
   }
 };

@@ -5,7 +5,7 @@ import axios from "axios";
 // Assuming the project uses a pre-configured api client.
 // Based on typical AgencyOS structure, let's create a generic api call setup or import.
 // For now, using direct axios calls with interceptors assuming an `api` instance exists.
-import { api } from "@/lib/api";
+import api from "@/lib/api";
 
 export interface WebsiteAnalysis {
   id: string;
@@ -34,7 +34,7 @@ export function useAnalysisList() {
   return useQuery({
     queryKey: analysisKeys.lists(),
     queryFn: async (): Promise<WebsiteAnalysis[]> => {
-      const response = await api.get("/api/v1/analysis");
+      const response = await api.get("/analysis");
       return response.data;
     },
   });
@@ -44,7 +44,7 @@ export function useAnalysisDetail(leadId: string) {
   return useQuery({
     queryKey: analysisKeys.detail(leadId),
     queryFn: async (): Promise<WebsiteAnalysis> => {
-      const response = await api.get(`/api/v1/analysis/${leadId}`);
+      const response = await api.get(`/analysis/${leadId}`);
       return response.data;
     },
     enabled: !!leadId,
@@ -56,7 +56,7 @@ export function useRunAnalysis() {
 
   return useMutation({
     mutationFn: async (leadId: string) => {
-      const response = await api.post(`/api/v1/analysis/run/${leadId}`);
+      const response = await api.post(`/analysis/run/${leadId}`);
       return response.data;
     },
     onSuccess: (_, leadId) => {

@@ -56,13 +56,13 @@ class AnalyticsService:
 
         # Proposals
         proposals_query = await db.execute(
-            select(func.count(Opportunity.id)).where(Opportunity.stage == PipelineStage.PROPOSAL)
+            select(func.count(Opportunity.id)).where(Opportunity.pipeline_stage == PipelineStage.PROPOSAL)
         )
         proposal_count = proposals_query.scalar() or 0
 
         # Win Rate
-        won_query = await db.execute(select(func.count(Opportunity.id)).where(Opportunity.stage == PipelineStage.WON))
-        lost_query = await db.execute(select(func.count(Opportunity.id)).where(Opportunity.stage == PipelineStage.LOST))
+        won_query = await db.execute(select(func.count(Opportunity.id)).where(Opportunity.pipeline_stage == PipelineStage.WON))
+        lost_query = await db.execute(select(func.count(Opportunity.id)).where(Opportunity.pipeline_stage == PipelineStage.LOST))
         won = won_query.scalar() or 0
         lost = lost_query.scalar() or 0
         total_closed = won + lost
@@ -172,36 +172,42 @@ class AnalyticsService:
     async def get_sales_metrics(db: AsyncSession) -> SalesMetricsResponse:
         # Pipeline value (All opportunities not closed)
         open_opps_result = await db.execute(
-            select(func.sum(Opportunity.estimated_value))
-            .where(Opportunity.stage.notin_([PipelineStage.WON, PipelineStage.LOST]))
+            select(func.sum(Opportunity.value))
+            .where(Opportunity.pipeline_stage.notin_([PipelineStage.WON, PipelineStage.LOST]))
         )
         pipeline_value = open_opps_result.scalar() or 0.0
 
         # Weighted pipeline (e.g. sum(value * probability / 100))
         # SQLite doesn't directly support this easily without numeric casting issues, so let's fetch open opps
         open_opps = await db.execute(
-            select(Opportunity.estimated_value, Opportunity.probability)
-            .where(Opportunity.stage.notin_([PipelineStage.WON, PipelineStage.LOST]))
+            select(Opportunity.value, Opportunity.probability)
+            .where(Opportunity.pipeline_stage.notin_([PipelineStage.WON, PipelineStage.LOST]))
         )
         weighted_pipeline_value = sum((float(val) * float(prob) / 100.0) for val, prob in open_opps.all() if val and prob)
 
         # Average deal size (WON opps)
-        won_opps = await db.execute(
-            select(func.sum(Opportunity.estimated_value), func.count(Opportunity.id))
-            .where(Opportunity.stage == PipelineStage.WON)
+        won_deals_res = await db.execute(
+            select(func.sum(Opportunity.value))
+            .where(Opportunity.pipeline_stage == PipelineStage.WON)
         )
-        won_sum, won_count = won_opps.first()
-        average_deal_size = float(won_sum) / won_count if won_count and won_count > 0 else 0.0
+        won_deals_val = won_deals_res.scalar() or 0.0
+
+        won_count_res = await db.execute(
+            select(func.count(Opportunity.id))
+            .where(Opportunity.pipeline_stage == PipelineStage.WON)
+        )
+        won_count = won_count_res.scalar() or 0
+        average_deal_size = float(won_deals_val) / won_count if won_count > 0 else 0.0
 
         sales_conversion_rate = 25.0
         average_sales_cycle_days = 30.0
 
         # Distributions
-        stage_dist_res = await db.execute(select(Opportunity.stage, func.count(Opportunity.id)).group_by(Opportunity.stage))
+        stage_dist_res = await db.execute(select(Opportunity.pipeline_stage, func.count(Opportunity.id)).group_by(Opportunity.pipeline_stage))
         pipeline_stage_distribution = [DistributionData(name=row[0].value, value=row[1]) for row in stage_dist_res.all()]
 
-        won_query = await db.execute(select(func.count(Opportunity.id)).where(Opportunity.stage == PipelineStage.WON))
-        lost_query = await db.execute(select(func.count(Opportunity.id)).where(Opportunity.stage == PipelineStage.LOST))
+        won_query = await db.execute(select(func.count(Opportunity.id)).where(Opportunity.pipeline_stage == PipelineStage.WON))
+        lost_query = await db.execute(select(func.count(Opportunity.id)).where(Opportunity.pipeline_stage == PipelineStage.LOST))
         win_loss_ratio = [
             WinLossData(name="Won", value=won_query.scalar() or 0),
             WinLossData(name="Lost", value=lost_query.scalar() or 0)

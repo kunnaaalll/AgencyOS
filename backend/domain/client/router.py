@@ -9,7 +9,7 @@ from domain.client.services import ClientService
 from domain.role.dependencies import require_permissions
 from domain.user.models import User
 
-router = APIRouter(prefix="/api/v1/clients", tags=["Clients"])
+router = APIRouter(prefix="/clients", tags=["Clients"])
 
 @router.get("", response_model=list[ClientResponse])
 async def list_clients(

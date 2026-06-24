@@ -14,7 +14,7 @@ from domain.outreach.models import OutreachDraft
 from domain.outreach.schemas import OutreachDraftResponse, OutreachDraftUpdate
 from domain.outreach.enums import OutreachChannel, DraftStatus
 from domain.lead.models import Lead
-from core.events import EventBus
+from events.bus import EventBus
 
 router = APIRouter(prefix="/outreach", tags=["Outreach"])
 
@@ -45,6 +45,8 @@ async def generate_outreach(
     
     return {"message": f"AI outreach generation job for channel {channel.value} enqueued successfully"}
 
+from sqlalchemy.orm import joinedload
+
 @router.get("/{draft_id}", response_model=OutreachDraftResponse)
 async def get_outreach_draft(
     draft_id: str,
@@ -52,7 +54,12 @@ async def get_outreach_draft(
     _ = Depends(require_permission("outreach:read"))
 ) -> Any:
     """Get outreach draft by ID."""
-    draft = await db.get(OutreachDraft, draft_id)
+    result = await db.execute(
+        select(OutreachDraft)
+        .options(joinedload(OutreachDraft.lead))
+        .where(OutreachDraft.id == draft_id)
+    )
+    draft = result.scalars().first()
     if not draft:
         raise HTTPException(status_code=404, detail="Outreach draft not found")
     return draft
@@ -63,7 +70,11 @@ async def list_outreach_drafts(
     _ = Depends(require_permission("outreach:read"))
 ) -> Any:
     """List all outreach drafts."""
-    result = await db.execute(select(OutreachDraft).order_by(OutreachDraft.created_at.desc()))
+    result = await db.execute(
+        select(OutreachDraft)
+        .options(joinedload(OutreachDraft.lead))
+        .order_by(OutreachDraft.created_at.desc())
+    )
     return result.scalars().all()
 
 @router.patch("/{draft_id}", response_model=OutreachDraftResponse)
@@ -74,7 +85,12 @@ async def update_outreach_draft(
     _ = Depends(require_permission("outreach:update"))
 ) -> Any:
     """Update an outreach draft (Edit, Approve, Reject, Mark Used)."""
-    draft = await db.get(OutreachDraft, draft_id)
+    result = await db.execute(
+        select(OutreachDraft)
+        .options(joinedload(OutreachDraft.lead))
+        .where(OutreachDraft.id == draft_id)
+    )
+    draft = result.scalars().first()
     if not draft:
         raise HTTPException(status_code=404, detail="Outreach draft not found")
         

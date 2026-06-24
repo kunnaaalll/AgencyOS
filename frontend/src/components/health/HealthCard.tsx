@@ -27,8 +27,8 @@ const STATUS_CONFIG: Record<ServiceStatus, {
   healthy: {
     label: 'Healthy',
     dotClass: 'healthy',
-    cardClass: 'border-green-200 bg-green-50/40',
-    badgeClass: 'bg-green-100 text-green-700',
+    cardClass: 'border-[var(--color-hairline)] bg-[var(--color-surface-card)]',
+    badgeClass: 'bg-[var(--color-primary)]/10 text-[var(--color-primary)]',
   },
   degraded: {
     label: 'Degraded',
@@ -39,8 +39,8 @@ const STATUS_CONFIG: Record<ServiceStatus, {
   offline: {
     label: 'Offline',
     dotClass: 'offline',
-    cardClass: 'border-red-200 bg-red-50/40',
-    badgeClass: 'bg-red-100 text-red-700',
+    cardClass: 'border-[var(--color-error)]/20 bg-[var(--color-error)]/10',
+    badgeClass: 'bg-[var(--color-error)]/20 text-[var(--color-error)]',
   },
 }
 
@@ -64,13 +64,13 @@ export function HealthCard({ service, isLoading }: HealthCardProps) {
       <div className="flex items-start justify-between">
         <div className={cn(
           'w-10 h-10 rounded-xl flex items-center justify-center',
-          isLoading ? 'bg-surface-200' : 'bg-white shadow-sm'
+          isLoading ? 'bg-[var(--color-surface-soft)]' : 'bg-[var(--color-canvas)] border border-[var(--color-hairline)]'
         )}>
           <Icon className={cn(
             'w-5 h-5',
-            isLoading ? 'text-surface-400' :
-            service.status === 'healthy' ? 'text-green-600' :
-            service.status === 'degraded' ? 'text-amber-500' : 'text-red-500'
+            isLoading ? 'text-[var(--color-muted)]' :
+            service.status === 'healthy' ? 'text-[var(--color-primary)]' :
+            service.status === 'degraded' ? 'text-amber-500' : 'text-[var(--color-error)]'
           )} />
         </div>
 
@@ -88,7 +88,7 @@ export function HealthCard({ service, isLoading }: HealthCardProps) {
 
       {/* Service name */}
       <div>
-        <h3 className="font-semibold text-surface-800 capitalize">
+        <h3 className="text-claude-body-md font-semibold text-[var(--color-ink)] capitalize">
           {service.name === 'postgresql' ? 'PostgreSQL' :
            service.name === 'meilisearch' ? 'Meilisearch' :
            service.name.charAt(0).toUpperCase() + service.name.slice(1)}
@@ -101,7 +101,7 @@ export function HealthCard({ service, isLoading }: HealthCardProps) {
               isLoading ? 'loading' : config.dotClass
             )}
           />
-          <span className="text-xs text-surface-500">
+          <span className="text-claude-body-sm text-[var(--color-muted)]">
             {isLoading
               ? 'Checking connectivity...'
               : service.latency_ms != null

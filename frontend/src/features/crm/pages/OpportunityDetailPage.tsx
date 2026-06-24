@@ -60,7 +60,7 @@ export function OpportunityDetailPage() {
         {/* Overview Card */}
         <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm">
           <h2 className="text-xl font-semibold mb-4 text-gray-800">Overview</h2>
-          <div className="grid grid-cols-2 gap-y-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-y-4">
             <div>
               <p className="text-sm text-gray-500">Expected Close Date</p>
               <p className="font-medium text-gray-900">
@@ -131,7 +131,7 @@ export function OpportunityDetailPage() {
                       {new Date(meeting.scheduled_at).toLocaleString()}
                     </span>
                   </div>
-                  <div className="text-sm text-gray-600 grid grid-cols-2 gap-2">
+                  <div className="text-sm text-gray-600 grid grid-cols-1 sm:grid-cols-2 gap-2">
                     <p><span className="text-gray-400">Duration:</span> {meeting.duration_minutes} min</p>
                     {meeting.location && <p><span className="text-gray-400">Location:</span> {meeting.location}</p>}
                     {meeting.outcome && <p className="col-span-2"><span className="text-gray-400">Outcome:</span> {meeting.outcome}</p>}

@@ -60,6 +60,9 @@ class Settings(BaseSettings):
     # ── CORS ──────────────────────────────────────────────────
     CORS_ORIGINS: str = "http://localhost:5173"
 
+    # ── FreeLLM API ───────────────────────────────────────────
+    FREELLM_API_BASE: str = "http://localhost:5174/playground"
+
     # ── Security ──────────────────────────────────────────────
     RATE_LIMIT_PER_MINUTE: int = 100
     CSRF_SECRET: str = ""

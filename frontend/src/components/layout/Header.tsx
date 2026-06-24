@@ -1,70 +1,58 @@
-// AgencyOS V2 — Header Component
-
-import { Bell, LogOut } from 'lucide-react'
-import { useStore } from '@tanstack/react-store'
-import { authStore } from '@/store/authStore'
-import { useLogout, useCurrentUser } from '@/features/auth/authApi'
+import React, { useEffect } from 'react';
+import { motion } from 'framer-motion';
+import { Search, Bell, User, Command } from 'lucide-react';
 
 export function Header() {
-  const authState = useStore(authStore)
-  const { mutate: logout } = useLogout()
-  const { data: user } = useCurrentUser()
 
-  const displayUser = user ?? authState.user
-  const initials = displayUser
-    ? `${displayUser.first_name[0]}${displayUser.last_name[0]}`.toUpperCase()
-    : '??'
 
+  const openCmdK = () => {
+    document.dispatchEvent(new KeyboardEvent('keydown', { key: 'k', metaKey: true }));
+  };
   return (
-    <header
-      className="fixed top-0 right-0 z-20 flex items-center justify-between bg-white/80 backdrop-blur-md border-b border-surface-200 px-6"
-      style={{
-        left: 'var(--sidebar-width)',
-        height: 'var(--header-height)',
-      }}
+    <motion.header 
+      initial={{ y: -50, opacity: 0 }}
+      animate={{ y: 0, opacity: 1 }}
+      className="h-20 flex items-center justify-between px-8 sticky top-0 z-30 mb-8 pt-4"
     >
-      {/* Left: Page title will be injected via context in future */}
-      <div />
-
-      {/* Right: Actions */}
-      <div className="flex items-center gap-3">
-        {/* Notifications (placeholder) */}
-        <button
-          className="relative p-2 rounded-xl text-surface-500 hover:bg-surface-100 hover:text-surface-700 transition-colors"
-          title="Notifications"
-        >
-          <Bell className="w-5 h-5" />
-          <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-brand-500 rounded-full" />
-        </button>
-
-        {/* User Menu */}
-        <div className="flex items-center gap-2 pl-3 border-l border-surface-200">
-          {/* Avatar */}
-          <div className="w-8 h-8 rounded-full bg-brand-600 flex items-center justify-center text-xs font-bold text-white shadow-md shadow-brand-600/20 flex-shrink-0">
-            {initials}
-          </div>
-
-          {/* User info */}
-          <div className="hidden sm:block">
-            <p className="text-sm font-semibold text-surface-800 leading-tight">
-              {displayUser?.full_name ?? 'Loading...'}
-            </p>
-            <p className="text-xs text-surface-500 leading-tight">
-              {displayUser?.role_name ?? ''}
-            </p>
-          </div>
-
-          {/* Logout */}
-          <button
-            id="logout-button"
-            onClick={() => logout()}
-            className="p-2 rounded-xl text-surface-400 hover:bg-red-50 hover:text-red-500 transition-colors ml-1"
-            title="Sign out"
-          >
-            <LogOut className="w-4 h-4" />
-          </button>
+      <div className="flex items-center">
+        {/* Breadcrumbs could go here, omitting for simplicity or making it abstract */}
+        <div className="text-gray-500 font-medium text-sm">
+          Overview / <span className="text-gray-900 font-semibold">Dashboard</span>
         </div>
       </div>
-    </header>
-  )
+
+      <div className="flex items-center gap-4">
+        {/* Search Bar / Command Palette Trigger */}
+        <div 
+          onClick={openCmdK}
+          className="glass-panel flex items-center gap-3 px-4 py-2 rounded-2xl cursor-pointer hover:bg-white/60 dark:hover:bg-gray-800/60 transition-all border border-white/40 dark:border-white/10 text-gray-500 dark:text-gray-400 w-64 shadow-sm group"
+        >
+          <Search className="w-4 h-4 text-gray-400 group-hover:text-pink-400 transition-colors" />
+          <span className="text-sm font-medium flex-1">Search anything...</span>
+          <div className="flex items-center gap-1 text-xs font-semibold bg-white/50 dark:bg-gray-800/50 px-2 py-0.5 rounded-lg border border-white/60 dark:border-white/10">
+            <Command className="w-3 h-3" />
+            <span>K</span>
+          </div>
+        </div>
+
+        {/* Action Icons */}
+        <div className="flex items-center gap-2">
+          <button className="glass-panel w-10 h-10 rounded-2xl flex items-center justify-center text-gray-500 dark:text-gray-400 hover:text-pink-500 dark:hover:text-pink-400 hover:bg-white/60 dark:hover:bg-gray-800/60 transition-all shadow-sm">
+            <Bell className="w-5 h-5" />
+          </button>
+        </div>
+
+        {/* Profile */}
+        <div className="glass-panel p-1 pr-4 rounded-2xl flex items-center gap-3 shadow-sm hover:bg-white/60 transition-all cursor-pointer border border-white/40">
+          <div className="w-8 h-8 rounded-xl bg-gradient-accent flex items-center justify-center text-gray-800 font-bold text-sm shadow-inner">
+            <User className="w-4 h-4" />
+          </div>
+          <div className="flex flex-col">
+            <span className="text-sm font-semibold text-gray-900 leading-tight">Admin User</span>
+            <span className="text-xs text-gray-500 font-medium">Founder</span>
+          </div>
+        </div>
+      </div>
+    </motion.header>
+  );
 }

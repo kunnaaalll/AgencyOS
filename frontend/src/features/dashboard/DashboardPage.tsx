@@ -1,12 +1,16 @@
 import { useQuery } from '@tanstack/react-query'
+import { useDemoQuery } from '@/lib/useDemoQuery'
+import { dashboardMock, mockFinanceData, mockSystemData } from '@/mocks'
 import api from '@/lib/api'
 import { HealthCard } from '@/components/health/HealthCard'
 import type { SystemHealth } from '@/types'
-import { RefreshCw, Activity, DollarSign, Calendar, Target, TrendingUp, XCircle } from 'lucide-react'
+import { RefreshCw, Activity, IndianRupee, Calendar, Target, TrendingUp, XCircle } from 'lucide-react'
 import { crmApi } from '@/features/crm/api'
 import { clientsApi } from '@/features/clients/api'
 import { financeApi } from '@/features/finance/api'
 import { PieChart, Pie, Cell, Tooltip as RechartsTooltip, ResponsiveContainer, BarChart, Bar, XAxis, YAxis, CartesianGrid } from 'recharts'
+import { Card, CardContent } from '@/components/ui/card'
+import { Button } from '@/components/ui/button'
 
 const PLACEHOLDER_SERVICES = [
   { name: 'backend' },
@@ -16,7 +20,7 @@ const PLACEHOLDER_SERVICES = [
   { name: 'meilisearch' },
 ]
 
-const COLORS = ['#10B981', '#EF4444', '#F59E0B', '#3B82F6']
+const COLORS = ['#FF6B57', '#F5E4D4', '#000000', '#D2CBB8'] // Updated to Claude colors
 
 export function DashboardPage() {
   const {
@@ -25,35 +29,40 @@ export function DashboardPage() {
     refetch: refetchHealth,
     isFetching: isFetchingHealth,
     dataUpdatedAt: healthUpdatedAt,
-  } = useQuery({
+  } = useDemoQuery({
     queryKey: ['health'],
     queryFn: async (): Promise<SystemHealth> => {
       const { data } = await api.get<SystemHealth>('/health')
       return data
     },
     refetchInterval: 30_000,
-  })
+  }, mockSystemData)
 
   const {
     data: crmStats,
     isLoading: isLoadingStats,
     refetch: refetchStats,
     isFetching: isFetchingStats,
-  } = useQuery({
+  } = useDemoQuery({
     queryKey: ['crmStats'],
     queryFn: crmApi.getStats,
     refetchInterval: 60_000,
-  })
+  }, dashboardMock.kpis)
 
   const {
     data: clientStats,
     isLoading: isLoadingClientStats,
     refetch: refetchClientStats,
     isFetching: isFetchingClientStats,
-  } = useQuery({
+  } = useDemoQuery({
     queryKey: ['clientStats'],
     queryFn: clientsApi.getStats,
     refetchInterval: 60_000,
+  }, {
+    active_clients: dashboardMock.kpis.activeClients,
+    monthly_retainer_revenue: dashboardMock.kpis.mrr,
+    at_risk_clients: 2,
+    renewals_due: 4
   })
 
   const {
@@ -61,11 +70,11 @@ export function DashboardPage() {
     isLoading: isLoadingFinance,
     refetch: refetchFinance,
     isFetching: isFetchingFinance,
-  } = useQuery({
+  } = useDemoQuery({
     queryKey: ['financeStats'],
     queryFn: financeApi.getSummary,
     refetchInterval: 60_000,
-  })
+  }, mockFinanceData)
 
   const lastChecked = healthUpdatedAt
     ? new Date(healthUpdatedAt).toLocaleTimeString()
@@ -73,9 +82,9 @@ export function DashboardPage() {
 
   const overallStatus = health?.status ?? 'healthy'
   const overallStatusConfig = {
-    healthy:  { label: 'All Systems Operational', color: 'text-green-600', bg: 'bg-green-50', border: 'border-green-200' },
+    healthy:  { label: 'All Systems Operational', color: 'text-[var(--color-primary)]', bg: 'bg-[var(--color-primary)]/10', border: 'border-[var(--color-primary)]/20' },
     degraded: { label: 'Partial Outage Detected', color: 'text-amber-600', bg: 'bg-amber-50', border: 'border-amber-200' },
-    offline:  { label: 'Major Outage', color: 'text-red-600', bg: 'bg-red-50', border: 'border-red-200' },
+    offline:  { label: 'Major Outage', color: 'text-[var(--color-error)]', bg: 'bg-[var(--color-error)]/10', border: 'border-[var(--color-error)]/20' },
   }[overallStatus]
 
   const handleRefresh = () => {
@@ -98,184 +107,180 @@ export function DashboardPage() {
   ] : [];
 
   return (
-    <div className="max-w-6xl mx-auto space-y-8 pb-10">
+    <div className="max-w-[1400px] mx-auto px-6 pt-8 space-y-12 pb-16 animate-fade-in">
       {/* Page Header */}
       <div className="flex items-start justify-between">
         <div>
-          <h2 className="text-2xl font-bold text-surface-900">Dashboard</h2>
-          <p className="text-surface-500 mt-0.5 text-sm">
+          <h2 className="text-claude-display-lg text-[var(--color-ink)]">Dashboard</h2>
+          <p className="text-[var(--color-muted)] text-claude-body-md mt-2">
             Overview of your pipeline and system health
           </p>
         </div>
 
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-4">
           {lastChecked && (
-            <span className="text-xs text-surface-400">
+            <span className="text-claude-body-sm text-[var(--color-muted)]">
               Updated {lastChecked}
             </span>
           )}
-          <button
+          <Button
+            variant="secondary"
             onClick={handleRefresh}
             disabled={isFetching}
-            className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium text-surface-600 bg-white border border-surface-200 hover:bg-surface-50 hover:border-surface-300 transition-all disabled:opacity-60"
           >
             <RefreshCw className={`w-4 h-4 ${isFetching ? 'animate-spin' : ''}`} />
             Refresh
-          </button>
+          </Button>
         </div>
       </div>
 
       {/* Finance Stats Section */}
       <div>
-        <h3 className="text-lg font-semibold text-gray-800 mb-4">Financial Overview</h3>
+        <h3 className="text-claude-title-md text-[var(--color-ink)] mb-4">Financial Overview</h3>
         {isLoadingFinance ? (
-          <div className="text-center py-8 text-gray-500">Loading finance stats...</div>
+          <div className="text-center py-8 text-[var(--color-muted)]">Loading finance stats...</div>
         ) : financeStats ? (
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-            <div className="bg-white p-5 rounded-xl border border-gray-200 shadow-sm">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <Card padding="md">
               <div className="flex justify-between items-start">
                 <div>
-                  <p className="text-sm font-medium text-gray-500 mb-1">MRR</p>
-                  <p className="text-2xl font-bold text-gray-900">${financeStats.mrr.toLocaleString()}</p>
+                  <p className="text-claude-body-sm font-semibold text-[var(--color-muted)] tracking-wide uppercase mb-2">MRR</p>
+                  <p className="text-claude-display-lg text-[var(--color-ink)]">₹{financeStats.mrr.toLocaleString()}</p>
                 </div>
-                <div className="bg-blue-50 p-2 rounded-lg"><TrendingUp className="w-5 h-5 text-blue-600" /></div>
+                <div className="p-2 rounded-lg bg-[var(--color-surface-soft)]"><TrendingUp className="w-5 h-5 text-[var(--color-ink)]" /></div>
               </div>
-            </div>
+            </Card>
             
-            <div className="bg-white p-5 rounded-xl border border-gray-200 shadow-sm">
+            <Card padding="md">
               <div className="flex justify-between items-start">
                 <div>
-                  <p className="text-sm font-medium text-gray-500 mb-1">Net Profit</p>
-                  <p className="text-2xl font-bold text-gray-900">${financeStats.net_profit.toLocaleString()}</p>
+                  <p className="text-claude-body-sm font-semibold text-[var(--color-muted)] tracking-wide uppercase mb-2">Net Profit</p>
+                  <p className="text-claude-display-lg text-[var(--color-ink)]">₹{financeStats.net_profit.toLocaleString()}</p>
                 </div>
-                <div className="bg-green-50 p-2 rounded-lg"><DollarSign className="w-5 h-5 text-green-600" /></div>
+                <div className="p-2 rounded-lg bg-[var(--color-surface-soft)]"><IndianRupee className="w-5 h-5 text-[var(--color-ink)]" /></div>
               </div>
-            </div>
+            </Card>
 
-            <div className="bg-white p-5 rounded-xl border border-gray-200 shadow-sm">
+            <Card padding="md">
               <div className="flex justify-between items-start">
                 <div>
-                  <p className="text-sm font-medium text-gray-500 mb-1">Cash Reserve</p>
-                  <p className="text-2xl font-bold text-gray-900">${financeStats.reserve_fund.toLocaleString()}</p>
+                  <p className="text-claude-body-sm font-semibold text-[var(--color-muted)] tracking-wide uppercase mb-2">Cash Reserve</p>
+                  <p className="text-claude-display-lg text-[var(--color-ink)]">₹{financeStats.reserve_fund.toLocaleString()}</p>
                 </div>
-                <div className="bg-indigo-50 p-2 rounded-lg"><DollarSign className="w-5 h-5 text-indigo-600" /></div>
+                <div className="p-2 rounded-lg bg-[var(--color-surface-soft)]"><IndianRupee className="w-5 h-5 text-[var(--color-ink)]" /></div>
               </div>
-            </div>
+            </Card>
           </div>
         ) : null}
       </div>
-
-      <div className="h-px bg-gray-200 w-full my-8"></div>
 
       {/* Client Stats Section */}
       <div>
-        <h3 className="text-lg font-semibold text-gray-800 mb-4">Client Operations</h3>
+        <h3 className="text-claude-title-md text-[var(--color-ink)] mb-4">Client Operations</h3>
         {isLoadingClientStats ? (
-          <div className="text-center py-8 text-gray-500">Loading client stats...</div>
+          <div className="text-center py-8 text-[var(--color-muted)]">Loading client stats...</div>
         ) : clientStats ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-            <div className="bg-white p-5 rounded-xl border border-gray-200 shadow-sm">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            <Card padding="md">
               <div className="flex justify-between items-start">
                 <div>
-                  <p className="text-sm font-medium text-gray-500 mb-1">Active Clients</p>
-                  <p className="text-2xl font-bold text-gray-900">{clientStats.active_clients}</p>
+                  <p className="text-claude-body-sm font-semibold text-[var(--color-muted)] tracking-wide uppercase mb-2">Active Clients</p>
+                  <p className="text-claude-display-lg text-[var(--color-ink)]">{clientStats.active_clients}</p>
                 </div>
-                <div className="bg-blue-50 p-2 rounded-lg"><Target className="w-5 h-5 text-blue-600" /></div>
+                <div className="p-2 rounded-lg bg-[var(--color-surface-soft)]"><Target className="w-5 h-5 text-[var(--color-ink)]" /></div>
               </div>
-            </div>
+            </Card>
             
-            <div className="bg-white p-5 rounded-xl border border-gray-200 shadow-sm">
+            <Card padding="md">
               <div className="flex justify-between items-start">
                 <div>
-                  <p className="text-sm font-medium text-gray-500 mb-1">Monthly Retainer</p>
-                  <p className="text-2xl font-bold text-gray-900">${clientStats.monthly_retainer_revenue.toLocaleString()}</p>
+                  <p className="text-claude-body-sm font-semibold text-[var(--color-muted)] tracking-wide uppercase mb-2">Monthly Retainer</p>
+                  <p className="text-claude-display-lg text-[var(--color-ink)]">₹{(clientStats.mrr ?? 0).toLocaleString()}</p>
                 </div>
-                <div className="bg-green-50 p-2 rounded-lg"><DollarSign className="w-5 h-5 text-green-600" /></div>
+                <div className="p-2 rounded-lg bg-[var(--color-surface-soft)]"><IndianRupee className="w-5 h-5 text-[var(--color-ink)]" /></div>
               </div>
-            </div>
+            </Card>
 
-            <div className="bg-white p-5 rounded-xl border border-gray-200 shadow-sm">
+            <Card padding="md">
               <div className="flex justify-between items-start">
                 <div>
-                  <p className="text-sm font-medium text-gray-500 mb-1">At Risk Clients</p>
-                  <p className="text-2xl font-bold text-gray-900">{clientStats.at_risk_clients}</p>
+                  <p className="text-claude-body-sm font-semibold text-[var(--color-muted)] tracking-wide uppercase mb-2">At Risk</p>
+                  <p className="text-claude-display-lg text-[var(--color-ink)]">{clientStats.at_risk_clients}</p>
                 </div>
-                <div className="bg-red-50 p-2 rounded-lg"><XCircle className="w-5 h-5 text-red-600" /></div>
+                <div className="p-2 rounded-lg bg-[var(--color-error)]/10"><XCircle className="w-5 h-5 text-[var(--color-error)]" /></div>
               </div>
-            </div>
+            </Card>
 
-            <div className="bg-white p-5 rounded-xl border border-gray-200 shadow-sm">
+            <Card padding="md">
               <div className="flex justify-between items-start">
                 <div>
-                  <p className="text-sm font-medium text-gray-500 mb-1">Renewals Due</p>
-                  <p className="text-2xl font-bold text-gray-900">{clientStats.renewals_due}</p>
+                  <p className="text-claude-body-sm font-semibold text-[var(--color-muted)] tracking-wide uppercase mb-2">Renewals</p>
+                  <p className="text-claude-display-lg text-[var(--color-ink)]">{clientStats.renewals_due}</p>
                 </div>
-                <div className="bg-amber-50 p-2 rounded-lg"><Calendar className="w-5 h-5 text-amber-600" /></div>
+                <div className="p-2 rounded-lg bg-[var(--color-surface-soft)]"><Calendar className="w-5 h-5 text-[var(--color-ink)]" /></div>
               </div>
-            </div>
+            </Card>
           </div>
         ) : null}
       </div>
 
-      <div className="h-px bg-gray-200 w-full my-8"></div>
-
       {/* CRM Stats Section */}
       <div>
-        <h3 className="text-lg font-semibold text-gray-800 mb-4">Pipeline Overview</h3>
+        <h3 className="text-claude-title-md text-[var(--color-ink)] mb-4">Pipeline Overview</h3>
         {isLoadingStats ? (
-          <div className="text-center py-8 text-gray-500">Loading CRM stats...</div>
+          <div className="text-center py-8 text-[var(--color-muted)]">Loading CRM stats...</div>
         ) : crmStats ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-            <div className="bg-white p-5 rounded-xl border border-gray-200 shadow-sm">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+            <Card padding="md">
               <div className="flex justify-between items-start">
                 <div>
-                  <p className="text-sm font-medium text-gray-500 mb-1">Pipeline Value</p>
-                  <p className="text-2xl font-bold text-gray-900">${crmStats.pipeline_value.toLocaleString()}</p>
+                  <p className="text-claude-body-sm font-semibold text-[var(--color-muted)] tracking-wide uppercase mb-2">Pipeline</p>
+                  <p className="text-claude-display-lg text-[var(--color-ink)]">₹{crmStats.pipeline_value.toLocaleString()}</p>
                 </div>
-                <div className="bg-blue-50 p-2 rounded-lg"><DollarSign className="w-5 h-5 text-blue-600" /></div>
+                <div className="p-2 rounded-lg bg-[var(--color-surface-soft)]"><IndianRupee className="w-5 h-5 text-[var(--color-ink)]" /></div>
               </div>
-            </div>
+            </Card>
             
-            <div className="bg-white p-5 rounded-xl border border-gray-200 shadow-sm">
+            <Card padding="md">
               <div className="flex justify-between items-start">
                 <div>
-                  <p className="text-sm font-medium text-gray-500 mb-1">Weighted Value</p>
-                  <p className="text-2xl font-bold text-gray-900">${crmStats.weighted_pipeline_value.toLocaleString()}</p>
+                  <p className="text-claude-body-sm font-semibold text-[var(--color-muted)] tracking-wide uppercase mb-2">Weighted</p>
+                  <p className="text-claude-display-lg text-[var(--color-ink)]">₹{crmStats.weighted_pipeline_value.toLocaleString()}</p>
                 </div>
-                <div className="bg-indigo-50 p-2 rounded-lg"><Target className="w-5 h-5 text-indigo-600" /></div>
+                <div className="p-2 rounded-lg bg-[var(--color-surface-soft)]"><Target className="w-5 h-5 text-[var(--color-ink)]" /></div>
               </div>
-            </div>
+            </Card>
 
-            <div className="bg-white p-5 rounded-xl border border-gray-200 shadow-sm">
+            <Card padding="md">
               <div className="flex justify-between items-start">
                 <div>
-                  <p className="text-sm font-medium text-gray-500 mb-1">Meetings</p>
-                  <p className="text-2xl font-bold text-gray-900">{crmStats.meetings_scheduled}</p>
+                  <p className="text-claude-body-sm font-semibold text-[var(--color-muted)] tracking-wide uppercase mb-2">Meetings</p>
+                  <p className="text-claude-display-lg text-[var(--color-ink)]">{crmStats.meetings_scheduled}</p>
                 </div>
-                <div className="bg-amber-50 p-2 rounded-lg"><Calendar className="w-5 h-5 text-amber-600" /></div>
+                <div className="p-2 rounded-lg bg-[var(--color-surface-soft)]"><Calendar className="w-5 h-5 text-[var(--color-ink)]" /></div>
               </div>
-            </div>
+            </Card>
 
-            <div className="bg-white p-5 rounded-xl border border-gray-200 shadow-sm">
+            <Card padding="md">
               <div className="flex justify-between items-start">
                 <div>
-                  <p className="text-sm font-medium text-gray-500 mb-1">Conversion Rate</p>
-                  <p className="text-2xl font-bold text-gray-900">{crmStats.conversion_rate}%</p>
+                  <p className="text-claude-body-sm font-semibold text-[var(--color-muted)] tracking-wide uppercase mb-2">Conversion</p>
+                  <p className="text-claude-display-lg text-[var(--color-ink)]">{crmStats.conversion_rate}%</p>
                 </div>
-                <div className="bg-green-50 p-2 rounded-lg"><TrendingUp className="w-5 h-5 text-green-600" /></div>
+                <div className="p-2 rounded-lg bg-[var(--color-primary)]/10"><TrendingUp className="w-5 h-5 text-[var(--color-primary)]" /></div>
               </div>
-            </div>
+            </Card>
           </div>
         ) : null}
 
         {/* Charts */}
         {crmStats && (
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm">
-              <h4 className="font-semibold text-gray-700 mb-4">Win / Loss Ratio</h4>
+            <Card padding="lg">
+              <h4 className="text-claude-title-sm text-[var(--color-ink)] mb-6">Win / Loss Ratio</h4>
               <div className="h-[250px] flex justify-center items-center">
                 {(crmStats.won_opportunities === 0 && crmStats.lost_opportunities === 0) ? (
-                   <p className="text-gray-400">No closed opportunities yet.</p>
+                   <p className="text-[var(--color-muted)]">No closed opportunities yet.</p>
                 ) : (
                   <ResponsiveContainer width="100%" height="100%">
                     <PieChart>
@@ -292,82 +297,45 @@ export function DashboardPage() {
                           <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                         ))}
                       </Pie>
-                      <RechartsTooltip />
+                      <RechartsTooltip contentStyle={{ borderRadius: '8px', border: '1px solid var(--color-hairline)' }} />
                     </PieChart>
                   </ResponsiveContainer>
                 )}
               </div>
-              <div className="flex justify-center gap-6 mt-2">
+              <div className="flex justify-center gap-8 mt-4">
                 <div className="text-center">
-                  <p className="text-xl font-bold text-green-600">{crmStats.won_opportunities}</p>
-                  <p className="text-xs text-gray-500">Won</p>
+                  <p className="text-claude-display-md text-[var(--color-primary)]">{crmStats.won_opportunities}</p>
+                  <p className="text-claude-body-sm font-semibold uppercase tracking-wide text-[var(--color-muted)]">Won</p>
                 </div>
                 <div className="text-center">
-                  <p className="text-xl font-bold text-red-500">{crmStats.lost_opportunities}</p>
-                  <p className="text-xs text-gray-500">Lost</p>
+                  <p className="text-claude-display-md text-[var(--color-ink)]">{crmStats.lost_opportunities}</p>
+                  <p className="text-claude-body-sm font-semibold uppercase tracking-wide text-[var(--color-muted)]">Lost</p>
                 </div>
               </div>
-            </div>
+            </Card>
 
-            <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm">
-              <h4 className="font-semibold text-gray-700 mb-4">Pipeline Value</h4>
+            <Card padding="lg">
+              <h4 className="text-claude-title-sm text-[var(--color-ink)] mb-6">Pipeline Value</h4>
               <div className="h-[250px]">
                 <ResponsiveContainer width="100%" height="100%">
                   <BarChart data={pipelineData} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
-                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#E5E7EB" />
-                    <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fill: '#6B7280' }} />
-                    <YAxis axisLine={false} tickLine={false} tick={{ fill: '#6B7280' }} tickFormatter={(value) => `$${value}`} />
-                    <RechartsTooltip cursor={{ fill: '#F3F4F6' }} formatter={(value: any) => [`$${value.toLocaleString()}`, 'Value']} />
-                    <Bar dataKey="value" fill="#3B82F6" radius={[4, 4, 0, 0]} maxBarSize={60}>
+                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="var(--color-hairline)" />
+                    <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fill: 'var(--color-muted)' }} />
+                    <YAxis axisLine={false} tickLine={false} tick={{ fill: 'var(--color-muted)' }} tickFormatter={(value) => `₹${value}`} />
+                    <RechartsTooltip cursor={{ fill: 'var(--color-surface-soft)' }} formatter={(value: any) => [`₹${value.toLocaleString()}`, 'Value']} contentStyle={{ borderRadius: '8px', border: '1px solid var(--color-hairline)' }} />
+                    <Bar dataKey="value" fill="var(--color-primary)" radius={[4, 4, 0, 0]} maxBarSize={60}>
                       {pipelineData.map((entry, index) => (
-                        <Cell key={`cell-${index}`} fill={index === 0 ? '#3B82F6' : '#8B5CF6'} />
+                        <Cell key={`cell-${index}`} fill={index === 0 ? 'var(--color-primary)' : 'var(--color-ink)'} />
                       ))}
                     </Bar>
                   </BarChart>
                 </ResponsiveContainer>
               </div>
-            </div>
+            </Card>
           </div>
         )}
       </div>
 
-      <div className="h-px bg-gray-200 w-full my-8"></div>
-
-      {/* System Health Section */}
-      <div>
-        <h3 className="text-lg font-semibold text-gray-800 mb-4">System Health</h3>
-        {/* Overall Status Banner */}
-        {!isLoadingHealth && health && (
-          <div className={`flex items-center gap-3 px-5 py-4 rounded-2xl border ${overallStatusConfig.bg} ${overallStatusConfig.border} animate-fade-in mb-6`}>
-            <Activity className={`w-5 h-5 ${overallStatusConfig.color}`} />
-            <div>
-              <p className={`font-semibold ${overallStatusConfig.color}`}>
-                {overallStatusConfig.label}
-              </p>
-              <p className="text-xs text-surface-500 mt-0.5">
-                {health.services.filter(s => s.status === 'healthy').length} of{' '}
-                {health.services.length} services are healthy
-              </p>
-            </div>
-          </div>
-        )}
-
-        {/* Health Cards Grid */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-          {isLoadingHealth
-            ? PLACEHOLDER_SERVICES.map((s) => (
-                <HealthCard
-                  key={s.name}
-                  service={{ name: s.name, status: 'healthy', latency_ms: null }}
-                  isLoading
-                />
-              ))
-            : (health?.services ?? []).map((service) => (
-                <HealthCard key={service.name} service={service} />
-              ))
-          }
-        </div>
-      </div>
     </div>
   )
 }

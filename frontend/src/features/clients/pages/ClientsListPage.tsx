@@ -1,4 +1,6 @@
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { useDemoQuery } from '@/lib/useDemoQuery';
+import { mockClientsData } from '@/mocks';
 import {
   createColumnHelper,
   flexRender,
@@ -13,7 +15,80 @@ import { useState } from 'react';
 import { clientsApi } from '../api';
 import { type Client } from '../types';
 import { Link } from '@tanstack/react-router';
-import { Search, ChevronDown, ChevronUp } from 'lucide-react';
+import { Search, ChevronDown, ChevronUp, Plus, X } from 'lucide-react';
+
+function AddClientModal({ isOpen, onClose, onAdd }: { isOpen: boolean, onClose: () => void, onAdd: (client: Partial<Client>) => void }) {
+  const [formData, setFormData] = useState({
+    business_name: '',
+    package_type: 'Scale',
+    monthly_retainer: 150000,
+  });
+
+  if (!isOpen) return null;
+
+  return (
+    <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4">
+      <div className="bg-white rounded-xl shadow-xl w-full max-w-md overflow-hidden">
+        <div className="flex justify-between items-center p-4 border-b border-surface-200">
+          <h3 className="font-semibold text-lg">Add Custom Client</h3>
+          <button onClick={onClose} className="p-1 hover:bg-surface-100 rounded-md">
+            <X className="w-5 h-5 text-surface-500" />
+          </button>
+        </div>
+        <div className="p-4 space-y-4">
+          <div>
+            <label className="block text-sm font-medium text-surface-700 mb-1">Business Name</label>
+            <input 
+              type="text" 
+              className="w-full px-3 py-2 border border-surface-200 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              value={formData.business_name}
+              onChange={e => setFormData({...formData, business_name: e.target.value})}
+              placeholder="e.g. Acme Corp"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-surface-700 mb-1">Package Type</label>
+            <select 
+              className="w-full px-3 py-2 border border-surface-200 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              value={formData.package_type}
+              onChange={e => setFormData({...formData, package_type: e.target.value})}
+            >
+              <option value="Starter">Starter</option>
+              <option value="Growth">Growth</option>
+              <option value="Scale">Scale</option>
+              <option value="Enterprise">Enterprise</option>
+            </select>
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-surface-700 mb-1">Monthly Retainer (₹)</label>
+            <input 
+              type="number" 
+              className="w-full px-3 py-2 border border-surface-200 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              value={formData.monthly_retainer}
+              onChange={e => setFormData({...formData, monthly_retainer: Number(e.target.value)})}
+            />
+          </div>
+          <button 
+            onClick={() => {
+              onAdd({
+                ...formData,
+                id: `client-custom-${Date.now()}`,
+                health_status: 'HEALTHY',
+                renewal_probability: 95,
+                contract_end_date: new Date(Date.now() + 31536000000).toISOString(),
+                status: 'ACTIVE'
+              });
+              onClose();
+            }}
+            className="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded-md transition-colors"
+          >
+            Add Client
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
 
 const columnHelper = createColumnHelper<Client>();
 
@@ -32,7 +107,7 @@ const columns = [
   }),
   columnHelper.accessor('monthly_retainer', {
     header: 'Retainer',
-    cell: info => `$${(info.getValue() || 0).toLocaleString()}`,
+    cell: info => `₹${(info.getValue() || 0).toLocaleString()}`,
   }),
   columnHelper.accessor('health_status', {
     header: 'Health Status',
@@ -73,10 +148,12 @@ const columns = [
 ];
 
 export function ClientsListPage() {
-  const { data: clients, isLoading } = useQuery({
+  const queryClient = useQueryClient();
+  const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+  const { data: clients, isLoading } = useDemoQuery({
     queryKey: ['clients'],
     queryFn: clientsApi.getClients,
-  });
+  }, mockClientsData);
 
   const [sorting, setSorting] = useState<SortingState>([]);
   const [globalFilter, setGlobalFilter] = useState('');
@@ -108,15 +185,24 @@ export function ClientsListPage() {
           <h2 className="text-2xl font-bold text-surface-900">Clients</h2>
           <p className="text-surface-500 mt-0.5 text-sm">Manage active clients and delivery health</p>
         </div>
-        <div className="relative">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-surface-400" />
-          <input
-            type="text"
-            placeholder="Search clients..."
-            value={globalFilter ?? ''}
-            onChange={e => setGlobalFilter(e.target.value)}
-            className="pl-9 pr-4 py-2 border border-surface-200 rounded-lg text-sm w-64 focus:outline-none focus:ring-2 focus:ring-blue-500"
-          />
+        <div className="flex items-center gap-4">
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-surface-400" />
+            <input
+              type="text"
+              placeholder="Search clients..."
+              value={globalFilter ?? ''}
+              onChange={e => setGlobalFilter(e.target.value)}
+              className="pl-9 pr-4 py-2 border border-surface-200 rounded-lg text-sm w-64 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            />
+          </div>
+          <button 
+            onClick={() => setIsAddModalOpen(true)}
+            className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors"
+          >
+            <Plus className="w-4 h-4" />
+            Add Client
+          </button>
         </div>
       </div>
 
@@ -202,6 +288,15 @@ export function ClientsListPage() {
           </div>
         </div>
       </div>
+      <AddClientModal 
+        isOpen={isAddModalOpen} 
+        onClose={() => setIsAddModalOpen(false)} 
+        onAdd={(newClient) => {
+          queryClient.setQueryData(['clients'], (oldData: any) => {
+            return [newClient, ...(oldData || [])];
+          });
+        }} 
+      />
     </div>
   );
 }

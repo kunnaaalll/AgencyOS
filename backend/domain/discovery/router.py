@@ -87,7 +87,40 @@ async def list_discovery_runs(
     result = await db.execute(
         select(DiscoveryRun).order_by(DiscoveryRun.created_at.desc()).offset(skip).limit(limit)
     )
-    return result.scalars().all()
+    runs = result.scalars().all()
+
+    if runs:
+        run_ids = [r.id for r in runs]
+        counts_res = await db.execute(
+            select(
+                RawBusiness.run_id,
+                func.count(RawBusiness.id).label("discovered"),
+                func.sum(func.cast(RawBusiness.validation_status == "VALID", type_=func.count().type)).label("validated"),
+                func.sum(func.cast(RawBusiness.enriched_at.isnot(None), type_=func.count().type)).label("promoted"),
+            )
+            .where(RawBusiness.run_id.in_(run_ids))
+            .group_by(RawBusiness.run_id)
+        )
+        counts_map = {
+            row.run_id: {
+                "discovered": row.discovered or 0,
+                "validated": row.validated or 0,
+                "promoted": row.promoted or 0,
+            }
+            for row in counts_res.all()
+        }
+        
+        responses = []
+        for r in runs:
+            cmap = counts_map.get(r.id, {})
+            resp = DiscoveryRunResponse.model_validate(r)
+            resp.businesses_discovered = max(r.businesses_discovered, cmap.get("discovered", 0))
+            resp.businesses_validated = cmap.get("validated", 0)
+            resp.businesses_created = cmap.get("promoted", 0)
+            responses.append(resp)
+        return responses
+
+    return runs
 
 
 @router.get("/runs/{run_id}", response_model=DiscoveryRunResponse)
@@ -103,7 +136,22 @@ async def get_discovery_run(
     run = result.scalar_one_or_none()
     if not run:
         raise HTTPException(status_code=404, detail="Run not found")
-    return run
+
+    counts = await db.execute(
+        select(
+            func.count(RawBusiness.id).label("discovered"),
+            func.sum(func.cast(RawBusiness.validation_status == "VALID", type_=func.count().type)).label("validated"),
+            func.sum(func.cast(RawBusiness.enriched_at.isnot(None), type_=func.count().type)).label("promoted"),
+        ).where(RawBusiness.run_id == run.id)
+    )
+    row = counts.first()
+    resp = DiscoveryRunResponse.model_validate(run)
+    if row:
+        resp.businesses_discovered = max(run.businesses_discovered, row.discovered or 0)
+        resp.businesses_validated = row.validated or 0
+        resp.businesses_created = row.promoted or 0
+
+    return resp
 
 
 # ── Bulk Discovery ────────────────────────────────────────────────────────────

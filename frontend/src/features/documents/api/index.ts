@@ -4,11 +4,11 @@ import { DocumentRecord, CredentialRecord } from '../types';
 export const DocumentsAPI = {
   // Documents
   getDocuments: async (): Promise<DocumentRecord[]> => {
-    const { data } = await api.get('/api/v1/documents');
+    const { data } = await api.get('/v1/documents');
     return data;
   },
   uploadDocument: async (formData: FormData): Promise<DocumentRecord> => {
-    const { data } = await api.post('/api/v1/documents/upload', formData, {
+    const { data } = await api.post('/v1/documents/upload', formData, {
       headers: {
         'Content-Type': 'multipart/form-data'
       }
@@ -16,27 +16,27 @@ export const DocumentsAPI = {
     return data;
   },
   deleteDocument: async (id: string): Promise<void> => {
-    await api.delete(`/api/v1/documents/${id}`);
+    await api.delete(`/v1/documents/${id}`);
   },
   getDownloadUrl: async (id: string): Promise<string> => {
-    const { data } = await api.get(`/api/v1/documents/${id}/download`);
+    const { data } = await api.get(`/v1/documents/${id}/download`);
     return data.url;
   },
 
   // Credentials
   getCredentials: async (): Promise<CredentialRecord[]> => {
-    const { data } = await api.get('/api/v1/credentials');
+    const { data } = await api.get('/v1/credentials');
     return data;
   },
   createCredential: async (credential: Partial<CredentialRecord>): Promise<CredentialRecord> => {
-    const { data } = await api.post('/api/v1/credentials', credential);
+    const { data } = await api.post('/v1/credentials', credential);
     return data;
   },
   updateCredential: async (id: string, credential: Partial<CredentialRecord>): Promise<CredentialRecord> => {
-    const { data } = await api.patch(`/api/v1/credentials/${id}`, credential);
+    const { data } = await api.patch(`/v1/credentials/${id}`, credential);
     return data;
   },
   deleteCredential: async (id: string): Promise<void> => {
-    await api.delete(`/api/v1/credentials/${id}`);
+    await api.delete(`/v1/credentials/${id}`);
   },
 };
