@@ -60,7 +60,7 @@ jobs:
           cache-dependency-path: frontend/package-lock.json
 
       - name: Install dependencies
-        run: npm ci
+        run: npm install
 
       - name: ESLint
         run: npm run lint
@@ -159,7 +159,7 @@ jobs:
           cache-dependency-path: frontend/package-lock.json
 
       - name: Install dependencies
-        run: npm ci
+        run: npm install
 
       - name: Run tests
         run: npx vitest run --reporter=verbose
@@ -213,7 +213,7 @@ jobs:
         continue-on-error: true
 
       - name: npm audit (Frontend)
-        run: cd frontend && npm ci && npm audit --audit-level=high || true
+        run: cd frontend && npm install && npm audit --audit-level=high || true
         continue-on-error: true
 
       - name: Trivy (Docker image scan)
