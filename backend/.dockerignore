@@ -19,7 +19,7 @@ htmlcov/
 *.cover
 
 # Tests (not needed in production image)
-# tests/
+tests/
 
 # Editor
 .vscode/
