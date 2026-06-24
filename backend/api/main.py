@@ -188,7 +188,7 @@ def create_app() -> FastAPI:
     # ── Root Redirect ─────────────────────────────────────────
     @app.get("/", include_in_schema=False)
     async def root():
-        return {"message": "AgencyOS V2 API", "docs": "/docs", "health": "/api/health"}
+        return {"message": "AgencyOS V2 API", "docs": "/docs", "health": "/api/v1/health"}
 
     return app
 

@@ -101,7 +101,7 @@ async def test_user(db_session: AsyncSession):
 async def auth_headers(client: AsyncClient, test_user) -> dict[str, str]:
     """Get authentication headers for the test user."""
     response = await client.post(
-        "/api/auth/login",
+        "/api/v1/auth/login",
         json={"email": "test@example.com", "password": "TestPassword123!"},
     )
     tokens = response.json()

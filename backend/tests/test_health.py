@@ -11,7 +11,7 @@ class TestHealth:
 
     @pytest.mark.asyncio
     async def test_health_check_returns_status(self, client: AsyncClient):
-        response = await client.get("/api/health")
+        response = await client.get("/api/v1/health")
         # May return 200 (healthy) or 503 (degraded) depending on service availability
         assert response.status_code in (200, 503)
         data = response.json()

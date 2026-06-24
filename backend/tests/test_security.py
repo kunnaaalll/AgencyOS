@@ -81,7 +81,7 @@ class TestCORS:
     @pytest.mark.asyncio
     async def test_cors_allowed_origin(self, client: AsyncClient):
         response = await client.options(
-            "/api/health",
+            "/api/v1/health",
             headers={
                 "Origin": "http://localhost:5173",
                 "Access-Control-Request-Method": "GET",
@@ -92,7 +92,7 @@ class TestCORS:
     @pytest.mark.asyncio
     async def test_cors_disallowed_origin(self, client: AsyncClient):
         response = await client.options(
-            "/api/health",
+            "/api/v1/health",
             headers={
                 "Origin": "http://evil.com",
                 "Access-Control-Request-Method": "GET",
@@ -108,13 +108,13 @@ class TestUnauthorizedAccess:
 
     @pytest.mark.asyncio
     async def test_protected_endpoint_no_token(self, client: AsyncClient):
-        response = await client.get("/api/auth/me")
+        response = await client.get("/api/v1/auth/me")
         assert response.status_code == 401
 
     @pytest.mark.asyncio
     async def test_protected_endpoint_invalid_token(self, client: AsyncClient):
         response = await client.get(
-            "/api/auth/me",
+            "/api/v1/auth/me",
             headers={"Authorization": "Bearer invalid.token.here"},
         )
         assert response.status_code == 401
@@ -132,7 +132,7 @@ class TestUnauthorizedAccess:
             expires_delta=timedelta(seconds=-1),
         )
         response = await client.get(
-            "/api/auth/me",
+            "/api/v1/auth/me",
             headers={"Authorization": f"Bearer {expired_token}"},
         )
         assert response.status_code == 401

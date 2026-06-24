@@ -13,7 +13,7 @@ class TestLogin:
     @pytest.mark.asyncio
     async def test_login_success(self, client: AsyncClient, test_user):
         response = await client.post(
-            "/api/auth/login",
+            "/api/v1/auth/login",
             json={"email": "test@example.com", "password": "TestPassword123!"},
         )
         assert response.status_code == 200
@@ -26,7 +26,7 @@ class TestLogin:
     @pytest.mark.asyncio
     async def test_login_wrong_password(self, client: AsyncClient, test_user):
         response = await client.post(
-            "/api/auth/login",
+            "/api/v1/auth/login",
             json={"email": "test@example.com", "password": "WrongPassword123!"},
         )
         assert response.status_code == 401
@@ -34,7 +34,7 @@ class TestLogin:
     @pytest.mark.asyncio
     async def test_login_nonexistent_user(self, client: AsyncClient):
         response = await client.post(
-            "/api/auth/login",
+            "/api/v1/auth/login",
             json={"email": "nobody@example.com", "password": "TestPassword123!"},
         )
         assert response.status_code == 401
@@ -42,7 +42,7 @@ class TestLogin:
     @pytest.mark.asyncio
     async def test_login_invalid_email_format(self, client: AsyncClient):
         response = await client.post(
-            "/api/auth/login",
+            "/api/v1/auth/login",
             json={"email": "not-an-email", "password": "TestPassword123!"},
         )
         assert response.status_code == 422
@@ -55,14 +55,14 @@ class TestRefresh:
     async def test_refresh_success(self, client: AsyncClient, test_user):
         # Login first
         login_resp = await client.post(
-            "/api/auth/login",
+            "/api/v1/auth/login",
             json={"email": "test@example.com", "password": "TestPassword123!"},
         )
         refresh_token = login_resp.json()["refresh_token"]
 
         # Refresh
         response = await client.post(
-            "/api/auth/refresh",
+            "/api/v1/auth/refresh",
             json={"refresh_token": refresh_token},
         )
         assert response.status_code == 200
@@ -73,7 +73,7 @@ class TestRefresh:
     @pytest.mark.asyncio
     async def test_refresh_invalid_token(self, client: AsyncClient):
         response = await client.post(
-            "/api/auth/refresh",
+            "/api/v1/auth/refresh",
             json={"refresh_token": "invalid.token.here"},
         )
         assert response.status_code == 401
@@ -85,13 +85,13 @@ class TestLogout:
     @pytest.mark.asyncio
     async def test_logout_success(self, client: AsyncClient, test_user):
         login_resp = await client.post(
-            "/api/auth/login",
+            "/api/v1/auth/login",
             json={"email": "test@example.com", "password": "TestPassword123!"},
         )
         refresh_token = login_resp.json()["refresh_token"]
 
         response = await client.post(
-            "/api/auth/logout",
+            "/api/v1/auth/logout",
             json={"refresh_token": refresh_token},
         )
         assert response.status_code == 204
@@ -102,7 +102,7 @@ class TestMe:
 
     @pytest.mark.asyncio
     async def test_me_authenticated(self, client: AsyncClient, auth_headers):
-        response = await client.get("/api/auth/me", headers=auth_headers)
+        response = await client.get("/api/v1/auth/me", headers=auth_headers)
         assert response.status_code == 200
         data = response.json()
         assert data["email"] == "test@example.com"
@@ -111,7 +111,7 @@ class TestMe:
 
     @pytest.mark.asyncio
     async def test_me_unauthenticated(self, client: AsyncClient):
-        response = await client.get("/api/auth/me")
+        response = await client.get("/api/v1/auth/me")
         assert response.status_code == 401
 
 
@@ -121,7 +121,7 @@ class TestChangePassword:
     @pytest.mark.asyncio
     async def test_change_password_success(self, client: AsyncClient, auth_headers):
         response = await client.post(
-            "/api/auth/change-password",
+            "/api/v1/auth/change-password",
             json={
                 "current_password": "TestPassword123!",
                 "new_password": "NewSecurePass456!",
@@ -133,7 +133,7 @@ class TestChangePassword:
     @pytest.mark.asyncio
     async def test_change_password_wrong_current(self, client: AsyncClient, auth_headers):
         response = await client.post(
-            "/api/auth/change-password",
+            "/api/v1/auth/change-password",
             json={
                 "current_password": "WrongPassword!",
                 "new_password": "NewSecurePass456!",
@@ -145,7 +145,7 @@ class TestChangePassword:
     @pytest.mark.asyncio
     async def test_change_password_weak_new(self, client: AsyncClient, auth_headers):
         response = await client.post(
-            "/api/auth/change-password",
+            "/api/v1/auth/change-password",
             json={
                 "current_password": "TestPassword123!",
                 "new_password": "weak",
