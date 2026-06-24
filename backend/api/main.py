@@ -11,7 +11,7 @@ import structlog
 from fastapi import FastAPI, Request, Response
 from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import ORJSONResponse
+
 from slowapi import Limiter, _rate_limit_exceeded_handler
 from slowapi.errors import RateLimitExceeded
 from slowapi.util import get_remote_address
@@ -102,7 +102,7 @@ def create_app() -> FastAPI:
         docs_url=docs_url,
         redoc_url=redoc_url,
         openapi_url=openapi_url,
-        default_response_class=ORJSONResponse,
+
         lifespan=lifespan,
     )
 
@@ -176,6 +176,9 @@ def create_app() -> FastAPI:
     app.add_exception_handler(Exception, generic_exception_handler)
 
     # ── Routers ───────────────────────────────────────────────
+    from api.health import router as health_router
+
+    app.include_router(health_router, prefix="/api")
     app.include_router(api_router)
 
     # ── Prometheus Metrics ────────────────────────────────────
@@ -188,7 +191,7 @@ def create_app() -> FastAPI:
     # ── Root Redirect ─────────────────────────────────────────
     @app.get("/", include_in_schema=False)
     async def root():
-        return {"message": "AgencyOS V2 API", "docs": "/docs", "health": "/api/v1/health"}
+        return {"message": "AgencyOS V2 API", "docs": "/docs", "health": "/api/health"}
 
     return app
 

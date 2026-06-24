@@ -31,7 +31,7 @@ from domain.user.router import router as user_router
 
 api_router = APIRouter(prefix="/api/v1")
 
-# ── Health (no auth required) ─────────────────────────────────
+# ── Health (mounted in main.py for /api/health and here for /api/v1/health)
 api_router.include_router(health_router)
 
 # ── Authentication ────────────────────────────────────────────

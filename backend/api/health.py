@@ -4,7 +4,7 @@ GET /api/health
 """
 
 from fastapi import APIRouter
-from fastapi.responses import ORJSONResponse
+from fastapi.responses import JSONResponse
 
 from services.health import ServiceStatus, check_all_services
 
@@ -15,9 +15,9 @@ router = APIRouter(tags=["Health"])
     "/health",
     summary="System health check",
     description="Returns connectivity status for all services (PostgreSQL, Redis, MinIO, Meilisearch).",
-    response_class=ORJSONResponse,
+    response_class=JSONResponse,
 )
-async def health_check() -> ORJSONResponse:
+async def health_check() -> JSONResponse:
     health = await check_all_services()
 
     response_body = {
@@ -35,4 +35,4 @@ async def health_check() -> ORJSONResponse:
 
     # Return 200 for healthy/degraded, 503 for full offline
     status_code = 200 if health.status != ServiceStatus.OFFLINE else 503
-    return ORJSONResponse(content=response_body, status_code=status_code)
+    return JSONResponse(content=response_body, status_code=status_code)
