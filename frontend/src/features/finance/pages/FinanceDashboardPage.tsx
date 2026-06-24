@@ -7,15 +7,7 @@ import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContai
 import { financeApi } from '../api'
 import type { FinanceSummary } from '../types'
 import { DEMO_MODE } from '@/config/demo'
-const mockTrendData = [
-  { name: 'Jan', revenue: 4000, expenses: 2400, profit: 1600 },
-  { name: 'Feb', revenue: 3000, expenses: 1398, profit: 1602 },
-  { name: 'Mar', revenue: 2000, expenses: 9800, profit: -7800 },
-  { name: 'Apr', revenue: 2780, expenses: 3908, profit: -1128 },
-  { name: 'May', revenue: 1890, expenses: 4800, profit: -2910 },
-  { name: 'Jun', revenue: 2390, expenses: 3800, profit: -1410 },
-  { name: 'Jul', revenue: 3490, expenses: 4300, profit: -810 },
-]
+import { useFinanceMetrics } from '@/features/analytics/api'
 
 export function FinanceDashboardPage() {
   const [summary, setSummary] = useState<FinanceSummary | null>(null)
@@ -28,7 +20,16 @@ export function FinanceDashboardPage() {
       .finally(() => setIsLoading(false))
   }, [])
 
-  if (isLoading) return <AppSkeleton />
+  const { data: financeMetrics, isLoading: isFinanceLoading } = useFinanceMetrics()
+
+  if (isLoading || isFinanceLoading) return <AppSkeleton />
+
+  const trendData = financeMetrics?.financial_trend?.map(t => ({
+    name: new Date(t.date).toLocaleDateString('default', { month: 'short' }),
+    revenue: t.revenue,
+    expenses: t.expense,
+    profit: t.profit
+  })) || []
 
   const formatCurrency = (val: number) => 
     new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR' }).format(val || 0)
@@ -115,7 +116,7 @@ export function FinanceDashboardPage() {
           </CardHeader>
           <CardContent className="h-[300px]">
             <ResponsiveContainer width="100%" height="100%">
-              <AreaChart data={mockTrendData}>
+              <AreaChart data={trendData}>
                 <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="var(--color-hairline)" />
                 <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{fill: 'var(--color-muted)'}} />
                 <YAxis axisLine={false} tickLine={false} tick={{fill: 'var(--color-muted)'}} />
@@ -135,7 +136,7 @@ export function FinanceDashboardPage() {
           </CardHeader>
           <CardContent className="h-[300px]">
             <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={mockTrendData}>
+              <BarChart data={trendData}>
                 <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="var(--color-hairline)" />
                 <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{fill: 'var(--color-muted)'}} />
                 <YAxis axisLine={false} tickLine={false} tick={{fill: 'var(--color-muted)'}} />

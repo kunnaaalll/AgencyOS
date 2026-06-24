@@ -9,20 +9,9 @@ import {
 import { cn } from '@/lib/utils';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 
-const monthlyCommissionData = [
-  { name: 'Jan', value: 120000 },
-  { name: 'Feb', value: 150000 },
-  { name: 'Mar', value: 140000 },
-  { name: 'Apr', value: 180000 },
-  { name: 'May', value: 210000 },
-  { name: 'Jun', value: 250000 },
-];
-
-const recentDeals = [
-  { id: 1, client: 'Acme Corp', value: 45000, date: 'Jun 12, 2024', status: 'Won' },
-  { id: 2, client: 'TechFlow Inc', value: 85000, date: 'Jun 08, 2024', status: 'Won' },
-  { id: 3, client: 'Global Dynamics', value: 120000, date: 'Jun 02, 2024', status: 'Won' },
-];
+import { useQuery } from '@tanstack/react-query';
+import { useFinanceMetrics } from '@/features/analytics/api';
+import { crmApi } from '@/features/crm/api';
 
 const containerVariants = {
   hidden: { opacity: 0 },
@@ -39,6 +28,30 @@ const itemVariants = {
 
 export function MyProfilePage() {
   const { user } = useStore(authStore);
+
+  const { data: financeMetrics } = useFinanceMetrics();
+  
+  const { data: opportunities } = useQuery({
+    queryKey: ['my-recent-deals'],
+    queryFn: crmApi.getOpportunities
+  });
+
+  const monthlyCommissionData = financeMetrics?.financial_trend?.map(t => ({
+    name: new Date(t.date).toLocaleDateString('default', { month: 'short' }),
+    value: t.revenue * 0.15 // Assuming 15% equity/commission payout
+  })) || [];
+
+  const recentDeals = opportunities?.filter(o => o.pipeline_stage === 'WON').slice(0, 3).map(o => ({
+    id: o.id,
+    client: o.lead_id || 'Unknown Client',
+    value: o.value,
+    date: new Date(o.created_at || Date.now()).toLocaleDateString('default', { month: 'short', day: 'numeric', year: 'numeric' }),
+    status: o.pipeline_stage
+  })) || [];
+
+  const totalPayout = monthlyCommissionData.length > 0 
+    ? monthlyCommissionData[monthlyCommissionData.length - 1].value 
+    : 0;
 
   return (
     <motion.div 
@@ -65,7 +78,7 @@ export function MyProfilePage() {
 
       {/* KPI Row */}
       <motion.div variants={itemVariants} className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <MetricCard title="June Equity Payout" value="₹2,50,000" trend="15% Equity Share" isPositive={true} icon={IndianRupee} highlight={true} />
+        <MetricCard title="Recent Equity Payout" value={`₹${totalPayout.toLocaleString()}`} trend="15% Equity Share" isPositive={true} icon={IndianRupee} highlight={true} />
         <MetricCard title="Total Onboarded Clients" value="48" trend="+4 this month" isPositive={true} icon={Users} />
         <MetricCard title="Active Clients Managed" value="32" trend="92% Retention" isPositive={true} icon={Target} />
       </motion.div>

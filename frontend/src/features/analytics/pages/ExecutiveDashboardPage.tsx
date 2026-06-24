@@ -12,28 +12,10 @@ import {
 } from 'recharts';
 import { cn } from '@/lib/utils';
 import { useQuery } from '@tanstack/react-query';
+import { useExecutiveSummary } from '@/features/analytics/api';
 import { getSystemHealth } from '@/features/system/api';
-import { mockSystemHealth } from '@/mocks/system';
 import { AnimatedCounter } from '@/components/ui/AnimatedCounter';
 import { Database, Server, HardDrive, ListTodo } from 'lucide-react';
-
-// Mock Data
-const revenueData = [
-  { name: 'Jan', revenue: 65000, expenses: 40000 },
-  { name: 'Feb', revenue: 72000, expenses: 42000 },
-  { name: 'Mar', revenue: 85000, expenses: 45000 },
-  { name: 'Apr', revenue: 94000, expenses: 48000 },
-  { name: 'May', revenue: 108000, expenses: 51000 },
-  { name: 'Jun', revenue: 124500, expenses: 54000 },
-];
-
-const pipelineData = [
-  { name: 'Discovery', value: 45 },
-  { name: 'Qualified', value: 30 },
-  { name: 'Proposal', value: 15 },
-  { name: 'Negotiation', value: 8 },
-  { name: 'Closed', value: 5 },
-];
 
 const upcomingTasks = [
   { id: 1, title: 'Review Q3 Marketing Strategy', client: 'Acme Corp', time: '10:00 AM', status: 'pending' },
@@ -59,9 +41,22 @@ export function ExecutiveDashboardPage() {
   const user = useStore(authStore, (state) => state.user);
   const isAdmin = user?.role_name === 'admin' || user?.role_name === 'Admin' || user?.first_name?.includes('Admin');
 
+  const { data: summary, isLoading } = useExecutiveSummary();
+
+  const revenueData = summary?.finance?.financial_trend?.map(t => ({
+    name: new Date(t.date).toLocaleDateString('default', { month: 'short' }),
+    revenue: t.revenue,
+    expenses: t.expense
+  })) || [];
+
+  const pipelineData = summary?.sales?.pipeline_stage_distribution?.map(d => ({
+    name: d.name,
+    value: d.value
+  })) || [];
+
   // Dynamic Valuation Calculation
   // Based on ~90% profit margins and a 10x ARR SaaS multiplier
-  const currentMrr = revenueData[revenueData.length - 1].revenue;
+  const currentMrr = revenueData.length > 0 ? revenueData[revenueData.length - 1].revenue : 0;
   const arr = currentMrr * 12;
   const valuation = arr * 10; // 10x ARR Multiple
   
@@ -76,6 +71,8 @@ export function ExecutiveDashboardPage() {
     queryFn: getSystemHealth,
     enabled: isAdmin
   });
+
+  if (isLoading) return <div className="p-8">Loading dashboard...</div>;
 
   return (
     <motion.div 
@@ -99,22 +96,22 @@ export function ExecutiveDashboardPage() {
       <motion.div variants={itemVariants} className={cn("grid grid-cols-1 md:grid-cols-2 gap-6", isAdmin ? "lg:grid-cols-5" : "lg:grid-cols-4")}>
         <MetricCard 
           title="Monthly Recurring Revenue" 
-          value={<AnimatedCounter value={124500} formatValue={(v) => `₹${Math.round(v).toLocaleString()}`} />} 
+          value={<AnimatedCounter value={summary?.finance?.mrr || 0} formatValue={(v) => `₹${Math.round(v).toLocaleString()}`} />} 
           trend="+14.2%" isPositive={true} icon={IndianRupee} 
         />
         <MetricCard 
           title="Active Clients" 
-          value={<AnimatedCounter value={42} />} 
+          value={<AnimatedCounter value={summary?.growth?.active_clients || 0} />} 
           trend="+3" isPositive={true} icon={Users} 
         />
         <MetricCard 
           title="Qualified Leads" 
-          value={<AnimatedCounter value={156} />} 
+          value={<AnimatedCounter value={summary?.growth?.qualified_leads || 0} />} 
           trend="+24%" isPositive={true} icon={Target} 
         />
         <MetricCard 
           title="Total Lifetime Earnings" 
-          value={<AnimatedCounter value={14500000} formatValue={(v) => `₹${Math.round(v).toLocaleString()}`} />} 
+          value={<AnimatedCounter value={summary?.finance?.lifetime_revenue || 0} formatValue={(v) => `₹${Math.round(v).toLocaleString()}`} />} 
           trend="+12%" isPositive={true} icon={TrendingUp} 
         />
         {isAdmin && (

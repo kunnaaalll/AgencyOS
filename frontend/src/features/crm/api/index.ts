@@ -4,8 +4,8 @@ import { Opportunity, Activity, Meeting, CRMStats } from '../types';
 export const crmApi = {
   // Opportunities
   getOpportunities: async () => {
-    const { data } = await api.get<Opportunity[]>('/crm/opportunities');
-    return data;
+    const { data } = await api.get<any>('/crm/opportunities');
+    return (Array.isArray(data) ? data : data.items || []) as Opportunity[];
   },
   getOpportunity: async (id: string) => {
     const { data } = await api.get<Opportunity>(`/crm/opportunities/${id}`);
