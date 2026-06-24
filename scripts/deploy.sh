@@ -91,7 +91,7 @@ docker compose --env-file .env.production -f docker-compose.prod.yml exec -T bac
 
 # ── Verify ───────────────────────────────────────────────────
 log "Verifying deployment..."
-HTTP_STATUS=$(curl -s -o /dev/null -w "%{http_code}" http://localhost:8000/api/health)
+HTTP_STATUS=$(docker compose --env-file .env.production -f docker-compose.prod.yml exec -T backend curl -s -o /dev/null -w "%{http_code}" http://localhost:8000/api/health) || HTTP_STATUS="000"
 if [[ "${HTTP_STATUS}" -eq 200 ]]; then
     log "🎉 Deployment successful! API is healthy."
 else
