@@ -55,7 +55,6 @@ providers:
   docker:
     endpoint: "unix:///var/run/docker.sock"
     exposedByDefault: false
-    network: agencyos_agencyos
   file:
     filename: /etc/traefik/dynamic.yml
     watch: true
