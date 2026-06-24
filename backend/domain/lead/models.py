@@ -1,7 +1,7 @@
 import uuid
 from datetime import datetime
 
-from sqlalchemy import DateTime, ForeignKey, Integer, String
+from sqlalchemy import DateTime, ForeignKey, Integer, String, Boolean
 from sqlalchemy import Enum as SQLEnum
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import Mapped, mapped_column, relationship
@@ -29,6 +29,7 @@ class Lead(Base):
     status: Mapped[LeadStatus] = mapped_column(
         SQLEnum(LeadStatus, name="leadstatus_enum"), default=LeadStatus.NEW, nullable=False
     )
+    is_published: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
     score: Mapped[int | None] = mapped_column(Integer, nullable=True)
     priority: Mapped[Priority | None] = mapped_column(
         SQLEnum(Priority, name="priority_enum"), nullable=True

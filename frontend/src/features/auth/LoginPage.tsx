@@ -139,36 +139,6 @@ export function LoginPage() {
           </form>
         </div>
 
-        {/* Mock Login Actions */}
-        <div className="mt-6 flex gap-4 gsap-fade-up">
-          <Button
-            variant="outline"
-            type="button"
-            className="w-full bg-white/50 border-white/40 hover:bg-white"
-            onClick={() => {
-              import('@/store/authStore').then(({ mockLogin }) => {
-                mockLogin('admin')
-                window.location.href = '/dashboard'
-              })
-            }}
-          >
-            Mock Admin
-          </Button>
-          <Button
-            variant="outline"
-            type="button"
-            className="w-full bg-white/50 border-white/40 hover:bg-white"
-            onClick={() => {
-              import('@/store/authStore').then(({ mockLogin }) => {
-                mockLogin('co-founder')
-                window.location.href = '/dashboard'
-              })
-            }}
-          >
-            Mock Co-Founder
-          </Button>
-        </div>
-
         {/* Footer */}
         <p className="text-center text-[var(--color-muted)] text-claude-body-sm mt-8 gsap-fade-up">
           AgencyOS V2 · Core Platform

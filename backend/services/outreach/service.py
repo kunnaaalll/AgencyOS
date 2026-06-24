@@ -1,6 +1,11 @@
+import structlog
+from core.exceptions import DomainException
 import json
 import time
 from sqlalchemy.ext.asyncio import AsyncSession
+
+logger = structlog.get_logger(__name__)
+
 
 from domain.lead.models import Lead
 from domain.analysis.models import WebsiteAnalysis
@@ -27,7 +32,7 @@ class OutreachGenerationService:
         try:
             from litellm import acompletion
         except ImportError:
-            raise Exception("litellm is not installed. Cannot run outreach generation.")
+            raise DomainException("litellm is not installed. Cannot run outreach generation.")
             
         start_time = time.time()
         
@@ -49,7 +54,8 @@ class OutreachGenerationService:
             response_content = response.choices[0].message.content
             usage = response.usage
         except Exception as e:
-            raise Exception(f"AI generation failed via FreeLLM API: {str(e)}")
+                logger.error(f"AI generation failed via FreeLLM API: {str(e, error=str(e), exc_info=True)
+                raise DomainException(f"AI generation failed via FreeLLM API: {str(e)}")
             
         execution_time_ms = (time.time() - start_time) * 1000
         tokens_used = usage.total_tokens if usage else 0
@@ -68,7 +74,8 @@ class OutreachGenerationService:
             parsed_json = json.loads(response_content)
             ai_output = AIOutreachOutputSchema(**parsed_json)
         except Exception as e:
-            raise Exception(f"Failed to parse AI output: {str(e)}")
+                logger.error(f"Failed to parse AI output: {str(e, error=str(e), exc_info=True)
+                raise DomainException(f"Failed to parse AI output: {str(e)}")
             
         # Create entity
         draft = OutreachDraft(

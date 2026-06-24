@@ -39,9 +39,14 @@ class FinanceService:
 
     @staticmethod
     async def create_revenue(db: AsyncSession, data: RevenueCreate) -> Revenue:
+        from sqlalchemy.exc import IntegrityError
         revenue = Revenue(**data.model_dump())
         db.add(revenue)
-        await db.commit()
+        try:
+            await db.commit()
+        except IntegrityError:
+            await db.rollback()
+            raise HTTPException(status_code=400, detail="Invalid data or missing related record")
         await db.refresh(revenue)
         return revenue
 
@@ -119,7 +124,7 @@ class FinanceService:
         net_profit = float(total_revenue) - float(total_expenses)
 
         settings = await FinanceService.get_settings(db)
-        reserve_allocation = net_profit * (float(settings.reserve_percentage) / 100.0) if net_profit > 0 else 0.0
+        reserve_allocation = net_profit * (float(settings.reserve_percentage or 20.0) / 100.0) if net_profit > 0 else 0.0
         distribution_pool = net_profit - reserve_allocation if net_profit > 0 else 0.0
 
         return FinanceSummaryResponse(

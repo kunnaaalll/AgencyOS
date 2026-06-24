@@ -1,1 +1,0 @@
-export const mockDiscoveryData = Array.from({length: 15}).map((_, i) => ({ id: 'disc-'+i, runName: 'Mumbai Healthcare Providers', status: 'Completed', results: 342 }));

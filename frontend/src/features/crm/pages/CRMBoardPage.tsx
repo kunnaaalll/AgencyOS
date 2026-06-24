@@ -1,7 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { useStore } from '@tanstack/react-store';
-import { crmStore, updateOpportunityStageLocal } from '@/store/crmStore';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { Plus } from 'lucide-react';
+
 import { AppSkeleton } from '@/components/layout/AppSkeleton';
+import { AddOpportunityModal } from '../components/AddOpportunityModal';
+import { EditOpportunityModal } from '../components/EditOpportunityModal';
 import {
   DndContext,
   closestCorners,
@@ -41,10 +44,20 @@ interface SortableItemProps {
   opportunity: Opportunity;
 }
 
-function OpportunityCard({ opportunity }: { opportunity: Opportunity }) {
+function OpportunityCard({ opportunity, onEdit, onDelete }: { opportunity: Opportunity, onEdit: () => void, onDelete: () => void }) {
   return (
-    <div className="bg-[var(--color-surface-card)] p-4 mb-3 rounded-xl shadow-sm border border-[var(--color-hairline)] cursor-grab active:cursor-grabbing hover:border-[var(--color-primary)] transition-colors">
-      <h4 className="text-claude-body-md font-semibold text-[var(--color-ink)] mb-1">{opportunity.title}</h4>
+    <div className="bg-[var(--color-surface-card)] p-4 mb-3 rounded-xl shadow-sm border border-[var(--color-hairline)] cursor-grab active:cursor-grabbing hover:border-[var(--color-primary)] transition-colors group">
+      <div className="flex justify-between items-start mb-1">
+        <h4 className="text-claude-body-md font-semibold text-[var(--color-ink)]">{opportunity.title}</h4>
+        <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+          <button onClick={(e) => { e.stopPropagation(); onEdit(); }} className="p-1 text-[var(--color-muted)] hover:text-[var(--color-primary)] transition-colors">
+            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>
+          </button>
+          <button onClick={(e) => { e.stopPropagation(); onDelete(); }} className="p-1 text-[var(--color-muted)] hover:text-red-500 transition-colors">
+            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/><line x1="10" x2="10" y1="11" y2="17"/><line x1="14" x2="14" y1="11" y2="17"/></svg>
+          </button>
+        </div>
+      </div>
       <div className="flex justify-between items-center text-claude-body-sm text-[var(--color-muted)] mb-2">
         <span>₹{opportunity.value.toLocaleString()}</span>
         <span className="bg-[var(--color-primary)]/10 text-[var(--color-primary)] px-2.5 py-0.5 rounded-full text-xs font-semibold uppercase tracking-wide">
@@ -60,7 +73,7 @@ function OpportunityCard({ opportunity }: { opportunity: Opportunity }) {
   );
 }
 
-function SortableItem({ id, opportunity }: SortableItemProps) {
+function SortableItem({ id, opportunity, onEdit, onDelete }: SortableItemProps & { onEdit: () => void, onDelete: () => void }) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id });
 
   const style = {
@@ -71,12 +84,12 @@ function SortableItem({ id, opportunity }: SortableItemProps) {
 
   return (
     <div ref={setNodeRef} style={style} {...attributes} {...listeners}>
-      <OpportunityCard opportunity={opportunity} />
+      <OpportunityCard opportunity={opportunity} onEdit={onEdit} onDelete={onDelete} />
     </div>
   );
 }
 
-function DroppableColumn({ id, stage, columnOpps }: { id: PipelineStage, stage: string, columnOpps: Opportunity[] }) {
+function DroppableColumn({ id, stage, columnOpps, onEdit, onDelete }: { id: PipelineStage, stage: string, columnOpps: Opportunity[], onEdit: (opp: Opportunity) => void, onDelete: (id: string) => void }) {
   const { setNodeRef } = useDroppable({ id });
 
   return (
@@ -96,7 +109,7 @@ function DroppableColumn({ id, stage, columnOpps }: { id: PipelineStage, stage: 
         >
           <div className="min-h-[150px]">
             {columnOpps.map(opp => (
-              <SortableItem key={opp.id} id={opp.id} opportunity={opp} />
+              <SortableItem key={opp.id} id={opp.id} opportunity={opp} onEdit={() => onEdit(opp)} onDelete={() => onDelete(opp.id)} />
             ))}
             {columnOpps.length === 0 && (
               <div className="border-2 border-dashed border-[var(--color-hairline)] rounded-xl p-4 text-center text-[var(--color-muted)] text-claude-body-sm">
@@ -111,23 +124,60 @@ function DroppableColumn({ id, stage, columnOpps }: { id: PipelineStage, stage: 
 }
 
 export function CRMBoardPage() {
-  const { opportunities } = useStore(crmStore);
-  const [loading, setLoading] = useState(true);
+  const queryClient = useQueryClient();
+  const { data: opportunities = [], isLoading: loading } = useQuery({
+    queryKey: ['opportunities'],
+    queryFn: crmApi.getOpportunities,
+  });
 
-  useEffect(() => {
-    loadData();
-  }, []);
+  const updateStageMutation = useMutation({
+    mutationFn: ({ id, stage }: { id: string; stage: PipelineStage }) => 
+      crmApi.updateOpportunity(id, { pipeline_stage: stage }),
+    onMutate: async ({ id, stage }) => {
+      await queryClient.cancelQueries({ queryKey: ['opportunities'] });
+      const previousOpps = queryClient.getQueryData<Opportunity[]>(['opportunities']);
+      if (previousOpps) {
+        queryClient.setQueryData<Opportunity[]>(['opportunities'], (old: any) => 
+          (old || []).map((o: any) => o.id === id ? { ...o, pipeline_stage: stage } : o)
+        );
+      }
+      return { previousOpps };
+    },
+    onError: (err, variables, context) => {
+      if (context?.previousOpps) {
+        queryClient.setQueryData(['opportunities'], context.previousOpps);
+      }
+    },
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: ['opportunities'] });
+    },
+  });
 
-  const loadData = async () => {
-    try {
-      const data = await crmApi.getOpportunities();
-      crmStore.setState((state) => ({ ...state, opportunities: data }));
-    } catch (error) {
-      console.error('Failed to load opportunities:', error);
-    } finally {
-      setLoading(false);
+  const deleteMutation = useMutation({
+    mutationFn: crmApi.deleteOpportunity,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['opportunities'] });
     }
-  };
+  });
+
+  const createMutation = useMutation({
+    mutationFn: crmApi.createOpportunity,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['opportunities'] });
+      setIsModalOpen(false);
+    }
+  });
+
+  const updateMutation = useMutation({
+    mutationFn: ({ id, data }: { id: string; data: Partial<Opportunity> }) => crmApi.updateOpportunity(id, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['opportunities'] });
+      setEditingOpportunity(null);
+    }
+  });
+
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [editingOpportunity, setEditingOpportunity] = useState<Opportunity | null>(null);
 
   const [activeId, setActiveId] = useState<string | null>(null);
 
@@ -167,17 +217,22 @@ export function CRMBoardPage() {
     if (!activeOpportunity) return;
 
     if (activeOpportunity.pipeline_stage !== targetStage) {
-      // Optimistic update
-      const prevStage = activeOpportunity.pipeline_stage;
-      updateOpportunityStageLocal(activeId, targetStage as PipelineStage);
+      updateStageMutation.mutate({ id: activeId, stage: targetStage as PipelineStage });
+    }
+  };
 
-      try {
-        await crmApi.updateOpportunity(activeId, { pipeline_stage: targetStage });
-      } catch (error) {
-        console.error('Failed to update stage:', error);
-        // Revert optimistic update
-        updateOpportunityStageLocal(activeId, prevStage);
-      }
+  const handleDelete = async (id: string) => {
+    if (!confirm('Are you sure you want to delete this opportunity?')) return;
+    try {
+      await crmApi.deleteOpportunity(id);
+      crmStore.setState((state) => ({
+        ...state,
+        opportunities: state.opportunities.filter(o => o.id !== id)
+      }));
+    } catch (error) {
+      console.error('Failed to delete opportunity:', error);
+      alert((error as any)?.response?.data?.detail || (error as any)?.message || 'An error occurred. Please try again.');
+      alert('Failed to delete opportunity');
     }
   };
 
@@ -187,9 +242,18 @@ export function CRMBoardPage() {
 
   return (
     <div className="p-8 h-full flex flex-col">
-      <div className="mb-8">
-        <h1 className="text-claude-display-lg text-[var(--color-ink)]">Pipeline Board</h1>
-        <p className="text-[var(--color-muted)] text-claude-body-md mt-2">Drag and drop opportunities to update their stage.</p>
+      <div className="mb-8 flex items-center justify-between">
+        <div>
+          <h1 className="text-claude-display-lg text-[var(--color-ink)]">Pipeline Board</h1>
+          <p className="text-[var(--color-muted)] text-claude-body-md mt-2">Drag and drop opportunities to update their stage.</p>
+        </div>
+        <button
+          onClick={() => setIsModalOpen(true)}
+          className="flex items-center gap-2 bg-[var(--color-primary)] text-white px-4 py-2 rounded-lg text-claude-body-sm font-semibold hover:opacity-90 transition-opacity"
+        >
+          <Plus size={16} />
+          New Opportunity
+        </button>
       </div>
 
       <div className="flex gap-6 overflow-x-auto pb-4 flex-1 items-start">
@@ -198,16 +262,44 @@ export function CRMBoardPage() {
             const columnOpps = opportunities.filter(o => o.pipeline_stage === stage);
             
             return (
-              <DroppableColumn key={stage} id={stage} stage={stage} columnOpps={columnOpps} />
+              <DroppableColumn 
+                key={stage} 
+                id={stage} 
+                stage={stage} 
+                columnOpps={columnOpps} 
+                onEdit={(opp) => setEditingOpportunity(opp)}
+                onDelete={handleDelete}
+              />
             );
           })}
           <DragOverlay>
             {activeId ? (
-              <OpportunityCard opportunity={opportunities.find(o => o.id === activeId)!} />
+              <OpportunityCard 
+                opportunity={opportunities.find(o => o.id === activeId)!} 
+                onEdit={() => {}} 
+                onDelete={() => {}} 
+              />
             ) : null}
           </DragOverlay>
         </DndContext>
       </div>
+
+      <AddOpportunityModal
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        onSubmit={async (data) => {
+          createMutation.mutate(data);
+        }}
+      />
+
+      <EditOpportunityModal
+        isOpen={!!editingOpportunity}
+        onClose={() => setEditingOpportunity(null)}
+        opportunity={editingOpportunity}
+        onSubmit={async (id, data) => {
+          updateMutation.mutate({ id, data });
+        }}
+      />
     </div>
   );
 }

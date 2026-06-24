@@ -13,6 +13,7 @@ export interface Lead {
   instagram_url: string | null
   linkedin_url: string | null
   google_maps_url: string | null
+  is_published: boolean
   status: string
   score: number | null
   priority: string | null
@@ -47,18 +48,30 @@ export interface LeadAnalysis {
   updated_at: string
 }
 
-export const fetchLeads = async (): Promise<Lead[]> => {
-  const { data } = await api.get('/v1/leads')
+export const fetchLeads = async (is_published?: boolean, min_score?: number): Promise<Lead[]> => {
+  const params = new URLSearchParams()
+  if (is_published !== undefined) params.append('is_published', String(is_published))
+  if (min_score !== undefined) params.append('min_score', String(min_score))
+  
+  const queryString = params.toString()
+  const url = queryString ? `/leads?${queryString}` : '/leads'
+  
+  const { data } = await api.get(url)
+  return data
+}
+
+export const publishLead = async (id: string): Promise<Lead> => {
+  const { data } = await api.post(`/leads/${id}/publish`)
   return data
 }
 
 export const fetchLeadStats = async (): Promise<LeadStats> => {
-  const { data } = await api.get('/v1/leads/stats')
+  const { data } = await api.get('/leads/stats')
   return data
 }
 
 export const fetchLeadById = async (id: string): Promise<Lead> => {
-  const { data } = await api.get(`/v1/leads/${id}`)
+  const { data } = await api.get(`/leads/${id}`)
   return data
 }
 
@@ -66,3 +79,43 @@ export const fetchLeadAnalysisById = async (leadId: string): Promise<LeadAnalysi
   const { data } = await api.get(`/analysis/${leadId}`)
   return data
 }
+
+// ── Discovery APIs ─────────────────────────────────────────────────────────────
+
+export interface RawBusiness {
+  id: string
+  business_name: string
+  website: string | null
+  industry: string | null
+  email: string | null
+  phone: string | null
+  validation_status: string
+  completeness_score: number
+  created_at: string
+}
+
+export interface PaginatedBusinessesResponse {
+  items: RawBusiness[]
+  total: number
+  page: number
+  limit: number
+  pages: number
+}
+
+export const fetchDiscoveredBusinesses = async (page = 1, limit = 50, status?: string): Promise<PaginatedBusinessesResponse> => {
+  const params = new URLSearchParams({ page: page.toString(), limit: limit.toString() })
+  if (status) params.append('status', status)
+  const { data } = await api.get(`/discovery/businesses?${params.toString()}`)
+  return data
+}
+
+export const runDiscovery = async (source: string, location: string, limit: number = 10) => {
+  const { data } = await api.post('/discovery/run', { source, location, limit })
+  return data
+}
+
+export const promoteBusiness = async (businessId: string) => {
+  const { data } = await api.post(`/discovery/businesses/${businessId}/promote`)
+  return data
+}
+

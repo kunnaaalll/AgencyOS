@@ -123,11 +123,17 @@ class DiscoveryOrchestrator:
             total_queries=total,
         )
 
-        # Enqueue the orchestration job
-        await redis.enqueue_job(
-            "bulk_discovery_job",
-            str(bulk_job.id),
-        )
+        # Enqueue the orchestration job if Redis is available
+        if redis:
+            try:
+                await redis.enqueue_job(
+                    "bulk_discovery_job",
+                    str(bulk_job.id),
+                )
+            except Exception as e:
+                logger.error("Failed to enqueue bulk_discovery_job", error=str(e), bulk_job_id=str(bulk_job.id))
+        else:
+            logger.warning("redis_unavailable", action="skipping enqueue of bulk_discovery_job")
 
         return bulk_job
 

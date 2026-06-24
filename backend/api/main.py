@@ -19,7 +19,9 @@ from slowapi.util import get_remote_address
 from api.router import api_router
 from core.audit import set_audit_context
 from core.config import settings
-from core.exceptions import AgencyOSException, agencyos_exception_handler, generic_exception_handler
+from core.exceptions import AgencyOSException, agencyos_exception_handler, generic_exception_handler, validation_exception_handler, http_exception_handler
+from fastapi.exceptions import RequestValidationError
+from starlette.exceptions import HTTPException as StarletteHTTPException
 from core.logging import configure_logging
 from core.minio import ensure_bucket_exists
 from events.listeners import register_listeners
@@ -100,12 +102,14 @@ def create_app() -> FastAPI:
     # ── Rate Limiting ────────────────────────────────────────
     app.state.limiter = limiter
     app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
+    from slowapi.middleware import SlowAPIMiddleware
+    app.add_middleware(SlowAPIMiddleware)
 
-    # ── CORS (emergency mode — allow all) ───────
+    # ── CORS ───────
     app.add_middleware(
         CORSMiddleware,
-        allow_origins=["*"],
-        allow_credentials=False,
+        allow_origins=[settings.FRONTEND_URL],
+        allow_credentials=True,
         allow_methods=["*"],
         allow_headers=["*"],
         expose_headers=["*"],
@@ -155,6 +159,8 @@ def create_app() -> FastAPI:
 
     # ── Exception Handlers ────────────────────────────────────
     app.add_exception_handler(AgencyOSException, agencyos_exception_handler)
+    app.add_exception_handler(RequestValidationError, validation_exception_handler)
+    app.add_exception_handler(StarletteHTTPException, http_exception_handler)
     app.add_exception_handler(Exception, generic_exception_handler)
 
     # ── Routers ───────────────────────────────────────────────

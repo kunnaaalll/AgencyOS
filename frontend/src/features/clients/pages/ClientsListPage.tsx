@@ -13,80 +13,9 @@ import { useState } from 'react';
 import { clientsApi } from '../api';
 import { type Client, HealthStatus, ClientStatus } from '../types';
 import { Link } from '@tanstack/react-router';
-import { Search, ChevronDown, ChevronUp, Plus, X } from 'lucide-react';
-
-function AddClientModal({ isOpen, onClose, onAdd }: { isOpen: boolean, onClose: () => void, onAdd: (client: Partial<Client>) => void }) {
-  const [formData, setFormData] = useState({
-    business_name: '',
-    package_type: 'Scale',
-    monthly_retainer: 150000,
-  });
-
-  if (!isOpen) return null;
-
-  return (
-    <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4">
-      <div className="bg-white rounded-xl shadow-xl w-full max-w-md overflow-hidden">
-        <div className="flex justify-between items-center p-4 border-b border-surface-200">
-          <h3 className="font-semibold text-lg">Add Custom Client</h3>
-          <button onClick={onClose} className="p-1 hover:bg-surface-100 rounded-md">
-            <X className="w-5 h-5 text-surface-500" />
-          </button>
-        </div>
-        <div className="p-4 space-y-4">
-          <div>
-            <label className="block text-sm font-medium text-surface-700 mb-1">Business Name</label>
-            <input 
-              type="text" 
-              className="w-full px-3 py-2 border border-surface-200 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-              value={formData.business_name}
-              onChange={e => setFormData({...formData, business_name: e.target.value})}
-              placeholder="e.g. Acme Corp"
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-surface-700 mb-1">Package Type</label>
-            <select 
-              className="w-full px-3 py-2 border border-surface-200 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-              value={formData.package_type}
-              onChange={e => setFormData({...formData, package_type: e.target.value})}
-            >
-              <option value="Starter">Starter</option>
-              <option value="Growth">Growth</option>
-              <option value="Scale">Scale</option>
-              <option value="Enterprise">Enterprise</option>
-            </select>
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-surface-700 mb-1">Monthly Retainer (₹)</label>
-            <input 
-              type="number" 
-              className="w-full px-3 py-2 border border-surface-200 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-              value={formData.monthly_retainer}
-              onChange={e => setFormData({...formData, monthly_retainer: Number(e.target.value)})}
-            />
-          </div>
-          <button 
-            onClick={() => {
-              onAdd({
-                ...formData,
-                id: `client-custom-${Date.now()}`,
-                health_status: HealthStatus.HEALTHY,
-                renewal_probability: 95,
-                contract_end_date: new Date(Date.now() + 31536000000).toISOString(),
-                status: ClientStatus.ACTIVE
-              });
-              onClose();
-            }}
-            className="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded-md transition-colors"
-          >
-            Add Client
-          </button>
-        </div>
-      </div>
-    </div>
-  );
-}
+import { Search, ChevronDown, ChevronUp, Plus, X, Pencil, Trash2 } from 'lucide-react';
+import { AddClientModal } from '../components/AddClientModal';
+import { EditClientModal } from '../components/EditClientModal';
 
 const columnHelper = createColumnHelper<Client>();
 
@@ -143,11 +72,36 @@ const columns = [
       </span>
     ),
   }),
+  columnHelper.display({
+    id: 'actions',
+    header: 'Actions',
+    cell: info => {
+      const { onEdit, onDelete } = info.table.options.meta as { onEdit: (c: Client) => void, onDelete: (id: string) => void };
+      return (
+        <div className="flex items-center gap-2">
+          <button 
+            onClick={() => onEdit(info.row.original)}
+            className="p-1 text-surface-400 hover:text-blue-600 transition-colors"
+          >
+            <Pencil className="w-4 h-4" />
+          </button>
+          <button 
+            onClick={() => onDelete(info.row.original.id)}
+            className="p-1 text-surface-400 hover:text-red-600 transition-colors"
+          >
+            <Trash2 className="w-4 h-4" />
+          </button>
+        </div>
+      );
+    }
+  })
 ];
 
 export function ClientsListPage() {
   const queryClient = useQueryClient();
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+  const [editingClient, setEditingClient] = useState<Client | null>(null);
+
   const { data: clients, isLoading } = useQuery({
     queryKey: ['clients'],
     queryFn: clientsApi.getClients,
@@ -155,6 +109,20 @@ export function ClientsListPage() {
 
   const [sorting, setSorting] = useState<SortingState>([]);
   const [globalFilter, setGlobalFilter] = useState('');
+
+  const handleDelete = async (id: string) => {
+    if (!confirm('Are you sure you want to delete this client?')) return;
+    try {
+      await clientsApi.deleteClient(id);
+      queryClient.setQueryData(['clients'], (oldData: Client[] | undefined) => {
+        return oldData?.filter(c => c.id !== id) || [];
+      });
+    } catch (error) {
+      console.error('Failed to delete client:', error);
+      alert((error as any)?.response?.data?.detail || (error as any)?.message || 'An error occurred. Please try again.');
+      alert('Failed to delete client');
+    }
+  };
 
   const table = useReactTable({
     data: clients || [],
@@ -169,6 +137,10 @@ export function ClientsListPage() {
     getSortedRowModel: getSortedRowModel(),
     getFilteredRowModel: getFilteredRowModel(),
     getPaginationRowModel: getPaginationRowModel(),
+    meta: {
+      onEdit: setEditingClient,
+      onDelete: handleDelete
+    },
     initialState: {
       pagination: {
         pageSize: 10,
@@ -286,14 +258,28 @@ export function ClientsListPage() {
           </div>
         </div>
       </div>
+      
       <AddClientModal 
         isOpen={isAddModalOpen} 
         onClose={() => setIsAddModalOpen(false)} 
-        onAdd={(newClient) => {
-          queryClient.setQueryData(['clients'], (oldData: any) => {
-            return [newClient, ...(oldData || [])];
+        onSubmit={async (newClient) => {
+          const client = await clientsApi.createClient(newClient);
+          queryClient.setQueryData(['clients'], (oldData: Client[] | undefined) => {
+            return [client, ...(oldData || [])];
           });
         }} 
+      />
+
+      <EditClientModal
+        isOpen={!!editingClient}
+        onClose={() => setEditingClient(null)}
+        client={editingClient}
+        onSubmit={async (id, updatedData) => {
+          const updatedClient = await clientsApi.updateClient(id, updatedData);
+          queryClient.setQueryData(['clients'], (oldData: Client[] | undefined) => {
+            return oldData?.map(c => c.id === id ? updatedClient : c) || [];
+          });
+        }}
       />
     </div>
   );

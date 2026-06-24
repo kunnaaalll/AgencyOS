@@ -1,5 +1,5 @@
 import React from 'react'
-import { Lead } from '@/store/leadsStore'
+import { Lead } from '@/features/leads/api'
 import { Building2, Mail, Sparkles, Calendar, UserCheck } from 'lucide-react'
 
 interface LeadCardProps {
@@ -16,22 +16,22 @@ export function LeadCard({ lead, actionButton, onClick }: LeadCardProps) {
     >
       <div className="flex justify-between items-start mb-4">
         <div>
-          <h3 className="text-xl font-bold text-gray-900 group-hover:text-[var(--color-accent-blue)] transition-colors line-clamp-1">{lead.company}</h3>
+          <h3 className="text-xl font-bold text-gray-900 group-hover:text-[var(--color-accent-blue)] transition-colors line-clamp-1">{lead.business_name}</h3>
           <p className="text-gray-500 font-medium flex items-center gap-1.5 mt-1">
             <UserCheck className="w-4 h-4 text-gray-400" />
-            {lead.name}
+            {lead.email ? lead.email.split('@')[0] : 'Owner'}
           </p>
         </div>
         
         {/* Intent Score Badge */}
         <div className="flex flex-col items-end">
           <div className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold border ${
-            lead.intentScore >= 90 ? 'bg-pink-100/80 text-pink-700 border-pink-200' : 
-            lead.intentScore >= 80 ? 'bg-blue-100/80 text-blue-700 border-blue-200' : 
+            (lead.score || 0) >= 90 ? 'bg-pink-100/80 text-pink-700 border-pink-200' : 
+            (lead.score || 0) >= 80 ? 'bg-blue-100/80 text-blue-700 border-blue-200' : 
             'bg-gray-100/80 text-gray-700 border-gray-200'
           }`}>
             <Sparkles className="w-3.5 h-3.5" />
-            {lead.intentScore} Intent
+            {lead.score || 0} Intent
           </div>
         </div>
       </div>
@@ -40,7 +40,7 @@ export function LeadCard({ lead, actionButton, onClick }: LeadCardProps) {
         {lead.industry && (
           <div className="flex items-center gap-2 text-sm text-gray-600">
             <Building2 className="w-4 h-4 text-gray-400" />
-            <span>{lead.industry}</span>
+            <span className="capitalize">{lead.industry}</span>
           </div>
         )}
         
@@ -53,13 +53,13 @@ export function LeadCard({ lead, actionButton, onClick }: LeadCardProps) {
 
         <div className="flex items-center gap-2 text-sm text-gray-600">
           <Calendar className="w-4 h-4 text-gray-400" />
-          <span>Added {lead.dateAdded}</span>
+          <span>Added {new Date(lead.created_at).toLocaleDateString()}</span>
         </div>
       </div>
 
       <div className="mt-auto pt-4 border-t border-white/30 flex items-center justify-between">
         <div className="text-xs font-medium uppercase tracking-wider text-gray-400">
-          {lead.status === 'staged' ? 'Pending Review' : lead.status === 'hot' ? 'Available' : 'Claimed'}
+          {lead.status === 'NEW' ? 'Available' : 'Claimed'}
         </div>
         {actionButton}
       </div>

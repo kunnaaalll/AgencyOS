@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Lead } from '@/store/leadsStore'
+import { Lead, fetchLeadAnalysisById } from '@/features/leads/api'
+import { useQuery } from '@tanstack/react-query'
 import { X, Send, Bot, Sparkles, Building2, AlertTriangle, Loader2 } from 'lucide-react'
 import { Button } from './button'
 
@@ -16,20 +17,29 @@ export function LeadOutreachPanel({ lead, isOpen, onClose }: LeadOutreachPanelPr
   const [isAiLoading, setIsAiLoading] = useState(false)
   const chatBottomRef = useRef<HTMLDivElement>(null)
 
+  const { data: analysis } = useQuery({
+    queryKey: ['lead-analysis', lead?.id],
+    queryFn: () => fetchLeadAnalysisById(lead!.id),
+    enabled: !!lead && isOpen
+  })
+
   // Initialize draft when a lead is opened
   useEffect(() => {
     if (lead && isOpen) {
+      const contactName = lead.email ? lead.email.split('@')[0] : 'Owner'
+      const problems = analysis?.pain_points || []
+      
       setEmailDraft(
-        `Hi ${lead.name.split(' ')[0]},\n\n` +
-        `I noticed that ${lead.company} is doing great work in the ${lead.industry || 'industry'} space. ` +
+        `Hi ${contactName},\n\n` +
+        `I noticed that ${lead.business_name} is doing great work in the ${lead.industry || 'industry'} space. ` +
         `However, while reviewing your website, I spotted a few issues that might be hurting your conversions:\n\n` +
-        `${lead.analysis?.problems.map(p => `- ${p}`).join('\n') || '- Lack of clear CTA'}\n\n` +
-        `I'd love to share a quick 3-minute video showing how we can fix this and improve your SEO score (currently estimated at ${lead.analysis?.seoScore || 50}/100).\n\n` +
+        `${problems.length > 0 ? problems.map(p => `- ${p}`).join('\n') : '- Lack of clear CTA'}\n\n` +
+        `I'd love to share a quick 3-minute video showing how we can fix this and improve your SEO score (currently estimated at ${analysis?.seo_score || 50}/100).\n\n` +
         `Are you open to me sending that over?\n\n` +
         `Best,\nAdmin`
       )
     }
-  }, [lead, isOpen])
+  }, [lead, isOpen, analysis])
 
   const handleChatSubmit = (e: React.FormEvent) => {
     e.preventDefault()
@@ -41,11 +51,12 @@ export function LeadOutreachPanel({ lead, isOpen, onClose }: LeadOutreachPanelPr
 
     // Mock AI response delay
     setTimeout(() => {
+      const contactName = lead?.email ? lead.email.split('@')[0] : 'Owner'
       let newDraft = emailDraft
       if (userPrompt.toLowerCase().includes('shorter')) {
-        newDraft = `Hi ${lead?.name.split(' ')[0]},\n\nLove what ${lead?.company} is doing. I found a few SEO issues on your site (like missing H1s) that are likely costing you traffic.\n\nMind if I send over a quick 3-min video showing how to fix them?\n\nBest,\nAdmin`
+        newDraft = `Hi ${contactName},\n\nLove what ${lead?.business_name} is doing. I found a few SEO issues on your site (like missing H1s) that are likely costing you traffic.\n\nMind if I send over a quick 3-min video showing how to fix them?\n\nBest,\nAdmin`
       } else if (userPrompt.toLowerCase().includes('casual')) {
-        newDraft = `Hey ${lead?.name.split(' ')[0]}!\n\nHuge fan of ${lead?.company}. Was checking out your site and noticed a few quick SEO wins you're missing out on.\n\nWant me to shoot over a quick video breakdown?\n\nCheers,\nAdmin`
+        newDraft = `Hey ${contactName}!\n\nHuge fan of ${lead?.business_name}. Was checking out your site and noticed a few quick SEO wins you're missing out on.\n\nWant me to shoot over a quick video breakdown?\n\nCheers,\nAdmin`
       } else {
         newDraft = `[AI Applied changes for: "${userPrompt}"]\n\n` + emailDraft
       }
@@ -78,7 +89,7 @@ export function LeadOutreachPanel({ lead, isOpen, onClose }: LeadOutreachPanelPr
             {/* Header */}
             <div className="flex items-center justify-between p-6 border-b border-gray-100 bg-white/50 backdrop-blur-md">
               <div>
-                <h2 className="text-xl font-bold text-gray-900">Outreach: {lead.company}</h2>
+                <h2 className="text-xl font-bold text-gray-900">Outreach: {lead.business_name}</h2>
                 <p className="text-sm text-gray-500 mt-1">Chat with AI to refine your pitch.</p>
               </div>
               <button 
@@ -100,8 +111,8 @@ export function LeadOutreachPanel({ lead, isOpen, onClose }: LeadOutreachPanelPr
                 <div className="glass-panel p-5 rounded-2xl border border-white border-b-gray-100 shadow-sm bg-white/80">
                   <div className="mb-4 flex items-center justify-between">
                     <span className="text-sm font-medium text-gray-700">Estimated SEO Score</span>
-                    <span className={`text-sm font-bold ${lead.analysis && lead.analysis.seoScore < 50 ? 'text-red-500' : 'text-amber-500'}`}>
-                      {lead.analysis?.seoScore || 50} / 100
+                    <span className={`text-sm font-bold ${(analysis?.seo_score || 50) < 50 ? 'text-red-500' : 'text-amber-500'}`}>
+                      {analysis?.seo_score || 50} / 100
                     </span>
                   </div>
                   
@@ -110,7 +121,7 @@ export function LeadOutreachPanel({ lead, isOpen, onClose }: LeadOutreachPanelPr
                       <AlertTriangle className="w-4 h-4 text-amber-500" /> Identified Problems
                     </span>
                     <ul className="space-y-2">
-                      {lead.analysis?.problems.map((prob, i) => (
+                      {analysis?.pain_points?.map((prob, i) => (
                         <li key={i} className="text-sm text-gray-600 flex items-start gap-2">
                           <span className="text-red-400 mt-0.5">•</span>
                           {prob}
@@ -119,9 +130,9 @@ export function LeadOutreachPanel({ lead, isOpen, onClose }: LeadOutreachPanelPr
                     </ul>
                   </div>
 
-                  {lead.analysis?.notes && (
+                  {analysis?.summary && (
                     <div className="mt-4 pt-4 border-t border-gray-100 text-sm text-gray-600 italic">
-                      " {lead.analysis.notes} "
+                      " {analysis.summary} "
                     </div>
                   )}
                 </div>

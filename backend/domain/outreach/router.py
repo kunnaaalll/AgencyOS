@@ -26,8 +26,11 @@ async def get_redis_pool():
         database=0
     ))
 
+from fastapi import Request
+
 @router.post("/generate/{lead_id}", status_code=status.HTTP_202_ACCEPTED)
 async def generate_outreach(
+    request: Request,
     lead_id: str,
     channel: OutreachChannel,
     db: AsyncSession = Depends(get_db),
@@ -40,7 +43,11 @@ async def generate_outreach(
         raise HTTPException(status_code=404, detail="Lead not found")
 
     # Enqueue job
-    redis_pool = await get_redis_pool()
+    redis_pool = getattr(request.app.state, "redis", None)
+    if not redis_pool:
+        # Graceful fallback if Redis is down
+        return {"message": "Redis is currently unavailable. Job could not be enqueued."}
+        
     await redis_pool.enqueue_job("generate_outreach_job", str(lead_id), channel.value)
     
     return {"message": f"AI outreach generation job for channel {channel.value} enqueued successfully"}

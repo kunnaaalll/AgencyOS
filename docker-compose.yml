@@ -167,7 +167,7 @@ services:
   worker:
     build:
       context: ./backend
-      dockerfile: Dockerfile
+      dockerfile: Dockerfile.worker
       target: development
     container_name: agencyos_worker
     restart: unless-stopped

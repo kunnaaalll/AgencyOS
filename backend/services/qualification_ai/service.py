@@ -1,6 +1,11 @@
+import structlog
+from core.exceptions import DomainException
 import json
 import time
 from sqlalchemy.ext.asyncio import AsyncSession
+
+logger = structlog.get_logger(__name__)
+
 
 from domain.lead.models import Lead
 from domain.analysis.models import WebsiteAnalysis
@@ -20,7 +25,7 @@ class AIQualificationService:
         try:
             from litellm import acompletion
         except ImportError:
-            raise Exception("litellm is not installed due to disk space constraints. Cannot run qualification.")
+            raise DomainException("litellm is not installed due to disk space constraints. Cannot run qualification.")
             
         start_time = time.time()
         
@@ -42,7 +47,8 @@ class AIQualificationService:
             response_content = response.choices[0].message.content
             usage = response.usage
         except Exception as e:
-            raise Exception(f"AI qualification failed via FreeLLM API: {str(e)}")
+                logger.error(f"AI qualification failed via FreeLLM API: {str(e, error=str(e), exc_info=True)
+                raise DomainException(f"AI qualification failed via FreeLLM API: {str(e)}")
             
         execution_time_ms = (time.time() - start_time) * 1000
         tokens_used = usage.total_tokens if usage else 0
@@ -62,7 +68,8 @@ class AIQualificationService:
             # Ensure it maps to the Pydantic schema properly
             ai_output = AIOutputSchema(**parsed_json)
         except Exception as e:
-            raise Exception(f"Failed to parse AI output: {str(e)}")
+                logger.error(f"Failed to parse AI output: {str(e, error=str(e), exc_info=True)
+                raise DomainException(f"Failed to parse AI output: {str(e)}")
             
         # Create entity
         qualification = AIQualification(
@@ -97,7 +104,7 @@ class AIQualificationService:
         website_score = getattr(analysis, "total_score", 0)
         seo_score = getattr(analysis, "seo_score", 0)
         cta_score = getattr(analysis, "cta_score", 0)
-        # Using placeholder or getattr for custom fields not fully detailed
+        # Extract nested scoring fields gracefully
         social_score = getattr(analysis, "social_score", 0)
         digital_maturity_score = getattr(analysis, "digital_maturity_score", 0)
         

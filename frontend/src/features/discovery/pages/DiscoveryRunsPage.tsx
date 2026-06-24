@@ -125,6 +125,7 @@ export function DiscoveryRunsPage() {
     },
     onError: (error: any) => {
       console.error('Failed to start bulk run:', error);
+      alert((error as any)?.response?.data?.detail || (error as any)?.message || 'An error occurred. Please try again.');
       setNotification({ type: 'error', message: `Failed to start bulk run: ${error.response?.data?.detail || error.message}` });
       setTimeout(() => setNotification(null), 8000);
     }

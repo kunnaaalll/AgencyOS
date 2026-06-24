@@ -61,6 +61,12 @@ async def discover_businesses(
         redis = ctx.get("redis")
 
         try:
+            logger.info(
+                "bulk_discovery_started",
+                source=run.source,
+                industry=run.query,
+                location=run.location
+            )
             raw_businesses_dicts = await source_instance.discover(
                 industry=run.query or "",
                 location=run.location or "",
@@ -118,8 +124,9 @@ async def discover_businesses(
                 "Discovery run complete",
                 run_id=run_id,
                 source=run.source,
-                discovered=discovered_count,
-                duplicates=duplicate_count,
+                businesses_found=discovered_count + duplicate_count,
+                businesses_saved=discovered_count,
+                duplicates_removed=duplicate_count,
             )
 
         except Exception as e:
@@ -224,9 +231,44 @@ async def enrich_business(ctx: dict, business_id: str) -> None:
 
         business.enriched_at = datetime.now(UTC)
 
-        await session.commit()
+        from domain.lead.models import Lead
 
-        logger.info("Business enriched", business_id=business_id, name=business.business_name)
+        lead = Lead(
+            business_name=business.business_name,
+            email=business.email,
+            phone=business.phone,
+            website=business.website,
+            industry=business.industry,
+            city=business.city,
+            state=business.state,
+            country=business.country,
+            instagram_url=business.instagram_url,
+            facebook_url=business.facebook_url,
+            linkedin_url=business.linkedin_url,
+            source="Discovery Engine",
+            status="NEW",
+            is_published=False,
+        )
+        session.add(lead)
+
+        if business.run_id:
+            run_result = await session.execute(
+                select(DiscoveryRun).where(DiscoveryRun.id == business.run_id)
+            )
+            run = run_result.scalar_one_or_none()
+            if run:
+                run.businesses_created += 1
+
+        await session.commit()
+        await session.refresh(lead)
+
+        logger.info("Business enriched and automatically promoted to Lead", business_id=business_id, lead_id=str(lead.id), name=business.business_name)
+
+        # Automatically enqueue downstream workflows
+        redis = ctx.get("redis")
+        if redis:
+            await redis.enqueue_job("analyze_website_job", str(lead.id))
+            await redis.enqueue_job("qualify_lead_job", str(lead.id))
 
 
 async def bulk_discovery_job(ctx: dict, bulk_job_id: str) -> None:

@@ -26,6 +26,9 @@ from fastapi import APIRouter, Depends, HTTPException, Query, Request
 from sqlalchemy import select, and_, func
 from sqlalchemy.ext.asyncio import AsyncSession
 from arq.connections import ArqRedis
+import structlog
+
+logger = structlog.get_logger(__name__)
 
 from api.deps import get_current_user
 from core.database import get_db
@@ -54,7 +57,7 @@ async def get_redis(request: Request) -> ArqRedis:
     return getattr(request.app.state, "redis", None)
 
 
-router = APIRouter(prefix="/v1/discovery", tags=["Discovery"])
+router = APIRouter(prefix="/discovery", tags=["Discovery"])
 
 
 # ── Single Run ────────────────────────────────────────────────────────────────
@@ -176,7 +179,7 @@ async def launch_bulk_discovery(
 
     redis = await get_redis(request)
     if not redis:
-        raise HTTPException(status_code=503, detail="Worker queue unavailable")
+        logger.warning("redis_unavailable", endpoint="/discovery/bulk", fallback="creating local job record without queueing")
 
     bulk_job = await DiscoveryOrchestrator.launch_bulk_discovery(
         session=db,
@@ -304,12 +307,13 @@ async def promote_business_to_lead(
     from domain.lead.models import Lead
 
     lead = Lead(
-        name=business.business_name,
+        business_name=business.business_name,
         email=business.email,
         phone=business.phone,
         website=business.website,
         source="Discovery Engine",
         status="NEW",
+        is_published=False,
     )
     db.add(lead)
 

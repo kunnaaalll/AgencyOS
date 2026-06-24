@@ -30,7 +30,7 @@ from domain.audit.router import router as audit_router
 from domain.notifications.router import router as notifications_router
 from domain.backup.router import router as backup_router
 
-api_router = APIRouter(prefix="/api")
+api_router = APIRouter(prefix="/api/v1")
 
 # ── Health (no auth required) ─────────────────────────────────
 api_router.include_router(health_router)

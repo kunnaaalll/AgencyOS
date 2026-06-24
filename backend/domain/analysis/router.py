@@ -26,8 +26,11 @@ async def get_redis_pool():
     ))
 
 
+from fastapi import Request
+
 @router.post("/run/{lead_id}", status_code=status.HTTP_202_ACCEPTED)
 async def run_website_analysis(
+    request: Request,
     lead_id: UUID,
     db: AsyncSession = Depends(get_db),
     _ = Depends(require_permission("analysis:create"))
@@ -42,7 +45,10 @@ async def run_website_analysis(
         raise HTTPException(status_code=400, detail="Lead does not have a website to analyze")
 
     # Enqueue job
-    redis_pool = await get_redis_pool()
+    redis_pool = getattr(request.app.state, "redis", None)
+    if not redis_pool:
+        return {"message": "Redis is currently unavailable. Job could not be enqueued."}
+        
     await redis_pool.enqueue_job("analyze_website_job", str(lead_id), lead.website)
     
     return {"message": "Website analysis job enqueued successfully"}

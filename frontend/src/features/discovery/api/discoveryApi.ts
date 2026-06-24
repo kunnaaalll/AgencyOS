@@ -132,33 +132,33 @@ export interface DiscoveryCatalog {
 export const discoveryApi = {
   // Single runs
   createRun: async (data: { source: string; query?: string; location?: string; limit?: number }) => {
-    const res = await api.post<DiscoveryRun>("/v1/discovery/run", data);
+    const res = await api.post<DiscoveryRun>("/discovery/run", data);
     return res.data;
   },
 
   getRuns: async () => {
-    const res = await api.get<DiscoveryRun[]>("/v1/discovery/runs");
+    const res = await api.get<DiscoveryRun[]>("/discovery/runs");
     return res.data;
   },
 
   getRun: async (id: string) => {
-    const res = await api.get<DiscoveryRun>(`/v1/discovery/runs/${id}`);
+    const res = await api.get<DiscoveryRun>(`/discovery/runs/${id}`);
     return res.data;
   },
 
   // Bulk discovery
   bulkDiscover: async (payload: BulkDiscoveryRequest) => {
-    const res = await api.post<BulkDiscoveryJob>("/v1/discovery/bulk", payload);
+    const res = await api.post<BulkDiscoveryJob>("/discovery/bulk", payload);
     return res.data;
   },
 
   getBulkJob: async (id: string) => {
-    const res = await api.get<BulkDiscoveryJob>(`/v1/discovery/bulk/${id}`);
+    const res = await api.get<BulkDiscoveryJob>(`/discovery/bulk/${id}`);
     return res.data;
   },
 
   listBulkJobs: async () => {
-    const res = await api.get<BulkDiscoveryJob[]>("/v1/discovery/bulk");
+    const res = await api.get<BulkDiscoveryJob[]>("/discovery/bulk");
     return res.data;
   },
 
@@ -170,29 +170,29 @@ export const discoveryApi = {
         params.set(k, String(v));
       }
     });
-    const res = await api.get<PaginatedBusinesses>(`/v1/discovery/businesses?${params}`);
+    const res = await api.get<PaginatedBusinesses>(`/discovery/businesses?${params}`);
     return res.data;
   },
 
   promoteBusiness: async (id: string) => {
-    const res = await api.post(`/v1/discovery/businesses/${id}/promote`);
+    const res = await api.post(`/discovery/businesses/${id}/promote`);
     return res.data;
   },
 
   markDuplicate: async (id: string) => {
-    const res = await api.delete(`/v1/discovery/businesses/${id}/duplicate`);
+    const res = await api.delete(`/discovery/businesses/${id}/duplicate`);
     return res.data;
   },
 
   // Metrics
   getMetrics: async (days = 30) => {
-    const res = await api.get<DiscoveryMetrics>(`/v1/discovery/metrics?days=${days}`);
+    const res = await api.get<DiscoveryMetrics>(`/discovery/metrics?days=${days}`);
     return res.data;
   },
 
   // Reference data
   getCatalog: async () => {
-    const res = await api.get<DiscoveryCatalog>("/v1/discovery/catalog");
+    const res = await api.get<DiscoveryCatalog>("/discovery/catalog");
     return res.data;
   },
 };

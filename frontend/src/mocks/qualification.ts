@@ -1,1 +1,0 @@
-export const mockQualifications = Array.from({length: 20}).map((_, i) => ({ id: 'qual-'+i, score: 85, notes: 'Highly qualified lead' }));

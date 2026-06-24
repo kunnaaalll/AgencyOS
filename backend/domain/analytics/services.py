@@ -89,18 +89,34 @@ class AnalyticsService:
 
         # Lead Funnel (Group By Status)
         funnel_result = await db.execute(select(Lead.status, func.count(Lead.id)).group_by(Lead.status))
-        lead_funnel = [LeadFunnelData(stage=row[0].value, count=row[1]) for row in funnel_result.all()]
+        lead_funnel = [LeadFunnelData(stage=row[0].value if hasattr(row[0], 'value') else str(row[0]), count=row[1] or 0) for row in funnel_result.all()]
 
-        # Generate some deterministic trends for charts (last 6 months)
+        # Calculate real trends for charts (last 6 months)
         lead_qualification_trend = []
         client_growth_trend = []
         for i in range(5, -1, -1):
-            m_date = today - timedelta(days=30*i)
-            m_str = m_date.strftime("%b %Y")
-            # Deterministic mock based on current values scaled
-            scale = (6 - i) / 6.0
-            lead_qualification_trend.append(TrendData(date=m_str, value=int(qualified_leads * scale)))
-            client_growth_trend.append(TrendData(date=m_str, value=int(active_clients * scale)))
+            start_date = (today.replace(day=1) - timedelta(days=30*i)).replace(day=1)
+            if start_date.month == 12:
+                end_date = start_date.replace(year=start_date.year + 1, month=1)
+            else:
+                end_date = start_date.replace(month=start_date.month + 1)
+            
+            m_str = start_date.strftime("%b %Y")
+            
+            # Count leads qualified in this month
+            l_q = await db.execute(select(func.count(Lead.id)).where(
+                Lead.status == LeadStatus.QUALIFIED,
+                Lead.created_at >= start_date,
+                Lead.created_at < end_date
+            ))
+            lead_qualification_trend.append(TrendData(date=m_str, value=l_q.scalar() or 0))
+            
+            # Count clients created in this month
+            c_q = await db.execute(select(func.count(Client.id)).where(
+                Client.created_at >= start_date,
+                Client.created_at < end_date
+            ))
+            client_growth_trend.append(TrendData(date=m_str, value=c_q.scalar() or 0))
 
         return GrowthMetricsResponse(
             total_leads=total_leads,
@@ -204,7 +220,7 @@ class AnalyticsService:
 
         # Distributions
         stage_dist_res = await db.execute(select(Opportunity.pipeline_stage, func.count(Opportunity.id)).group_by(Opportunity.pipeline_stage))
-        pipeline_stage_distribution = [DistributionData(name=row[0].value, value=row[1]) for row in stage_dist_res.all()]
+        pipeline_stage_distribution = [DistributionData(name=row[0].value if hasattr(row[0], 'value') else str(row[0]), value=row[1] or 0) for row in stage_dist_res.all()]
 
         won_query = await db.execute(select(func.count(Opportunity.id)).where(Opportunity.pipeline_stage == PipelineStage.WON))
         lost_query = await db.execute(select(func.count(Opportunity.id)).where(Opportunity.pipeline_stage == PipelineStage.LOST))
@@ -260,13 +276,13 @@ class AnalyticsService:
 
         # Distributions
         task_dist_res = await db.execute(select(Task.status, func.count(Task.id)).group_by(Task.status))
-        task_status_distribution = [DistributionData(name=row[0].value, value=row[1]) for row in task_dist_res.all()]
+        task_status_distribution = [DistributionData(name=row[0].value if hasattr(row[0], 'value') else str(row[0]), value=row[1] or 0) for row in task_dist_res.all()]
 
         health_dist_res = await db.execute(select(Client.health_status, func.count(Client.id)).group_by(Client.health_status))
-        client_health_distribution = [DistributionData(name=row[0].value, value=row[1]) for row in health_dist_res.all()]
+        client_health_distribution = [DistributionData(name=row[0].value if hasattr(row[0], 'value') else str(row[0]), value=row[1] or 0) for row in health_dist_res.all()]
 
         proj_dist_res = await db.execute(select(Project.status, func.count(Project.id)).group_by(Project.status))
-        project_status_distribution = [DistributionData(name=row[0].value, value=row[1]) for row in proj_dist_res.all()]
+        project_status_distribution = [DistributionData(name=row[0].value if hasattr(row[0], 'value') else str(row[0]), value=row[1] or 0) for row in proj_dist_res.all()]
 
         return DeliveryMetricsResponse(
             open_tasks=open_tasks,
@@ -282,23 +298,31 @@ class AnalyticsService:
     async def get_forecast(db: AsyncSession) -> ForecastResponse:
         summary = await FinanceService.get_summary(db)
 
-        projected_mrr = float(summary.mrr) * 1.10
-        projected_profit = float(summary.net_profit) * 1.05
+        projected_mrr = float(summary.mrr or 0.0) * 1.10
+        projected_profit = float(summary.net_profit or 0.0) * 1.05
 
         active_clients_query = await db.execute(select(func.count(Client.id)).where(Client.status == ClientStatus.ACTIVE))
         active_clients = active_clients_query.scalar() or 0
 
         projected_clients = int(active_clients * 1.15)
 
-        # Hiring logic: 10+ active clients AND Task utilization high (we mock util > 85%)
-        # Here we just use the active_clients count to deterministically decide
-        task_utilization_mock = 88.0
+        # Real hiring logic based on actual task utilization
+        total_tasks_q = await db.execute(select(func.count(Task.id)))
+        total_tasks = total_tasks_q.scalar() or 0
+        completed_tasks_q = await db.execute(select(func.count(Task.id)).where(Task.status == TaskStatus.DONE))
+        completed_tasks = completed_tasks_q.scalar() or 0
+        
+        task_utilization = (completed_tasks / total_tasks * 100.0) if total_tasks > 0 else 0.0
+        
         hiring_recommendation = False
         hiring_reason = "Current capacity is sufficient."
 
-        if active_clients >= 10 and task_utilization_mock > 85.0:
+        if active_clients >= 10 and task_utilization > 85.0:
             hiring_recommendation = True
-            hiring_reason = "10+ active clients AND Task utilization > 85%"
+            hiring_reason = f"10+ active clients AND Task utilization > 85% (Current: {task_utilization:.1f}%)"
+        elif task_utilization > 95.0:
+            hiring_recommendation = True
+            hiring_reason = f"Task utilization critically high (Current: {task_utilization:.1f}%)" 
 
         return ForecastResponse(
             projected_mrr=projected_mrr,

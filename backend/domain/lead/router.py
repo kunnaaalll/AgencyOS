@@ -17,20 +17,48 @@ from domain.lead.schemas import (
 )
 from domain.user.models import User
 
-router = APIRouter(prefix="/v1", tags=["Leads"])
+router = APIRouter(tags=["Leads"])
 
 @router.get("/leads", response_model=list[LeadResponse])
 async def list_leads(
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(get_current_user),
     skip: int = 0,
-    limit: int = 100
+    limit: int = 100,
+    is_published: bool | None = None,
+    min_score: int | None = None
 ):
     if not current_user.has_permission("leads:read"):
         raise HTTPException(status_code=403, detail="Not enough permissions")
 
-    result = await db.execute(select(Lead).offset(skip).limit(limit))
+    query = select(Lead)
+    if is_published is not None:
+        query = query.where(Lead.is_published == is_published)
+    if min_score is not None:
+        query = query.where(Lead.score >= min_score)
+    
+    result = await db.execute(query.offset(skip).limit(limit))
     return result.scalars().all()
+
+@router.post("/leads/{lead_id}/publish", response_model=LeadResponse)
+async def publish_lead(
+    lead_id: uuid.UUID,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    if not current_user.has_permission("leads:update"):
+        raise HTTPException(status_code=403, detail="Not enough permissions")
+
+    result = await db.execute(select(Lead).where(Lead.id == lead_id))
+    lead = result.scalar_one_or_none()
+    if not lead:
+        raise HTTPException(status_code=404, detail="Lead not found")
+
+    lead.is_published = True
+    await db.commit()
+    await db.refresh(lead)
+    return lead
+
 
 @router.post("/leads", response_model=LeadResponse)
 async def create_lead(

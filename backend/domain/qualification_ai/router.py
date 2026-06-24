@@ -26,8 +26,11 @@ async def get_redis_pool():
     ))
 
 
+from fastapi import Request
+
 @router.post("/run/{lead_id}", status_code=status.HTTP_202_ACCEPTED)
 async def run_qualification(
+    request: Request,
     lead_id: str,
     db: AsyncSession = Depends(get_db),
     _ = Depends(require_permission("qualification:create"))
@@ -39,7 +42,10 @@ async def run_qualification(
         raise HTTPException(status_code=404, detail="Lead not found")
 
     # Enqueue job
-    redis_pool = await get_redis_pool()
+    redis_pool = getattr(request.app.state, "redis", None)
+    if not redis_pool:
+        return {"message": "Redis is currently unavailable. Job could not be enqueued."}
+        
     await redis_pool.enqueue_job("qualify_lead_job", str(lead_id))
     
     return {"message": "AI qualification job enqueued successfully"}

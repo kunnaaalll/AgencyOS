@@ -32,7 +32,6 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 
 COPY pyproject.toml uv.lock ./
 RUN uv pip install --system --no-cache -e ".[dev]"
-RUN playwright install --with-deps chromium
 
 COPY . .
 

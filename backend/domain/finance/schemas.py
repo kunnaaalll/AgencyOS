@@ -39,13 +39,15 @@ class RevenueResponse(RevenueBase):
         from_attributes = True
 
 # -- Expense Schemas --
+from pydantic import BaseModel, Field, AliasChoices
+
 class ExpenseBase(BaseModel):
     category: str
     amount: float = Field(..., gt=0)
     currency: str = "USD"
-    description: str | None = None
-    vendor: str | None = None
-    expense_date: date | None = None
+    description: str | None = Field(None, validation_alias=AliasChoices("description", "title", "name"))
+    vendor: str | None = Field(None, validation_alias=AliasChoices("vendor", "merchant"))
+    expense_date: date | None = Field(None, validation_alias=AliasChoices("expense_date", "date"))
     status: ExpenseStatus = ExpenseStatus.PENDING
 
 class ExpenseCreate(ExpenseBase):

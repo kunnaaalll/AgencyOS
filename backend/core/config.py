@@ -25,6 +25,7 @@ class Settings(BaseSettings):
     APP_HOST: str = "0.0.0.0"
     APP_PORT: int = 8000
     DEBUG: bool = False
+    FRONTEND_URL: str = "http://localhost:5173"
 
     # ── Database ──────────────────────────────────────────────
     POSTGRES_HOST: str = "postgres"

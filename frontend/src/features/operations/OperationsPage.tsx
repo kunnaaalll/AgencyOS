@@ -1,19 +1,70 @@
-import { useStore } from '@tanstack/react-store'
-import { leadsStore, publishLeads, runAutomation } from '@/store/leadsStore'
-import { Zap, ArrowRight, UserPlus, Send, Settings, Sparkles, CheckSquare } from 'lucide-react'
+import { useRef, useState } from 'react'
+import { Zap, UserPlus, Send, Settings, Sparkles, CheckSquare } from 'lucide-react'
 import { Button } from '@/components/ui/button'
-import { DataTable } from '@/components/ui/DataTable'
 import { LeadCard } from '@/components/ui/LeadCard'
 import gsap from 'gsap'
 import { useGSAP } from '@gsap/react'
-import { useRef } from 'react'
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
+import { fetchLeads, publishLead, Lead } from '@/features/leads/api'
+import { discoveryApi } from '@/features/discovery/api/discoveryApi'
+import { Input } from '@/components/ui/input'
+
+const HARDCODED_LOCATIONS = ["Mumbai", "Navi Mumbai", "Thane"];
+const HARDCODED_INDUSTRIES = [
+  "dentist", "restaurant", "salon", "spa", "skin clinic", "gym", 
+  "interior designer", "architect", "lawyer", "CA", "real estate agent", 
+  "school", "coaching class", "hospital", "bakery", "cafe", 
+  "hotel", "jeweller", "furniture store", "digital marketing agency"
+];
+const HARDCODED_SOURCES = [
+  "google_maps", "google_search", "justdial", "indiamart", "clutch", "reddit", "crawl4ai_web"
+];
 
 export function OperationsPage() {
-  const { leads } = useStore(leadsStore)
   const containerRef = useRef<HTMLDivElement>(null)
+  const queryClient = useQueryClient()
+  
+  const [isRunning, setIsRunning] = useState(false)
+  const [limit, setLimit] = useState(10)
 
-  const stagedLeads = leads.filter(l => l.status === 'staged')
-  const publishedLeads = leads.filter(l => l.status === 'hot')
+  // Fetch staged leads (Leads not yet published, but scored >= 60)
+  const { data: stagedLeads = [], isLoading: isLoadingDiscovery } = useQuery({
+    queryKey: ['leads', 'unpublished', 'premium'],
+    queryFn: () => fetchLeads(false, 60)
+  })
+  
+  // Fetch published leads
+  const { data: publishedLeads = [] } = useQuery({
+    queryKey: ['leads', 'published'],
+    queryFn: () => fetchLeads(true)
+  })
+
+  // Mutations
+  const publishMutation = useMutation({
+    mutationFn: (id: string) => publishLead(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['leads'] })
+    }
+  })
+
+  const discoveryMutation = useMutation({
+    mutationFn: () => discoveryApi.bulkDiscover({
+      industries: HARDCODED_INDUSTRIES,
+      locations: HARDCODED_LOCATIONS,
+      sources: HARDCODED_SOURCES,
+      limit_per_query: limit
+    }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['discovery-businesses'] })
+      queryClient.invalidateQueries({ queryKey: ['discovery-runs'] })
+      setIsRunning(false)
+      alert("Bulk Automation Loop started successfully in the background!")
+    },
+    onError: (error: any) => {
+      setIsRunning(false)
+      alert("Failed to start automation: " + (error?.response?.data?.detail || error.message))
+    }
+  })
 
   useGSAP(() => {
     gsap.fromTo('.gsap-fade-up', 
@@ -22,21 +73,16 @@ export function OperationsPage() {
     )
   }, { scope: containerRef })
 
-  const columns = [
-    { accessorKey: 'name', header: 'Contact Name' },
-    { accessorKey: 'company', header: 'Company' },
-    { accessorKey: 'intentScore', header: 'Intent Score' },
-    { accessorKey: 'dateAdded', header: 'Date Added' },
-    {
-      accessorKey: 'status',
-      header: 'Status',
-      cell: (info: any) => (
-        <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-amber-100 text-amber-800">
-          {info.getValue()}
-        </span>
-      ),
-    },
-  ]
+  const handleRunAutomation = () => {
+    setIsRunning(true)
+    discoveryMutation.mutate()
+  }
+
+  const handlePublishAll = () => {
+    stagedLeads.forEach(business => {
+      publishMutation.mutate(business.id)
+    })
+  }
 
   return (
     <div ref={containerRef} className="max-w-7xl mx-auto space-y-8">
@@ -54,15 +100,27 @@ export function OperationsPage() {
             <Zap className="w-6 h-6 text-blue-500" />
           </div>
           <h3 className="font-semibold text-gray-900 mb-2">Lead Discovery Loop</h3>
-          <p className="text-sm text-gray-500 mb-6 flex-1">
-            Execute the scraping protocol to find new highly-qualified prospects and stage them for review.
+          <p className="text-sm text-gray-500 mb-4 flex-1">
+            Execute the scraping protocol across {HARDCODED_INDUSTRIES.length} industries, {HARDCODED_LOCATIONS.length} locations, and {HARDCODED_SOURCES.length} sources.
           </p>
+          <div className="w-full mb-4">
+            <label className="block text-xs font-semibold text-gray-700 tracking-wide uppercase mb-1">Limit per combination</label>
+            <Input 
+              type="number" 
+              value={limit}
+              onChange={(e) => setLimit(Number(e.target.value))}
+              min="1"
+              max="100"
+              className="bg-white/50 border-white/60"
+            />
+          </div>
           <Button 
             variant="outline" 
             className="w-full bg-white/60 border-blue-200 text-blue-700 hover:bg-blue-50 hover:border-blue-300 transition-all shadow-sm"
-            onClick={runAutomation}
+            onClick={handleRunAutomation}
+            disabled={isRunning}
           >
-            Run Automation Loop
+            {isRunning ? 'Starting...' : 'Run Full Automation Loop'}
           </Button>
         </div>
 
@@ -110,17 +168,19 @@ export function OperationsPage() {
           
           <Button 
             variant="primary" 
-            onClick={publishLeads}
-            disabled={stagedLeads.length === 0}
+            onClick={handlePublishAll}
+            disabled={stagedLeads.length === 0 || publishMutation.isPending}
             className="flex items-center gap-2 shadow-sm"
           >
             <Send className="w-4 h-4" />
-            Publish {stagedLeads.length} Leads to Co-Founders
+            {publishMutation.isPending ? 'Publishing...' : `Publish ${stagedLeads.length} Leads to Co-Founders`}
           </Button>
         </div>
 
         <div className="p-6">
-          {stagedLeads.length === 0 ? (
+          {isLoadingDiscovery ? (
+            <div className="text-center py-12 text-gray-500">Loading staged leads...</div>
+          ) : stagedLeads.length === 0 ? (
             <div className="text-center py-12">
               <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-gray-50 border border-gray-100 mb-4">
                 <CheckSquare className="w-8 h-8 text-gray-400" />
@@ -132,9 +192,13 @@ export function OperationsPage() {
             </div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-              {stagedLeads.map((lead, i) => (
-                <div key={lead.id} className="gsap-fade-up">
-                  <LeadCard lead={lead} />
+              {stagedLeads.map((business, i) => (
+                <div key={business.id} className="gsap-fade-up">
+                  <LeadCard lead={business} actionButton={
+                    <Button variant="outline" size="sm" onClick={() => publishMutation.mutate(business.id)}>
+                      Publish
+                    </Button>
+                  } />
                 </div>
               ))}
             </div>

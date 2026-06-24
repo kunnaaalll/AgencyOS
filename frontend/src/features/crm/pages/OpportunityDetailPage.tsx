@@ -28,6 +28,7 @@ export function OpportunityDetailPage() {
       setMeetings(mtgData);
     } catch (error) {
       console.error('Failed to load opportunity details:', error);
+      alert((error as any)?.response?.data?.detail || (error as any)?.message || 'An error occurred. Please try again.');
     } finally {
       setLoading(false);
     }

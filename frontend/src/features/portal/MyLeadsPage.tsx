@@ -1,14 +1,19 @@
 import React, { useState } from 'react'
-import { useStore } from '@tanstack/react-store'
-import { leadsStore } from '@/store/leadsStore'
 import { LeadCard } from '@/components/ui/LeadCard'
 import { LeadOutreachPanel } from '@/components/ui/LeadOutreachPanel'
 import { motion } from 'framer-motion'
 import { CheckCircle2 } from 'lucide-react'
+import { useQuery } from '@tanstack/react-query'
+import { fetchLeads } from '@/features/leads/api'
 
 export function MyLeadsPage() {
-  const { leads } = useStore(leadsStore)
-  const myLeads = leads.filter(l => l.status === 'transferred')
+  const { data: leads = [], isLoading } = useQuery({
+    queryKey: ['leads'],
+    queryFn: () => fetchLeads(true)
+  })
+  
+  // For the MVP, we assume any lead that is not NEW has been claimed/interacted with
+  const myLeads = leads.filter(l => l.status !== 'NEW')
   const [selectedLeadId, setSelectedLeadId] = useState<string | null>(null)
 
   const selectedLead = myLeads.find(l => l.id === selectedLeadId) || null
@@ -25,7 +30,11 @@ export function MyLeadsPage() {
           <p className="text-gray-500 mt-2">Leads you have claimed from the hot leads market.</p>
         </div>
         
-        {myLeads.length === 0 ? (
+        {isLoading ? (
+          <div className="glass-panel rounded-3xl p-12 text-center border border-white/40">
+            <p className="text-gray-500">Loading leads...</p>
+          </div>
+        ) : myLeads.length === 0 ? (
           <div className="glass-panel rounded-3xl p-12 text-center border border-white/40">
             <p className="text-gray-500">You haven't claimed any leads yet.</p>
           </div>
@@ -54,11 +63,13 @@ export function MyLeadsPage() {
         )}
       </motion.div>
 
-      <LeadOutreachPanel 
-        lead={selectedLead} 
-        isOpen={!!selectedLead} 
-        onClose={() => setSelectedLeadId(null)} 
-      />
+      {selectedLead && (
+        <LeadOutreachPanel 
+          lead={selectedLead} 
+          isOpen={!!selectedLead} 
+          onClose={() => setSelectedLeadId(null)} 
+        />
+      )}
     </>
   )
 }

@@ -21,7 +21,8 @@ class BackupService:
             started_at=datetime.utcnow()
         )
         self.db.add(db_backup)
-        await self.db.flush()
+        await self.db.commit()
+        await self.db.refresh(db_backup)
         # In a real scenario, this would trigger an ARQ task to perform the actual backup.
         # Here we just record metadata.
         return db_backup

@@ -16,6 +16,7 @@ from sqlalchemy import or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from domain.discovery.models import RawBusiness
+from domain.lead.models import Lead
 
 logger = structlog.get_logger()
 
@@ -71,6 +72,13 @@ class DeduplicationService:
         # 1. Website match
         website = _normalize_website(business_dict.get("website"))
         if website:
+            existing_lead = await session.execute(
+                select(Lead).where(Lead.website.ilike(f"%{website}%")).limit(1)
+            )
+            if existing_lead.scalar_one_or_none():
+                logger.debug("Duplicate found by website in Leads", website=website)
+                return True
+
             existing = await session.execute(
                 select(RawBusiness).where(
                     RawBusiness.is_duplicate.is_(False),
@@ -85,6 +93,13 @@ class DeduplicationService:
         # 2. Phone match
         phone = _normalize_phone(business_dict.get("phone"))
         if phone:
+            existing_lead = await session.execute(
+                select(Lead).where(Lead.phone.ilike(f"%{phone}%")).limit(1)
+            )
+            if existing_lead.scalar_one_or_none():
+                logger.debug("Duplicate found by phone in Leads", phone=phone)
+                return True
+
             existing = await session.execute(
                 select(RawBusiness).where(
                     RawBusiness.is_duplicate.is_(False),
@@ -113,6 +128,17 @@ class DeduplicationService:
         city = business_dict.get("city", "")
         name_key = _name_city_key(name, city)
         if name_key:
+            all_leads = await session.execute(
+                select(Lead).where(
+                    Lead.city.ilike(f"%{city}%") if city else True,
+                ).limit(500)
+            )
+            for candidate in all_leads.scalars().all():
+                candidate_key = _name_city_key(candidate.business_name, candidate.city)
+                if candidate_key and candidate_key == name_key:
+                    logger.debug("Duplicate found by name+city in Leads", name=name, city=city)
+                    return True
+
             all_in_city = await session.execute(
                 select(RawBusiness).where(
                     RawBusiness.is_duplicate.is_(False),

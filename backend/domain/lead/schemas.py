@@ -33,6 +33,7 @@ class LeadUpdate(LeadBase):
 class LeadResponse(LeadBase):
     id: uuid.UUID
     status: LeadStatus
+    is_published: bool
     score: int | None
     priority: Priority | None
     qualification_status: str | None

@@ -92,6 +92,15 @@ class ValidationException(AgencyOSException):
         )
 
 
+
+class DomainException(AgencyOSException):
+    def __init__(self, message: str = "A domain error occurred", error_code: str = "DOMAIN_ERROR") -> None:
+        super().__init__(
+            message=message,
+            status_code=status.HTTP_400_BAD_REQUEST,
+            error_code=error_code,
+        )
+
 # ── Exception Handlers ────────────────────────────────────────
 
 async def agencyos_exception_handler(
@@ -101,6 +110,7 @@ async def agencyos_exception_handler(
     return ORJSONResponse(
         status_code=exc.status_code,
         content={
+            "success": False,
             "error": {
                 "code": exc.error_code,
                 "message": exc.message,
@@ -109,16 +119,56 @@ async def agencyos_exception_handler(
     )
 
 
+import structlog
+
+logger = structlog.get_logger(__name__)
+
 async def generic_exception_handler(
     request: Request,
     exc: Exception,
 ) -> ORJSONResponse:
+    logger.exception("Unhandled Server Error", error=str(exc))
     return ORJSONResponse(
         status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
         content={
+            "success": False,
             "error": {
                 "code": "INTERNAL_ERROR",
                 "message": "An unexpected error occurred",
+            }
+        },
+    )
+
+from fastapi.exceptions import RequestValidationError
+from starlette.exceptions import HTTPException as StarletteHTTPException
+
+async def validation_exception_handler(
+    request: Request,
+    exc: RequestValidationError,
+) -> ORJSONResponse:
+    return ORJSONResponse(
+        status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+        content={
+            "success": False,
+            "error": {
+                "code": "VALIDATION_ERROR",
+                "message": "Payload mismatch or missing fields",
+                "details": exc.errors()
+            }
+        },
+    )
+
+async def http_exception_handler(
+    request: Request,
+    exc: StarletteHTTPException,
+) -> ORJSONResponse:
+    return ORJSONResponse(
+        status_code=exc.status_code,
+        content={
+            "success": False,
+            "error": {
+                "code": "HTTP_ERROR",
+                "message": exc.detail,
             }
         },
     )

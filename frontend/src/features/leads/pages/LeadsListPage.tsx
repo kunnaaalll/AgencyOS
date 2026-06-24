@@ -85,7 +85,7 @@ const columns = [
 export function LeadsListPage() {
   const { data: leads, isLoading } = useQuery({
     queryKey: ['leads'],
-    queryFn: fetchLeads,
+    queryFn: () => fetchLeads(true),
   })
 
   const [sorting, setSorting] = useState<SortingState>([])

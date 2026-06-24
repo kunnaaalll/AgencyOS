@@ -4,6 +4,7 @@ AgencyOS V2 — Monitoring Services
 
 import os
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy import text
 from core.database import check_database_connection
 from core.redis import check_redis_connection, get_redis
 from core.minio import check_minio_connection
@@ -28,21 +29,22 @@ class SystemMonitorService:
         if redis_health:
             try:
                 redis = await get_redis()
-                # Use ARQ defaults to fetch metrics
                 queue_depth = await redis.zcard(default_queue_name)
-                # ARQ doesn't provide an easy active workers list out of the box in simple usage, 
-                # but we can try to guess or mock if we don't use the health check key.
-                # For this implementation, we will keep it simple or zero if not easily retrievable.
-                active_workers = 1 # mocked for simple visibility
-                # Failed jobs are often kept in arq:result with a failure flag, or custom list.
-                # Just mock for now unless we have a specific arq tracker.
-                failed_jobs = 0 
+                # ARQ health checks: 'arq:health-check:*'
+                health_keys = await redis.keys('arq:health-check:*')
+                active_workers = len(health_keys)
+                failed_jobs = await redis.get('arq:metrics:failed_jobs') or 0
+                failed_jobs = int(failed_jobs)
             except Exception:
                 pass
 
-        # Mock storage usage 
-        # In a real app we might query Postgres DB size or MinIO bucket size.
-        storage_usage = "42.5 GB"
+        # Calculate real Postgres database size
+        storage_usage = "Unknown"
+        try:
+            res = await self.db.execute(text("SELECT pg_size_pretty(pg_database_size(current_database()))"))
+            storage_usage = res.scalar() or "0 bytes"
+        except Exception as e:
+            pass
 
         return SystemHealthResponse(
             postgres_health=postgres_health,
