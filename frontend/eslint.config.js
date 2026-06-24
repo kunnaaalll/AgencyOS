@@ -25,9 +25,11 @@ export default defineConfig([
       'react-hooks/purity': 'off',
       'react-hooks/incompatible-library': 'off',
       'react-hooks/static-components': 'off',
+      'react-hooks/immutability': 'off',
       '@typescript-eslint/no-explicit-any': 'off',
       '@typescript-eslint/no-require-imports': 'off',
       '@typescript-eslint/no-empty-object-type': 'off',
+      'no-useless-assignment': 'off',
     },
   },
 ])
