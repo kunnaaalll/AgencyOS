@@ -26,10 +26,12 @@ def compile_jsonb_sqlite(type_, compiler, **kw):
     return "JSON"
 
 
+from sqlalchemy.pool import NullPool
+
 # Use PostgreSQL if provided (e.g. in CI), fallback to SQLite
 TEST_DATABASE_URL = os.getenv("DATABASE_URL", "sqlite+aiosqlite:///./test.db")
 
-test_engine = create_async_engine(TEST_DATABASE_URL, echo=False)
+test_engine = create_async_engine(TEST_DATABASE_URL, echo=False, poolclass=NullPool)
 TestSessionFactory = async_sessionmaker(
     bind=test_engine, class_=AsyncSession, expire_on_commit=False
 )
