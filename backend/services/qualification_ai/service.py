@@ -47,8 +47,8 @@ class AIQualificationService:
             response_content = response.choices[0].message.content
             usage = response.usage
         except Exception as e:
-                logger.error(f"AI qualification failed via FreeLLM API: {str(e, error=str(e), exc_info=True)
-                raise DomainException(f"AI qualification failed via FreeLLM API: {str(e)}")
+            logger.error(f"AI qualification failed via FreeLLM API: {str(e)}", exc_info=True)
+            raise DomainException(f"AI qualification failed via FreeLLM API: {str(e)}")
             
         execution_time_ms = (time.time() - start_time) * 1000
         tokens_used = usage.total_tokens if usage else 0
@@ -68,8 +68,8 @@ class AIQualificationService:
             # Ensure it maps to the Pydantic schema properly
             ai_output = AIOutputSchema(**parsed_json)
         except Exception as e:
-                logger.error(f"Failed to parse AI output: {str(e, error=str(e), exc_info=True)
-                raise DomainException(f"Failed to parse AI output: {str(e)}")
+            logger.error(f"Failed to parse AI output: {str(e)}", exc_info=True)
+            raise DomainException(f"Failed to parse AI output: {str(e)}")
             
         # Create entity
         qualification = AIQualification(
