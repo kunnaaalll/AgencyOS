@@ -7,6 +7,7 @@ from domain.discovery.sources.justdial import JustDialSource
 from domain.discovery.sources.indiamart import IndiaMartSource
 from domain.discovery.sources.clutch import ClutchSource
 from domain.discovery.sources.reddit import RedditSource
+from domain.discovery.sources.crawl4ai_web import Crawl4AISource
 
 # Source registry — maps source name → class
 SOURCE_REGISTRY: dict[str, type[BaseDiscoverySource]] = {
@@ -16,6 +17,7 @@ SOURCE_REGISTRY: dict[str, type[BaseDiscoverySource]] = {
     "indiamart": IndiaMartSource,
     "clutch": ClutchSource,
     "reddit": RedditSource,
+    "crawl4ai_web": Crawl4AISource,
 }
 
 ALL_SOURCES = list(SOURCE_REGISTRY.keys())
@@ -37,6 +39,7 @@ __all__ = [
     "IndiaMartSource",
     "ClutchSource",
     "RedditSource",
+    "Crawl4AISource",
     "SOURCE_REGISTRY",
     "ALL_SOURCES",
     "get_source",

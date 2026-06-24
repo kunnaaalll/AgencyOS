@@ -1,7 +1,7 @@
 from abc import ABC, abstractmethod
 from bs4 import BeautifulSoup
 from duckduckgo_search import DDGS
-from playwright.async_api import async_playwright
+from crawl4ai import AsyncWebCrawler
 
 class DiscoverySource(ABC):
     @abstractmethod
@@ -12,44 +12,70 @@ class DiscoverySource(ABC):
         """
         pass
 
-class GoogleMapsSource(DiscoverySource):
+class Crawl4AISource(DiscoverySource):
     async def discover(self, query: str, location: str, limit: int) -> list[dict]:
         results = []
-        search_query = f"{query} in {location}"
+        search_query = f"{query} businesses in {location}"
         
-        async with async_playwright() as p:
-            browser = await p.chromium.launch(headless=True)
-            page = await browser.new_page()
-            
-            # Simple mock integration for Google Maps using Playwright
-            # In a real scenario, this would navigate to maps.google.com and scrape results.
-            # Due to CAPTCHAs and structural changes, this provides a structural skeleton.
-            await page.goto(f"https://duckduckgo.com/?q={search_query.replace(' ', '+')}+site:maps.google.com")
-            await page.wait_for_timeout(2000)
-            
-            content = await page.content()
-            soup = BeautifulSoup(content, "html.parser")
-            
-            # Simulated extraction
-            # This is a structural representation of what would be extracted
-            for _ in range(min(limit, 5)):
-                results.append({
-                    "business_name": f"Extracted Business from Google Maps - {search_query}",
-                    "website": "https://example.com",
-                    "phone": "+1-555-0100",
-                    "address": location,
-                    "city": location.split(',')[0] if ',' in location else location,
-                    "state": "",
-                    "country": "",
-                    "industry": query,
-                    "google_maps_url": "https://maps.google.com/?q=...",
-                    "raw_payload": {"source_type": "google_maps", "query": search_query}
-                })
+        # 1. Use DDGS to find target URLs
+        urls_to_scrape = []
+        with DDGS() as ddgs:
+            ddg_results = ddgs.text(search_query, max_results=limit)
+            for res in ddg_results:
+                if res.get("href"):
+                    urls_to_scrape.append({
+                        "url": res["href"],
+                        "title": res.get("title", ""),
+                        "search_snippet": res.get("body", "")
+                    })
+        
+        # 2. Use Crawl4AI to scrape the sites for deep context
+        async with AsyncWebCrawler(verbose=True) as crawler:
+            for item in urls_to_scrape:
+                try:
+                    crawl_result = await crawler.arun(url=item["url"])
+                    
+                    # Extract raw markdown which is perfect for LLM parsing downstream
+                    markdown_content = crawl_result.markdown
+                    
+                    results.append({
+                        "business_name": item["title"],
+                        "website": item["url"],
+                        "phone": None, # Could be parsed via regex or LLM downstream
+                        "address": location,
+                        "city": location.split(',')[0] if ',' in location else location,
+                        "state": "",
+                        "country": "",
+                        "industry": query,
+                        "google_maps_url": None,
+                        "raw_payload": {
+                            "source_type": "crawl4ai_web",
+                            "search_snippet": item["search_snippet"],
+                            "markdown": markdown_content[:5000] # Limit size for payload safety
+                        }
+                    })
+                except Exception as e:
+                    print(f"Failed to crawl {item['url']}: {e}")
+                    # Still append basic info even if scrape fails
+                    results.append({
+                        "business_name": item["title"],
+                        "website": item["url"],
+                        "phone": None,
+                        "address": location,
+                        "city": location.split(',')[0] if ',' in location else location,
+                        "state": "",
+                        "country": "",
+                        "industry": query,
+                        "google_maps_url": None,
+                        "raw_payload": {
+                            "source_type": "crawl4ai_failed",
+                            "search_snippet": item["search_snippet"]
+                        }
+                    })
                 
-            await browser.close()
-            
         return results
 
+# Keep simple DDG Search for very fast non-scraping fallback
 class GoogleSearchSource(DiscoverySource):
     async def discover(self, query: str, location: str, limit: int) -> list[dict]:
         results = []
@@ -70,29 +96,4 @@ class GoogleSearchSource(DiscoverySource):
                     "google_maps_url": None,
                     "raw_payload": res
                 })
-        return results
-
-class RedditSource(DiscoverySource):
-    async def discover(self, query: str, location: str, limit: int) -> list[dict]:
-        results = []
-        subreddits = ["mumbai", "india", "smallbusiness", "startups"]
-        search_query = f"{query} {location}"
-        
-        with DDGS() as ddgs:
-            for sub in subreddits:
-                ddg_query = f"site:reddit.com/r/{sub} {search_query}"
-                ddg_results = ddgs.text(ddg_query, max_results=max(1, limit // len(subreddits)))
-                for res in ddg_results:
-                    results.append({
-                        "business_name": res.get("title", f"Business from r/{sub}"),
-                        "website": res.get("href", ""),
-                        "phone": None,
-                        "address": location,
-                        "city": location.split(',')[0] if ',' in location else location,
-                        "state": "",
-                        "country": "",
-                        "industry": query,
-                        "google_maps_url": None,
-                        "raw_payload": res
-                    })
         return results

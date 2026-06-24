@@ -14,6 +14,7 @@ import asyncio
 import re
 import structlog
 from duckduckgo_search import DDGS
+from crawl4ai import AsyncWebCrawler
 
 from domain.discovery.sources.base import BaseDiscoverySource
 
@@ -102,6 +103,14 @@ class GoogleSearchSource(BaseDiscoverySource):
                     description = res.get("body", "")
                     name = _infer_business_name(title, url)
 
+                    markdown_content = ""
+                    try:
+                        async with AsyncWebCrawler(verbose=False) as crawler:
+                            crawl_result = await crawler.arun(url=url)
+                            markdown_content = crawl_result.markdown[:5000] if crawl_result and crawl_result.markdown else ""
+                    except Exception as e:
+                        logger.warning("Crawl4AI extraction failed", url=url, error=str(e))
+
                     results.append(
                         self._make_business_dict(
                             business_name=name,
@@ -115,6 +124,7 @@ class GoogleSearchSource(BaseDiscoverySource):
                                 "title": title,
                                 "description": description,
                                 "ddg_href": url,
+                                "markdown": markdown_content,
                             },
                         )
                     )
