@@ -81,11 +81,12 @@ class DeduplicationService:
                 return True
 
             existing = await session.execute(
-                select(RawBusiness).where(
+                select(RawBusiness)
+                .where(
                     RawBusiness.is_duplicate.is_(False),
-                ).where(
-                    RawBusiness.website.ilike(f"%{website}%")
-                ).limit(1)
+                )
+                .where(RawBusiness.website.ilike(f"%{website}%"))
+                .limit(1)
             )
             if existing.scalar_one_or_none():
                 logger.debug("Duplicate found by website", website=website)
@@ -102,10 +103,12 @@ class DeduplicationService:
                 return True
 
             existing = await session.execute(
-                select(RawBusiness).where(
+                select(RawBusiness)
+                .where(
                     RawBusiness.is_duplicate.is_(False),
                     RawBusiness.phone.ilike(f"%{phone}%"),
-                ).limit(1)
+                )
+                .limit(1)
             )
             if existing.scalar_one_or_none():
                 logger.debug("Duplicate found by phone", phone=phone)
@@ -115,10 +118,12 @@ class DeduplicationService:
         maps_url = business_dict.get("google_maps_url")
         if maps_url:
             existing = await session.execute(
-                select(RawBusiness).where(
+                select(RawBusiness)
+                .where(
                     RawBusiness.is_duplicate.is_(False),
                     RawBusiness.google_maps_url == maps_url,
-                ).limit(1)
+                )
+                .limit(1)
             )
             if existing.scalar_one_or_none():
                 logger.debug("Duplicate found by google_maps_url")
@@ -130,9 +135,11 @@ class DeduplicationService:
         name_key = _name_city_key(name, city)
         if name_key:
             all_leads = await session.execute(
-                select(Lead).where(
+                select(Lead)
+                .where(
                     Lead.city.ilike(f"%{city}%") if city else True,
-                ).limit(500)
+                )
+                .limit(500)
             )
             for candidate in all_leads.scalars().all():
                 candidate_key = _name_city_key(candidate.business_name, candidate.city)
@@ -141,10 +148,12 @@ class DeduplicationService:
                     return True
 
             all_in_city = await session.execute(
-                select(RawBusiness).where(
+                select(RawBusiness)
+                .where(
                     RawBusiness.is_duplicate.is_(False),
                     RawBusiness.city.ilike(f"%{city}%") if city else True,
-                ).limit(500)
+                )
+                .limit(500)
             )
             for candidate in all_in_city.scalars().all():
                 candidate_key = _name_city_key(candidate.business_name, candidate.city)

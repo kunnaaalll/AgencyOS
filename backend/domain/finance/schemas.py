@@ -17,8 +17,10 @@ class RevenueBase(BaseModel):
     payment_method: str | None = None
     status: RevenueStatus = RevenueStatus.PENDING
 
+
 class RevenueCreate(RevenueBase):
     pass
+
 
 class RevenueUpdate(BaseModel):
     client_id: UUID | None = None
@@ -30,6 +32,7 @@ class RevenueUpdate(BaseModel):
     payment_method: str | None = None
     status: RevenueStatus | None = None
 
+
 class RevenueResponse(RevenueBase):
     id: UUID
     created_at: datetime
@@ -37,6 +40,7 @@ class RevenueResponse(RevenueBase):
 
     class Config:
         from_attributes = True
+
 
 # -- Expense Schemas --
 from pydantic import AliasChoices, BaseModel, Field
@@ -46,13 +50,17 @@ class ExpenseBase(BaseModel):
     category: str
     amount: float = Field(..., gt=0)
     currency: str = "USD"
-    description: str | None = Field(None, validation_alias=AliasChoices("description", "title", "name"))
+    description: str | None = Field(
+        None, validation_alias=AliasChoices("description", "title", "name")
+    )
     vendor: str | None = Field(None, validation_alias=AliasChoices("vendor", "merchant"))
     expense_date: date | None = Field(None, validation_alias=AliasChoices("expense_date", "date"))
     status: ExpenseStatus = ExpenseStatus.PENDING
 
+
 class ExpenseCreate(ExpenseBase):
     pass
+
 
 class ExpenseUpdate(BaseModel):
     category: str | None = None
@@ -63,6 +71,7 @@ class ExpenseUpdate(BaseModel):
     expense_date: date | None = None
     status: ExpenseStatus | None = None
 
+
 class ExpenseResponse(ExpenseBase):
     id: UUID
     created_at: datetime
@@ -71,6 +80,7 @@ class ExpenseResponse(ExpenseBase):
     class Config:
         from_attributes = True
 
+
 # -- Founder Schemas --
 class FounderBase(BaseModel):
     name: str
@@ -78,14 +88,17 @@ class FounderBase(BaseModel):
     equity_percentage: float = Field(..., ge=0, le=100)
     is_active: bool = True
 
+
 class FounderCreate(FounderBase):
     pass
+
 
 class FounderUpdate(BaseModel):
     name: str | None = None
     email: str | None = None
     equity_percentage: float | None = Field(None, ge=0, le=100)
     is_active: bool | None = None
+
 
 class FounderResponse(FounderBase):
     id: UUID
@@ -95,6 +108,7 @@ class FounderResponse(FounderBase):
     class Config:
         from_attributes = True
 
+
 # -- Distribution Schemas --
 class DistributionBase(BaseModel):
     founder_id: UUID
@@ -102,6 +116,7 @@ class DistributionBase(BaseModel):
     period_end: date
     amount: float
     distribution_date: date
+
 
 class DistributionResponse(DistributionBase):
     id: UUID
@@ -111,18 +126,22 @@ class DistributionResponse(DistributionBase):
     class Config:
         from_attributes = True
 
+
 # -- Finance Settings Schemas --
 class FinanceSettingsBase(BaseModel):
     reserve_percentage: float = Field(..., ge=0, le=100)
 
+
 class FinanceSettingsUpdate(BaseModel):
     reserve_percentage: float = Field(..., ge=0, le=100)
+
 
 class FinanceSettingsResponse(FinanceSettingsBase):
     id: UUID
 
     class Config:
         from_attributes = True
+
 
 # -- Summary Schemas --
 class FinanceSummaryResponse(BaseModel):
@@ -132,6 +151,7 @@ class FinanceSummaryResponse(BaseModel):
     net_profit: float
     reserve_fund: float
     distribution_pool: float
+
 
 class ForecastResponse(BaseModel):
     projected_mrr: float

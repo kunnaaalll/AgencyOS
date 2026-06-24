@@ -38,7 +38,9 @@ class KnowledgeService:
         return category
 
     @staticmethod
-    async def update_category(db: AsyncSession, category_id: uuid.UUID, data: KnowledgeCategoryUpdate) -> KnowledgeCategory:
+    async def update_category(
+        db: AsyncSession, category_id: uuid.UUID, data: KnowledgeCategoryUpdate
+    ) -> KnowledgeCategory:
         category = await KnowledgeService.get_category(db, category_id)
         update_data = data.model_dump(exclude_unset=True)
         for key, value in update_data.items():
@@ -56,7 +58,9 @@ class KnowledgeService:
     # ── Articles ─────────────────────────────────────────────────
 
     @staticmethod
-    async def create_article(db: AsyncSession, data: KnowledgeArticleCreate, author_id: uuid.UUID) -> KnowledgeArticle:
+    async def create_article(
+        db: AsyncSession, data: KnowledgeArticleCreate, author_id: uuid.UUID
+    ) -> KnowledgeArticle:
         article = KnowledgeArticle(**data.model_dump(), author_id=author_id)
         db.add(article)
         await db.commit()
@@ -65,7 +69,9 @@ class KnowledgeService:
 
     @staticmethod
     async def get_articles(db: AsyncSession) -> Sequence[KnowledgeArticle]:
-        result = await db.execute(select(KnowledgeArticle).order_by(KnowledgeArticle.created_at.desc()))
+        result = await db.execute(
+            select(KnowledgeArticle).order_by(KnowledgeArticle.created_at.desc())
+        )
         return result.scalars().all()
 
     @staticmethod
@@ -76,7 +82,9 @@ class KnowledgeService:
         return article
 
     @staticmethod
-    async def update_article(db: AsyncSession, article_id: uuid.UUID, data: KnowledgeArticleUpdate) -> KnowledgeArticle:
+    async def update_article(
+        db: AsyncSession, article_id: uuid.UUID, data: KnowledgeArticleUpdate
+    ) -> KnowledgeArticle:
         article = await KnowledgeService.get_article(db, article_id)
         update_data = data.model_dump(exclude_unset=True)
         for key, value in update_data.items():

@@ -20,8 +20,10 @@ class LeadBase(BaseModel):
     google_maps_url: str | None = None
     source: str | None = None
 
+
 class LeadCreate(LeadBase):
     pass
+
 
 class LeadUpdate(LeadBase):
     business_name: str | None = None
@@ -29,6 +31,7 @@ class LeadUpdate(LeadBase):
     priority: Priority | None = None
     qualification_status: str | None = None
     score: int | None = None
+
 
 class LeadResponse(LeadBase):
     id: uuid.UUID
@@ -41,6 +44,7 @@ class LeadResponse(LeadBase):
     updated_at: datetime
 
     model_config = ConfigDict(from_attributes=True)
+
 
 class LeadAnalysisBase(BaseModel):
     website_score: int | None = None
@@ -55,8 +59,10 @@ class LeadAnalysisBase(BaseModel):
     strengths: list[str] = []
     weaknesses: list[str] = []
 
+
 class LeadAnalysisCreate(LeadAnalysisBase):
     pass
+
 
 class LeadAnalysisResponse(LeadAnalysisBase):
     id: uuid.UUID
@@ -66,6 +72,7 @@ class LeadAnalysisResponse(LeadAnalysisBase):
     updated_at: datetime
 
     model_config = ConfigDict(from_attributes=True)
+
 
 class LeadStats(BaseModel):
     total_leads: int

@@ -16,21 +16,23 @@ from .services import NotificationService
 
 router = APIRouter(prefix="/notifications", tags=["Notifications"])
 
+
 @router.get("", response_model=list[NotificationResponse])
 async def list_notifications(
     limit: int = 50,
     offset: int = 0,
     db: AsyncSession = Depends(get_db),
-    current_user: User = Depends(get_current_active_user)
+    current_user: User = Depends(get_current_active_user),
 ):
     service = NotificationService(db)
     return await service.list_notifications(user_id=current_user.id, limit=limit, offset=offset)
+
 
 @router.patch("/{notification_id}/read", response_model=NotificationResponse)
 async def mark_notification_read(
     notification_id: UUID,
     db: AsyncSession = Depends(get_db),
-    current_user: User = Depends(get_current_active_user)
+    current_user: User = Depends(get_current_active_user),
 ):
     service = NotificationService(db)
     notif = await service.mark_read(notification_id)

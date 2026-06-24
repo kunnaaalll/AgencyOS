@@ -6,6 +6,7 @@ class RevenueStatus(str, Enum):
     RECEIVED = "RECEIVED"
     OVERDUE = "OVERDUE"
 
+
 class ExpenseStatus(str, Enum):
     PENDING = "PENDING"
     PAID = "PAID"

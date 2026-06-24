@@ -60,6 +60,7 @@ router = APIRouter(prefix="/discovery", tags=["Discovery"])
 
 # ── Single Run ────────────────────────────────────────────────────────────────
 
+
 @router.post("/run", response_model=DiscoveryRunResponse)
 async def create_discovery_run(
     run_in: DiscoveryRunCreate,
@@ -96,8 +97,12 @@ async def list_discovery_runs(
             select(
                 RawBusiness.run_id,
                 func.count(RawBusiness.id).label("discovered"),
-                func.sum(func.cast(RawBusiness.validation_status == "VALID", type_=func.count().type)).label("validated"),
-                func.sum(func.cast(RawBusiness.enriched_at.isnot(None), type_=func.count().type)).label("promoted"),
+                func.sum(
+                    func.cast(RawBusiness.validation_status == "VALID", type_=func.count().type)
+                ).label("validated"),
+                func.sum(
+                    func.cast(RawBusiness.enriched_at.isnot(None), type_=func.count().type)
+                ).label("promoted"),
             )
             .where(RawBusiness.run_id.in_(run_ids))
             .group_by(RawBusiness.run_id)
@@ -141,8 +146,12 @@ async def get_discovery_run(
     counts = await db.execute(
         select(
             func.count(RawBusiness.id).label("discovered"),
-            func.sum(func.cast(RawBusiness.validation_status == "VALID", type_=func.count().type)).label("validated"),
-            func.sum(func.cast(RawBusiness.enriched_at.isnot(None), type_=func.count().type)).label("promoted"),
+            func.sum(
+                func.cast(RawBusiness.validation_status == "VALID", type_=func.count().type)
+            ).label("validated"),
+            func.sum(func.cast(RawBusiness.enriched_at.isnot(None), type_=func.count().type)).label(
+                "promoted"
+            ),
         ).where(RawBusiness.run_id == run.id)
     )
     row = counts.first()
@@ -156,6 +165,7 @@ async def get_discovery_run(
 
 
 # ── Bulk Discovery ────────────────────────────────────────────────────────────
+
 
 @router.post("/bulk", response_model=BulkDiscoveryResponse)
 async def launch_bulk_discovery(
@@ -177,7 +187,11 @@ async def launch_bulk_discovery(
 
     redis = await get_redis(request)
     if not redis:
-        logger.warning("redis_unavailable", endpoint="/discovery/bulk", fallback="creating local job record without queueing")
+        logger.warning(
+            "redis_unavailable",
+            endpoint="/discovery/bulk",
+            fallback="creating local job record without queueing",
+        )
 
     bulk_job = await DiscoveryOrchestrator.launch_bulk_discovery(
         session=db,
@@ -199,9 +213,7 @@ async def get_bulk_job(
     if not current_user.has_permission("discovery:read"):
         raise HTTPException(status_code=403, detail="Not enough permissions")
 
-    result = await db.execute(
-        select(DiscoveryBulkJob).where(DiscoveryBulkJob.id == job_id)
-    )
+    result = await db.execute(select(DiscoveryBulkJob).where(DiscoveryBulkJob.id == job_id))
     job = result.scalar_one_or_none()
     if not job:
         raise HTTPException(status_code=404, detail="Bulk job not found")
@@ -224,6 +236,7 @@ async def list_bulk_jobs(
 
 
 # ── Businesses ────────────────────────────────────────────────────────────────
+
 
 @router.get("/businesses", response_model=PaginatedBusinessesResponse)
 async def list_raw_businesses(
@@ -264,12 +277,7 @@ async def list_raw_businesses(
 
     # Fetch page
     offset = (page - 1) * limit
-    data_q = (
-        select(RawBusiness)
-        .order_by(RawBusiness.created_at.desc())
-        .offset(offset)
-        .limit(limit)
-    )
+    data_q = select(RawBusiness).order_by(RawBusiness.created_at.desc()).offset(offset).limit(limit)
     if filters:
         data_q = data_q.where(and_(*filters))
 
@@ -351,6 +359,7 @@ async def mark_as_duplicate(
 
 # ── Metrics ───────────────────────────────────────────────────────────────────
 
+
 @router.get("/metrics", response_model=DiscoveryMetricsResponse)
 async def get_discovery_metrics(
     db: AsyncSession = Depends(get_db),
@@ -365,6 +374,7 @@ async def get_discovery_metrics(
 
 
 # ── Reference Data ────────────────────────────────────────────────────────────
+
 
 @router.get("/sources")
 async def list_sources(current_user: User = Depends(get_current_user)):

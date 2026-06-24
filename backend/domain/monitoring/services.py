@@ -33,9 +33,9 @@ class SystemMonitorService:
                 redis = await get_redis()
                 queue_depth = await redis.zcard(default_queue_name)
                 # ARQ health checks: 'arq:health-check:*'
-                health_keys = await redis.keys('arq:health-check:*')
+                health_keys = await redis.keys("arq:health-check:*")
                 active_workers = len(health_keys)
-                failed_jobs = await redis.get('arq:metrics:failed_jobs') or 0
+                failed_jobs = await redis.get("arq:metrics:failed_jobs") or 0
                 failed_jobs = int(failed_jobs)
             except Exception:
                 pass
@@ -43,7 +43,9 @@ class SystemMonitorService:
         # Calculate real Postgres database size
         storage_usage = "Unknown"
         try:
-            res = await self.db.execute(text("SELECT pg_size_pretty(pg_database_size(current_database()))"))
+            res = await self.db.execute(
+                text("SELECT pg_size_pretty(pg_database_size(current_database()))")
+            )
             storage_usage = res.scalar() or "0 bytes"
         except Exception:
             pass
@@ -56,5 +58,5 @@ class SystemMonitorService:
             queue_depth=queue_depth,
             active_workers=active_workers,
             failed_jobs=failed_jobs,
-            storage_usage=storage_usage
+            storage_usage=storage_usage,
         )

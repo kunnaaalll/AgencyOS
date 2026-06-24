@@ -24,14 +24,7 @@ class WebsiteAnalysisService:
             url = f"https://{url}"
 
         # Setup base scores
-        scores = {
-            "website": 0,
-            "seo": 0,
-            "mobile": 0,
-            "cta": 0,
-            "social": 0,
-            "digital_maturity": 0
-        }
+        scores = {"website": 0, "seo": 0, "mobile": 0, "cta": 0, "social": 0, "digital_maturity": 0}
 
         strengths = []
         weaknesses = []
@@ -59,9 +52,7 @@ class WebsiteAnalysisService:
 
                 # Mobile View check
                 mobile_context = await browser.new_context(
-                    viewport={"width": 375, "height": 812},
-                    is_mobile=True,
-                    has_touch=True
+                    viewport={"width": 375, "height": 812}, is_mobile=True, has_touch=True
                 )
                 mobile_page = await mobile_context.new_page()
                 try:
@@ -97,7 +88,7 @@ class WebsiteAnalysisService:
                 overall_score=0,
                 strengths=strengths,
                 weaknesses=weaknesses,
-                pain_points=pain_points
+                pain_points=pain_points,
             )
 
         soup = BeautifulSoup(html_content, "html.parser")
@@ -174,7 +165,7 @@ class WebsiteAnalysisService:
             "facebook": "facebook.com",
             "linkedin": "linkedin.com",
             "youtube": "youtube.com",
-            "twitter": "twitter.com"
+            "twitter": "twitter.com",
         }
         found_socials = 0
         for name, domain in social_links.items():
@@ -192,7 +183,11 @@ class WebsiteAnalysisService:
             scores["digital_maturity"] += 5
             strengths.append("Analytics tracking is implemented.")
 
-        if "intercom" in html_content or "drift.com" in html_content or "crisp.chat" in html_content:
+        if (
+            "intercom" in html_content
+            or "drift.com" in html_content
+            or "crisp.chat" in html_content
+        ):
             scores["digital_maturity"] += 5
 
         if "pixel" in html_content.lower() or "connect.facebook.net" in html_content:
@@ -218,7 +213,7 @@ class WebsiteAnalysisService:
             overall_score=overall,
             strengths=strengths,
             weaknesses=weaknesses,
-            pain_points=pain_points
+            pain_points=pain_points,
         )
 
         return analysis

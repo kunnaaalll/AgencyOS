@@ -15,17 +15,19 @@ from .services import WorkflowExecutionService
 
 router = APIRouter(prefix="/monitoring/workflows", tags=["Automation"])
 
+
 def require_super_admin(current_user: User = Depends(get_current_active_user)):
     if current_user.role is None or current_user.role.name != "Super Admin":
         raise ForbiddenException("Super Admin access required")
     return current_user
+
 
 @router.get("", response_model=list[WorkflowExecutionResponse])
 async def list_workflows(
     limit: int = 100,
     offset: int = 0,
     db: AsyncSession = Depends(get_db),
-    _=Depends(require_super_admin)
+    _=Depends(require_super_admin),
 ):
     service = WorkflowExecutionService(db)
     return await service.list_executions(limit=limit, offset=offset)

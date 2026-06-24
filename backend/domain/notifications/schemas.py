@@ -16,8 +16,10 @@ class NotificationBase(BaseModel):
     type: NotificationType
     is_read: bool = False
 
+
 class NotificationCreate(NotificationBase):
     user_id: UUID | None = None
+
 
 class NotificationResponse(NotificationBase):
     model_config = ConfigDict(from_attributes=True)

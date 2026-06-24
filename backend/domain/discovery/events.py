@@ -11,6 +11,7 @@ class DiscoveryRunStartedEvent:
     location: str | None
     timestamp: datetime
 
+
 @dataclass
 class BusinessDiscoveredEvent:
     run_id: uuid.UUID
@@ -19,12 +20,14 @@ class BusinessDiscoveredEvent:
     business_name: str
     timestamp: datetime
 
+
 @dataclass
 class BusinessValidatedEvent:
     business_id: uuid.UUID
     is_valid: bool
     validation_status: str
     timestamp: datetime
+
 
 @dataclass
 class LeadPromotedEvent:

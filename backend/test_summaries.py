@@ -34,5 +34,6 @@ async def test():
         except Exception as e:
             print("ExecutiveSummary ERROR:", type(e), e)
 
+
 if __name__ == "__main__":
     asyncio.run(test())

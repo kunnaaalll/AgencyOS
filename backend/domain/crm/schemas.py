@@ -7,6 +7,7 @@ from domain.crm.enums import ActivityType, MeetingType, PipelineStage
 
 # ── Opportunity Schemas ────────────────────────────────────────
 
+
 class OpportunityBase(BaseModel):
     title: str
     pipeline_stage: PipelineStage = PipelineStage.NEW
@@ -15,9 +16,11 @@ class OpportunityBase(BaseModel):
     expected_close_date: datetime | None = None
     notes: str | None = None
 
+
 class OpportunityCreate(OpportunityBase):
     lead_id: uuid.UUID
     owner_id: uuid.UUID | None = None
+
 
 class OpportunityUpdate(BaseModel):
     title: str | None = None
@@ -28,6 +31,7 @@ class OpportunityUpdate(BaseModel):
     notes: str | None = None
     owner_id: uuid.UUID | None = None
 
+
 class OpportunityResponse(OpportunityBase):
     id: uuid.UUID
     lead_id: uuid.UUID
@@ -37,7 +41,9 @@ class OpportunityResponse(OpportunityBase):
 
     model_config = ConfigDict(from_attributes=True)
 
+
 # ── Activity Schemas ───────────────────────────────────────────
+
 
 class ActivityBase(BaseModel):
     activity_type: ActivityType
@@ -46,8 +52,10 @@ class ActivityBase(BaseModel):
     scheduled_for: datetime | None = None
     completed_at: datetime | None = None
 
+
 class ActivityCreate(ActivityBase):
     user_id: uuid.UUID
+
 
 class ActivityUpdate(BaseModel):
     activity_type: ActivityType | None = None
@@ -55,6 +63,7 @@ class ActivityUpdate(BaseModel):
     description: str | None = None
     scheduled_for: datetime | None = None
     completed_at: datetime | None = None
+
 
 class ActivityResponse(ActivityBase):
     id: uuid.UUID
@@ -65,7 +74,9 @@ class ActivityResponse(ActivityBase):
 
     model_config = ConfigDict(from_attributes=True)
 
+
 # ── Meeting Schemas ────────────────────────────────────────────
+
 
 class MeetingBase(BaseModel):
     meeting_type: MeetingType
@@ -75,8 +86,10 @@ class MeetingBase(BaseModel):
     meeting_notes: str | None = None
     outcome: str | None = None
 
+
 class MeetingCreate(MeetingBase):
     pass
+
 
 class MeetingUpdate(BaseModel):
     meeting_type: MeetingType | None = None
@@ -86,6 +99,7 @@ class MeetingUpdate(BaseModel):
     meeting_notes: str | None = None
     outcome: str | None = None
 
+
 class MeetingResponse(MeetingBase):
     id: uuid.UUID
     opportunity_id: uuid.UUID
@@ -94,7 +108,9 @@ class MeetingResponse(MeetingBase):
 
     model_config = ConfigDict(from_attributes=True)
 
+
 # ── Stats Schema ───────────────────────────────────────────────
+
 
 class CRMStats(BaseModel):
     pipeline_value: int

@@ -30,7 +30,7 @@ class TaskService:
 
     @staticmethod
     async def create_task(db: AsyncSession, project_id: uuid.UUID, data: TaskCreate) -> Task:
-        await ProjectService.get_project(db, project_id) # Verify project exists
+        await ProjectService.get_project(db, project_id)  # Verify project exists
 
         task = Task(
             project_id=project_id,
@@ -47,9 +47,7 @@ class TaskService:
 
         await dispatch_event(
             TaskCreatedEvent(
-                task_id=str(task.id),
-                project_id=str(task.project_id),
-                title=task.title
+                task_id=str(task.id), project_id=str(task.project_id), title=task.title
             )
         )
         return task

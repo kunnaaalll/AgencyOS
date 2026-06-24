@@ -19,8 +19,10 @@ class WorkflowExecutionBase(BaseModel):
     error_message: str | None = None
     retry_count: int
 
+
 class WorkflowExecutionCreate(WorkflowExecutionBase):
     pass
+
 
 class WorkflowExecutionResponse(WorkflowExecutionBase):
     model_config = ConfigDict(from_attributes=True)

@@ -40,6 +40,7 @@ class FinanceService:
     @staticmethod
     async def create_revenue(db: AsyncSession, data: RevenueCreate) -> Revenue:
         from sqlalchemy.exc import IntegrityError
+
         revenue = Revenue(**data.model_dump())
         db.add(revenue)
         try:
@@ -51,7 +52,9 @@ class FinanceService:
         return revenue
 
     @staticmethod
-    async def update_revenue(db: AsyncSession, revenue_id: uuid.UUID, data: RevenueUpdate) -> Revenue:
+    async def update_revenue(
+        db: AsyncSession, revenue_id: uuid.UUID, data: RevenueUpdate
+    ) -> Revenue:
         revenue = await db.get(Revenue, revenue_id)
         if not revenue:
             raise HTTPException(status_code=404, detail="Revenue not found")
@@ -83,7 +86,9 @@ class FinanceService:
         return expense
 
     @staticmethod
-    async def update_expense(db: AsyncSession, expense_id: uuid.UUID, data: ExpenseUpdate) -> Expense:
+    async def update_expense(
+        db: AsyncSession, expense_id: uuid.UUID, data: ExpenseUpdate
+    ) -> Expense:
         expense = await db.get(Expense, expense_id)
         if not expense:
             raise HTTPException(status_code=404, detail="Expense not found")
@@ -104,11 +109,15 @@ class FinanceService:
     @staticmethod
     async def get_summary(db: AsyncSession) -> FinanceSummaryResponse:
         # Sum of RECEIVED revenues
-        rev_result = await db.execute(select(func.sum(Revenue.amount)).where(Revenue.status == RevenueStatus.RECEIVED))
+        rev_result = await db.execute(
+            select(func.sum(Revenue.amount)).where(Revenue.status == RevenueStatus.RECEIVED)
+        )
         total_revenue = rev_result.scalar() or 0.0
 
         # Sum of PAID expenses
-        exp_result = await db.execute(select(func.sum(Expense.amount)).where(Expense.status == ExpenseStatus.PAID))
+        exp_result = await db.execute(
+            select(func.sum(Expense.amount)).where(Expense.status == ExpenseStatus.PAID)
+        )
         total_expenses = exp_result.scalar() or 0.0
 
         # MRR calculation (Sum of all RECEIVED revenues in current month - simplified approach)
@@ -116,15 +125,19 @@ class FinanceService:
         mrr_result = await db.execute(
             select(func.sum(Revenue.amount))
             .where(Revenue.status == RevenueStatus.RECEIVED)
-            .where(func.extract('month', Revenue.received_date) == today.month)
-            .where(func.extract('year', Revenue.received_date) == today.year)
+            .where(func.extract("month", Revenue.received_date) == today.month)
+            .where(func.extract("year", Revenue.received_date) == today.year)
         )
         mrr = mrr_result.scalar() or 0.0
 
         net_profit = float(total_revenue) - float(total_expenses)
 
         settings = await FinanceService.get_settings(db)
-        reserve_allocation = net_profit * (float(settings.reserve_percentage or 20.0) / 100.0) if net_profit > 0 else 0.0
+        reserve_allocation = (
+            net_profit * (float(settings.reserve_percentage or 20.0) / 100.0)
+            if net_profit > 0
+            else 0.0
+        )
         distribution_pool = net_profit - reserve_allocation if net_profit > 0 else 0.0
 
         return FinanceSummaryResponse(
@@ -133,7 +146,7 @@ class FinanceService:
             total_expenses=float(total_expenses),
             net_profit=net_profit,
             reserve_fund=reserve_allocation,
-            distribution_pool=distribution_pool
+            distribution_pool=distribution_pool,
         )
 
 
@@ -144,7 +157,9 @@ class DistributionService:
         return result.scalars().all()
 
     @staticmethod
-    async def validate_equity(db: AsyncSession, ignore_id: uuid.UUID | None = None, new_equity: float = 0.0) -> None:
+    async def validate_equity(
+        db: AsyncSession, ignore_id: uuid.UUID | None = None, new_equity: float = 0.0
+    ) -> None:
         query = select(func.sum(Founder.equity_percentage)).where(Founder.is_active == True)
         if ignore_id:
             query = query.where(Founder.id != ignore_id)
@@ -167,18 +182,22 @@ class DistributionService:
         return founder
 
     @staticmethod
-    async def update_founder(db: AsyncSession, founder_id: uuid.UUID, data: FounderUpdate) -> Founder:
+    async def update_founder(
+        db: AsyncSession, founder_id: uuid.UUID, data: FounderUpdate
+    ) -> Founder:
         founder = await db.get(Founder, founder_id)
         if not founder:
             raise HTTPException(status_code=404, detail="Founder not found")
 
         update_data = data.model_dump(exclude_unset=True)
 
-        is_active = update_data.get('is_active', founder.is_active)
-        new_equity = update_data.get('equity_percentage', founder.equity_percentage)
+        is_active = update_data.get("is_active", founder.is_active)
+        new_equity = update_data.get("equity_percentage", founder.equity_percentage)
 
         if is_active:
-            await DistributionService.validate_equity(db, ignore_id=founder_id, new_equity=new_equity)
+            await DistributionService.validate_equity(
+                db, ignore_id=founder_id, new_equity=new_equity
+            )
 
         for key, value in update_data.items():
             setattr(founder, key, value)
@@ -213,5 +232,5 @@ class ForecastService:
         return ForecastResponse(
             projected_mrr=projected_mrr,
             projected_profit=projected_profit,
-            hiring_affordability=hiring_affordability
+            hiring_affordability=hiring_affordability,
         )

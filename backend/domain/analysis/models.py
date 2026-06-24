@@ -25,8 +25,8 @@ class WebsiteAnalysis(Base):
     digital_maturity_score: Mapped[int | None] = mapped_column(Integer, nullable=True)
     overall_score: Mapped[int | None] = mapped_column(Integer, nullable=True)
 
-    strengths: Mapped[list[str]] = mapped_column(JSONB, server_default='[]', nullable=False)
-    weaknesses: Mapped[list[str]] = mapped_column(JSONB, server_default='[]', nullable=False)
-    pain_points: Mapped[list[str]] = mapped_column(JSONB, server_default='[]', nullable=False)
+    strengths: Mapped[list[str]] = mapped_column(JSONB, server_default="[]", nullable=False)
+    weaknesses: Mapped[list[str]] = mapped_column(JSONB, server_default="[]", nullable=False)
+    pain_points: Mapped[list[str]] = mapped_column(JSONB, server_default="[]", nullable=False)
 
     analyzed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)

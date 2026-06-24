@@ -17,12 +17,14 @@ router = APIRouter(prefix="/qualification", tags=["Qualification"])
 
 
 async def get_redis_pool():
-    return await create_pool(RedisSettings(
-        host=settings.REDIS_HOST,
-        port=settings.REDIS_PORT,
-        password=settings.REDIS_PASSWORD,
-        database=0
-    ))
+    return await create_pool(
+        RedisSettings(
+            host=settings.REDIS_HOST,
+            port=settings.REDIS_PORT,
+            password=settings.REDIS_PASSWORD,
+            database=0,
+        )
+    )
 
 
 from fastapi import Request
@@ -33,7 +35,7 @@ async def run_qualification(
     request: Request,
     lead_id: str,
     db: AsyncSession = Depends(get_db),
-    _ = Depends(require_permission("qualification:create"))
+    _=Depends(require_permission("qualification:create")),
 ) -> dict[str, str]:
     """Enqueue a background job to run AI qualification for a given lead."""
     # Check if lead exists
@@ -58,7 +60,7 @@ from sqlalchemy.orm import joinedload
 async def get_qualification(
     lead_id: str,
     db: AsyncSession = Depends(get_db),
-    _ = Depends(require_permission("qualification:read"))
+    _=Depends(require_permission("qualification:read")),
 ) -> Any:
     """Get AI qualification results for a specific lead."""
     result = await db.execute(
@@ -77,8 +79,7 @@ async def get_qualification(
 
 @router.get("", response_model=list[AIQualificationResponse])
 async def list_qualifications(
-    db: AsyncSession = Depends(get_db),
-    _ = Depends(require_permission("qualification:read"))
+    db: AsyncSession = Depends(get_db), _=Depends(require_permission("qualification:read"))
 ) -> Any:
     """List all AI qualifications."""
     result = await db.execute(

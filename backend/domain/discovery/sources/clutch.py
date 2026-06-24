@@ -62,7 +62,9 @@ class ClutchSource(BaseDiscoverySource):
 
                 # Accept cookies
                 try:
-                    accept = page.locator('button:has-text("Accept"), button:has-text("I agree")').first
+                    accept = page.locator(
+                        'button:has-text("Accept"), button:has-text("I agree")'
+                    ).first
                     if await accept.is_visible(timeout=3000):
                         await accept.click()
                         await asyncio.sleep(0.5)
@@ -91,9 +93,7 @@ class ClutchSource(BaseDiscoverySource):
 
         return results
 
-    def _parse_listings(
-        self, html: str, industry: str, location: str, limit: int
-    ) -> list[dict]:
+    def _parse_listings(self, html: str, industry: str, location: str, limit: int) -> list[dict]:
         soup = BeautifulSoup(html, "html.parser")
         results = []
 
@@ -137,9 +137,7 @@ class ClutchSource(BaseDiscoverySource):
                 city = business_location.split(",")[0].strip() if business_location else location
 
                 # Rating
-                rating_el = item.select_one(
-                    "span.sg-rating__number, span[class*='rating-value']"
-                )
+                rating_el = item.select_one("span.sg-rating__number, span[class*='rating-value']")
                 rating = None
                 if rating_el:
                     try:
@@ -148,9 +146,7 @@ class ClutchSource(BaseDiscoverySource):
                         pass
 
                 # Review count
-                review_el = item.select_one(
-                    "a[href*='/reviews'] span, span[class*='review-count']"
-                )
+                review_el = item.select_one("a[href*='/reviews'] span, span[class*='review-count']")
                 review_count = None
                 if review_el:
                     match = re.search(r"\d+", review_el.get_text())

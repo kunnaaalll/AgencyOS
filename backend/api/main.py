@@ -60,12 +60,14 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
 
     # Initialize Redis connection pool for arq jobs
     try:
-        app.state.redis = await create_pool(RedisSettings(
-            host=settings.REDIS_HOST,
-            port=settings.REDIS_PORT,
-            password=settings.REDIS_PASSWORD or None,
-            database=0
-        ))
+        app.state.redis = await create_pool(
+            RedisSettings(
+                host=settings.REDIS_HOST,
+                port=settings.REDIS_PORT,
+                password=settings.REDIS_PASSWORD or None,
+                database=0,
+            )
+        )
         logger.info("Redis connection pool initialized")
     except Exception as e:
         logger.warning("Failed to initialize Redis connection pool", error=str(e))
@@ -108,6 +110,7 @@ def create_app() -> FastAPI:
     app.state.limiter = limiter
     app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
     from slowapi.middleware import SlowAPIMiddleware
+
     app.add_middleware(SlowAPIMiddleware)
 
     # ── CORS ───────
@@ -133,8 +136,12 @@ def create_app() -> FastAPI:
         response.headers["Permissions-Policy"] = "camera=(), microphone=(), geolocation=()"
 
         if settings.is_production:
-            response.headers["Strict-Transport-Security"] = "max-age=31536000; includeSubDomains; preload"
-            response.headers["Content-Security-Policy"] = "default-src 'self'; frame-ancestors 'none'"
+            response.headers["Strict-Transport-Security"] = (
+                "max-age=31536000; includeSubDomains; preload"
+            )
+            response.headers["Content-Security-Policy"] = (
+                "default-src 'self'; frame-ancestors 'none'"
+            )
 
         return response
 

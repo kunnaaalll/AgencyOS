@@ -25,43 +25,49 @@ class AIQualificationService:
         try:
             from litellm import acompletion
         except ImportError:
-            raise DomainException("litellm is not installed due to disk space constraints. Cannot run qualification.")
-            
+            raise DomainException(
+                "litellm is not installed due to disk space constraints. Cannot run qualification."
+            )
+
         start_time = time.time()
-        
+
         prompt = self._build_prompt(lead, analysis)
-        
+
         model_used = "freellmapi/auto"
         usage = None
-        
+
         try:
             response = await acompletion(
                 model="openai/auto",
                 api_base=settings.FREELLM_API_BASE,
                 messages=[
-                    {"role": "system", "content": "You are an expert AI business qualification engine. Output ONLY valid JSON matching the exact schema requested, with no markdown formatting or extra text."},
-                    {"role": "user", "content": prompt}
+                    {
+                        "role": "system",
+                        "content": "You are an expert AI business qualification engine. Output ONLY valid JSON matching the exact schema requested, with no markdown formatting or extra text.",
+                    },
+                    {"role": "user", "content": prompt},
                 ],
-                response_format={"type": "json_object"}
+                response_format={"type": "json_object"},
             )
             response_content = response.choices[0].message.content
             usage = response.usage
         except Exception as e:
-            logger.error(f"AI qualification failed via FreeLLM API: {str(e)}", exc_info=True)
-            raise DomainException(f"AI qualification failed via FreeLLM API: {str(e)}")
-            
+            error_msg = "AI qualification failed via FreeLLM API: " + str(e)
+            logger.error(error_msg, exc_info=True)
+            raise DomainException(error_msg)
+
         execution_time_ms = (time.time() - start_time) * 1000
         tokens_used = usage.total_tokens if usage else 0
-        
+
         # Log token usage
         token_log = TokenUsageLog(
             model_used=model_used,
             tokens_used=tokens_used,
             execution_time_ms=execution_time_ms,
-            context=f"qualification_lead_{lead.id}"
+            context=f"qualification_lead_{lead.id}",
         )
         self.db.add(token_log)
-        
+
         # Parse JSON
         try:
             parsed_json = json.loads(response_content)
@@ -70,7 +76,7 @@ class AIQualificationService:
         except Exception as e:
             logger.error(f"Failed to parse AI output: {str(e)}", exc_info=True)
             raise DomainException(f"Failed to parse AI output: {str(e)}")
-            
+
         # Create entity
         qualification = AIQualification(
             lead_id=lead.id,
@@ -83,20 +89,17 @@ class AIQualificationService:
             recommended_pitch=ai_output.recommended_pitch,
             recommended_package=ai_output.recommended_package,
             confidence=ai_output.confidence,
-            model_used=model_used
+            model_used=model_used,
         )
-        
+
         self.db.add(qualification)
         await self.db.commit()
         await self.db.refresh(qualification)
-        
+
         # Emit event
-        event = LeadQualifiedEvent(
-            lead_id=lead.id,
-            priority=qualification.priority.value
-        )
+        event = LeadQualifiedEvent(lead_id=lead.id, priority=qualification.priority.value)
         await EventBus.publish(event)
-        
+
         return qualification
 
     def _build_prompt(self, lead: Lead, analysis: WebsiteAnalysis) -> str:
@@ -107,18 +110,18 @@ class AIQualificationService:
         # Extract nested scoring fields gracefully
         social_score = getattr(analysis, "social_score", 0)
         digital_maturity_score = getattr(analysis, "digital_maturity_score", 0)
-        
+
         strengths = getattr(analysis, "strengths", [])
         weaknesses = getattr(analysis, "weaknesses", [])
-        
+
         # The prompt payload
         prompt = f"""
 Evaluate the following business lead and output a JSON response matching the required schema.
 
 ### Lead Information
 Business Name: {lead.business_name}
-Industry: {lead.industry or 'Unknown'}
-Location: {lead.city or 'Unknown'}, {lead.state or 'Unknown'}
+Industry: {lead.industry or "Unknown"}
+Location: {lead.city or "Unknown"}, {lead.state or "Unknown"}
 
 ### Analysis Scores
 Website Score: {website_score}/100

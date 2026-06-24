@@ -35,6 +35,7 @@ PROBABILITY_MAP = {
     PipelineStage.LOST: 0,
 }
 
+
 class CRMService:
     @staticmethod
     async def get_opportunities(db: AsyncSession) -> Sequence[Opportunity]:
@@ -48,7 +49,9 @@ class CRMService:
         result = await db.execute(stmt)
         opp = result.scalar_one_or_none()
         if not opp:
-            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Opportunity not found")
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND, detail="Opportunity not found"
+            )
         return opp
 
     @staticmethod
@@ -70,15 +73,15 @@ class CRMService:
 
         await dispatch_event(
             OpportunityCreatedEvent(
-                opportunity_id=str(opp.id),
-                lead_id=str(opp.lead_id),
-                title=opp.title
+                opportunity_id=str(opp.id), lead_id=str(opp.lead_id), title=opp.title
             )
         )
         return opp
 
     @staticmethod
-    async def update_opportunity(db: AsyncSession, opp_id: uuid.UUID, data: OpportunityUpdate) -> Opportunity:
+    async def update_opportunity(
+        db: AsyncSession, opp_id: uuid.UUID, data: OpportunityUpdate
+    ) -> Opportunity:
         opp = await CRMService.get_opportunity(db, opp_id)
 
         old_stage = opp.pipeline_stage
@@ -97,11 +100,13 @@ class CRMService:
                 OpportunityStageChangedEvent(
                     opportunity_id=str(opp.id),
                     old_stage=old_stage.value,
-                    new_stage=opp.pipeline_stage.value
+                    new_stage=opp.pipeline_stage.value,
                 )
             )
             if opp.pipeline_stage == PipelineStage.WON:
-                await dispatch_event(OpportunityWonEvent(opportunity_id=str(opp.id), value=opp.value))
+                await dispatch_event(
+                    OpportunityWonEvent(opportunity_id=str(opp.id), value=opp.value)
+                )
             elif opp.pipeline_stage == PipelineStage.LOST:
                 await dispatch_event(OpportunityLostEvent(opportunity_id=str(opp.id)))
 
@@ -115,12 +120,18 @@ class CRMService:
 
     @staticmethod
     async def get_activities(db: AsyncSession, opp_id: uuid.UUID) -> Sequence[Activity]:
-        stmt = select(Activity).where(Activity.opportunity_id == opp_id).order_by(Activity.created_at.desc())
+        stmt = (
+            select(Activity)
+            .where(Activity.opportunity_id == opp_id)
+            .order_by(Activity.created_at.desc())
+        )
         result = await db.execute(stmt)
         return result.scalars().all()
 
     @staticmethod
-    async def create_activity(db: AsyncSession, opp_id: uuid.UUID, data: ActivityCreate) -> Activity:
+    async def create_activity(
+        db: AsyncSession, opp_id: uuid.UUID, data: ActivityCreate
+    ) -> Activity:
         # verify opp exists
         await CRMService.get_opportunity(db, opp_id)
 
@@ -131,14 +142,16 @@ class CRMService:
             title=data.title,
             description=data.description,
             scheduled_for=data.scheduled_for,
-            completed_at=data.completed_at
+            completed_at=data.completed_at,
         )
         db.add(activity)
         await db.flush()
         return activity
 
     @staticmethod
-    async def update_activity(db: AsyncSession, act_id: uuid.UUID, data: ActivityUpdate) -> Activity:
+    async def update_activity(
+        db: AsyncSession, act_id: uuid.UUID, data: ActivityUpdate
+    ) -> Activity:
         stmt = select(Activity).where(Activity.id == act_id)
         result = await db.execute(stmt)
         activity = result.scalar_one_or_none()
@@ -164,7 +177,11 @@ class CRMService:
 
     @staticmethod
     async def get_meetings(db: AsyncSession, opp_id: uuid.UUID) -> Sequence[Meeting]:
-        stmt = select(Meeting).where(Meeting.opportunity_id == opp_id).order_by(Meeting.scheduled_at.asc())
+        stmt = (
+            select(Meeting)
+            .where(Meeting.opportunity_id == opp_id)
+            .order_by(Meeting.scheduled_at.asc())
+        )
         result = await db.execute(stmt)
         return result.scalars().all()
 
@@ -179,17 +196,21 @@ class CRMService:
             duration_minutes=data.duration_minutes,
             location=data.location,
             meeting_notes=data.meeting_notes,
-            outcome=data.outcome
+            outcome=data.outcome,
         )
         db.add(meeting)
         await db.flush()
 
-        await dispatch_event(MeetingScheduledEvent(meeting_id=str(meeting.id), opportunity_id=str(opp_id)))
+        await dispatch_event(
+            MeetingScheduledEvent(meeting_id=str(meeting.id), opportunity_id=str(opp_id))
+        )
 
         return meeting
 
     @staticmethod
-    async def update_meeting(db: AsyncSession, meeting_id: uuid.UUID, data: MeetingUpdate) -> Meeting:
+    async def update_meeting(
+        db: AsyncSession, meeting_id: uuid.UUID, data: MeetingUpdate
+    ) -> Meeting:
         stmt = select(Meeting).where(Meeting.id == meeting_id)
         result = await db.execute(stmt)
         meeting = result.scalar_one_or_none()
@@ -219,8 +240,14 @@ class CRMService:
         result = await db.execute(stmt)
         opps = result.scalars().all()
 
-        pipeline_value = sum(o.value for o in opps if o.pipeline_stage not in [PipelineStage.WON, PipelineStage.LOST])
-        weighted_pipeline_value = sum(int(o.value * (o.probability / 100.0)) for o in opps if o.pipeline_stage not in [PipelineStage.WON, PipelineStage.LOST])
+        pipeline_value = sum(
+            o.value for o in opps if o.pipeline_stage not in [PipelineStage.WON, PipelineStage.LOST]
+        )
+        weighted_pipeline_value = sum(
+            int(o.value * (o.probability / 100.0))
+            for o in opps
+            if o.pipeline_stage not in [PipelineStage.WON, PipelineStage.LOST]
+        )
 
         won = sum(1 for o in opps if o.pipeline_stage == PipelineStage.WON)
         lost = sum(1 for o in opps if o.pipeline_stage == PipelineStage.LOST)
@@ -242,5 +269,5 @@ class CRMService:
             meetings_scheduled=meetings_scheduled,
             won_opportunities=won,
             lost_opportunities=lost,
-            conversion_rate=round(conversion_rate, 2)
+            conversion_rate=round(conversion_rate, 2),
         )

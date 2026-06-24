@@ -11,12 +11,18 @@ from domain.qualification_ai.enums import Priority, QualificationStatus
 
 class AIQualification(Base):
     __tablename__ = "ai_qualifications"
-    lead_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("leads.id", ondelete="CASCADE"), nullable=False, index=True)
-    website_analysis_id: Mapped[uuid.UUID | None] = mapped_column(ForeignKey("website_analyses.id", ondelete="SET NULL"), nullable=True)
+    lead_id: Mapped[uuid.UUID] = mapped_column(
+        ForeignKey("leads.id", ondelete="CASCADE"), nullable=False, index=True
+    )
+    website_analysis_id: Mapped[uuid.UUID | None] = mapped_column(
+        ForeignKey("website_analyses.id", ondelete="SET NULL"), nullable=True
+    )
 
     priority = Column(SQLEnum(Priority), nullable=False, default=Priority.MEDIUM)
     opportunity_score = Column(Integer, nullable=False, default=0)
-    qualification_status = Column(SQLEnum(QualificationStatus), nullable=False, default=QualificationStatus.REVIEW_REQUIRED)
+    qualification_status = Column(
+        SQLEnum(QualificationStatus), nullable=False, default=QualificationStatus.REVIEW_REQUIRED
+    )
 
     summary = Column(Text, nullable=True)
     pain_points = Column(JSON, nullable=True, default=list)

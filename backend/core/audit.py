@@ -27,6 +27,7 @@ audit_user_agent: ContextVar[str | None] = ContextVar("audit_user_agent", defaul
 
 class AuditAction(str, enum.Enum):
     """Typed audit actions for consistent logging."""
+
     CREATE = "CREATE"
     UPDATE = "UPDATE"
     DELETE = "DELETE"
@@ -154,6 +155,7 @@ def register_audit_listeners() -> None:
 # These write audit events directly (not via SQLAlchemy listeners)
 # for security-critical actions like login/logout.
 
+
 async def audit_security_event(
     db_session: Any,
     action: AuditAction,
@@ -197,21 +199,35 @@ async def audit_security_event(
     )
 
 
-async def audit_login(db_session: Any, user_id: str, email: str, ip: str | None = None, ua: str | None = None) -> None:
-    await audit_security_event(db_session, AuditAction.LOGIN, "User", user_id, {"email": email}, user_id, ip, ua)
+async def audit_login(
+    db_session: Any, user_id: str, email: str, ip: str | None = None, ua: str | None = None
+) -> None:
+    await audit_security_event(
+        db_session, AuditAction.LOGIN, "User", user_id, {"email": email}, user_id, ip, ua
+    )
 
 
-async def audit_login_failed(db_session: Any, email: str, ip: str | None = None, ua: str | None = None) -> None:
-    await audit_security_event(db_session, AuditAction.LOGIN_FAILED, "User", "", {"email": email}, None, ip, ua)
+async def audit_login_failed(
+    db_session: Any, email: str, ip: str | None = None, ua: str | None = None
+) -> None:
+    await audit_security_event(
+        db_session, AuditAction.LOGIN_FAILED, "User", "", {"email": email}, None, ip, ua
+    )
 
 
 async def audit_logout(db_session: Any, user_id: str, ip: str | None = None) -> None:
-    await audit_security_event(db_session, AuditAction.LOGOUT, "User", user_id, user_id=user_id, ip_address=ip)
+    await audit_security_event(
+        db_session, AuditAction.LOGOUT, "User", user_id, user_id=user_id, ip_address=ip
+    )
 
 
 async def audit_password_change(db_session: Any, user_id: str, ip: str | None = None) -> None:
-    await audit_security_event(db_session, AuditAction.PASSWORD_CHANGE, "User", user_id, user_id=user_id, ip_address=ip)
+    await audit_security_event(
+        db_session, AuditAction.PASSWORD_CHANGE, "User", user_id, user_id=user_id, ip_address=ip
+    )
 
 
 async def audit_account_locked(db_session: Any, email: str, ip: str | None = None) -> None:
-    await audit_security_event(db_session, AuditAction.ACCOUNT_LOCKED, "User", "", {"email": email}, ip_address=ip)
+    await audit_security_event(
+        db_session, AuditAction.ACCOUNT_LOCKED, "User", "", {"email": email}, ip_address=ip
+    )

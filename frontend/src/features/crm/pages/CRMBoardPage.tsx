@@ -223,17 +223,7 @@ export function CRMBoardPage() {
 
   const handleDelete = async (id: string) => {
     if (!confirm('Are you sure you want to delete this opportunity?')) return;
-    try {
-      await crmApi.deleteOpportunity(id);
-      crmStore.setState((state) => ({
-        ...state,
-        opportunities: state.opportunities.filter(o => o.id !== id)
-      }));
-    } catch (error) {
-      console.error('Failed to delete opportunity:', error);
-      alert((error as any)?.response?.data?.detail || (error as any)?.message || 'An error occurred. Please try again.');
-      alert('Failed to delete opportunity');
-    }
+    deleteMutation.mutate(id);
   };
 
   if (loading) {

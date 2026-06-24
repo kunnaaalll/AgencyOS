@@ -18,9 +18,7 @@ class BackupService:
 
     async def create_backup(self, data: BackupRecordCreate) -> BackupRecord:
         db_backup = BackupRecord(
-            backup_type=data.backup_type,
-            status=BackupStatus.PENDING,
-            started_at=datetime.utcnow()
+            backup_type=data.backup_type, status=BackupStatus.PENDING, started_at=datetime.utcnow()
         )
         self.db.add(db_backup)
         await self.db.commit()
@@ -30,7 +28,12 @@ class BackupService:
         return db_backup
 
     async def list_backups(self, limit: int = 50, offset: int = 0) -> list[BackupRecord]:
-        stmt = select(BackupRecord).order_by(BackupRecord.created_at.desc()).limit(limit).offset(offset)
+        stmt = (
+            select(BackupRecord)
+            .order_by(BackupRecord.created_at.desc())
+            .limit(limit)
+            .offset(offset)
+        )
         result = await self.db.execute(stmt)
         return list(result.scalars().all())
 

@@ -59,6 +59,7 @@ def needs_rehash(hashed_password: str) -> bool:
 
 # ── Password Validation ──────────────────────────────────────
 
+
 def validate_password_strength(password: str) -> list[str]:
     """
     Validate password meets complexity requirements.
@@ -82,6 +83,7 @@ def validate_password_strength(password: str) -> list[str]:
 
 
 # ── Token Generation ──────────────────────────────────────────
+
 
 def _create_token(
     subject: str,
@@ -130,6 +132,7 @@ def create_refresh_token(user_id: str) -> str:
 
 
 # ── Token Decoding ────────────────────────────────────────────
+
 
 class TokenPayload:
     """Decoded JWT payload."""

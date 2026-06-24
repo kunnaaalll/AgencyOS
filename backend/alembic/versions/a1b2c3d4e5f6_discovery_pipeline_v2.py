@@ -57,9 +57,7 @@ def upgrade() -> None:
     op.create_index("ix_raw_businesses_website", "raw_businesses", ["website"])
     op.create_index("ix_raw_businesses_phone", "raw_businesses", ["phone"])
     op.create_index("ix_raw_businesses_google_maps_url", "raw_businesses", ["google_maps_url"])
-    op.create_index(
-        "ix_raw_businesses_validation_status", "raw_businesses", ["validation_status"]
-    )
+    op.create_index("ix_raw_businesses_validation_status", "raw_businesses", ["validation_status"])
     op.create_index("ix_raw_businesses_industry", "raw_businesses", ["industry"])
     op.create_index("ix_raw_businesses_city", "raw_businesses", ["city"])
 
@@ -106,12 +104,8 @@ def upgrade() -> None:
         sa.Column("error_message", sa.String(), nullable=True),
         sa.PrimaryKeyConstraint("id"),
     )
-    op.create_index(
-        op.f("ix_discovery_bulk_jobs_id"), "discovery_bulk_jobs", ["id"], unique=False
-    )
-    op.create_index(
-        "ix_discovery_bulk_jobs_status", "discovery_bulk_jobs", ["status"]
-    )
+    op.create_index(op.f("ix_discovery_bulk_jobs_id"), "discovery_bulk_jobs", ["id"], unique=False)
+    op.create_index("ix_discovery_bulk_jobs_status", "discovery_bulk_jobs", ["status"])
 
 
 def downgrade() -> None:
@@ -127,8 +121,19 @@ def downgrade() -> None:
     op.drop_index("ix_raw_businesses_website", table_name="raw_businesses")
 
     for col in [
-        "run_id", "rating", "review_count", "completeness_score", "enriched_at",
-        "google_rating", "opening_hours", "instagram_url", "facebook_url",
-        "linkedin_url", "youtube_url", "meta_title", "meta_description", "is_duplicate",
+        "run_id",
+        "rating",
+        "review_count",
+        "completeness_score",
+        "enriched_at",
+        "google_rating",
+        "opening_hours",
+        "instagram_url",
+        "facebook_url",
+        "linkedin_url",
+        "youtube_url",
+        "meta_title",
+        "meta_description",
+        "is_duplicate",
     ]:
         op.drop_column("raw_businesses", col)

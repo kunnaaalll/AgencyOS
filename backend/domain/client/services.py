@@ -52,7 +52,7 @@ class ClientService:
             ClientCreatedEvent(
                 client_id=str(client.id),
                 opportunity_id=str(client.opportunity_id) if client.opportunity_id else "",
-                business_name=client.business_name
+                business_name=client.business_name,
             )
         )
         return client
@@ -74,7 +74,7 @@ class ClientService:
                 ClientHealthChangedEvent(
                     client_id=str(client.id),
                     old_health=old_health.value,
-                    new_health=client.health_status.value
+                    new_health=client.health_status.value,
                 )
             )
 
@@ -93,9 +93,19 @@ class ClientService:
         clients = result.scalars().all()
 
         active_clients = sum(1 for c in clients if c.status == ClientStatus.ACTIVE)
-        monthly_retainer_revenue = sum(c.monthly_retainer for c in clients if c.status == ClientStatus.ACTIVE)
-        at_risk_clients = sum(1 for c in clients if c.health_status == HealthStatus.AT_RISK and c.status == ClientStatus.ACTIVE)
-        renewals_due = sum(1 for c in clients if c.health_status == HealthStatus.RENEWAL_DUE and c.status == ClientStatus.ACTIVE)
+        monthly_retainer_revenue = sum(
+            c.monthly_retainer for c in clients if c.status == ClientStatus.ACTIVE
+        )
+        at_risk_clients = sum(
+            1
+            for c in clients
+            if c.health_status == HealthStatus.AT_RISK and c.status == ClientStatus.ACTIVE
+        )
+        renewals_due = sum(
+            1
+            for c in clients
+            if c.health_status == HealthStatus.RENEWAL_DUE and c.status == ClientStatus.ACTIVE
+        )
 
         return ClientStats(
             active_clients=active_clients,

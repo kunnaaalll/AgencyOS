@@ -22,26 +22,27 @@ from .services import BackupService
 # We'll use prefix="/backups" and later alias the monitoring one.
 router = APIRouter(prefix="/backups", tags=["Backups"])
 
+
 def require_super_admin(current_user: User = Depends(get_current_active_user)):
     if current_user.role is None or current_user.role.name != "Super Admin":
         raise ForbiddenException("Super Admin access required")
     return current_user
+
 
 @router.get("", response_model=list[BackupRecordResponse])
 async def list_backups(
     limit: int = 50,
     offset: int = 0,
     db: AsyncSession = Depends(get_db),
-    _=Depends(require_super_admin)
+    _=Depends(require_super_admin),
 ):
     service = BackupService(db)
     return await service.list_backups(limit=limit, offset=offset)
 
+
 @router.post("", response_model=BackupRecordResponse)
 async def create_backup(
-    data: BackupRecordCreate,
-    db: AsyncSession = Depends(get_db),
-    _=Depends(require_super_admin)
+    data: BackupRecordCreate, db: AsyncSession = Depends(get_db), _=Depends(require_super_admin)
 ):
     service = BackupService(db)
     return await service.create_backup(data)

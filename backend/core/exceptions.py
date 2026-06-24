@@ -7,6 +7,7 @@ from fastapi.responses import ORJSONResponse
 
 # ── Base Exception ────────────────────────────────────────────
 
+
 class AgencyOSException(Exception):
     """Base exception for all AgencyOS application errors."""
 
@@ -23,6 +24,7 @@ class AgencyOSException(Exception):
 
 
 # ── Authentication / Authorization ────────────────────────────
+
 
 class UnauthorizedException(AgencyOSException):
     def __init__(self, message: str = "Authentication required") -> None:
@@ -62,6 +64,7 @@ class RateLimitException(AgencyOSException):
 
 # ── Resource Exceptions ───────────────────────────────────────
 
+
 class NotFoundException(AgencyOSException):
     def __init__(self, resource: str = "Resource", resource_id: str | None = None) -> None:
         msg = f"{resource} not found"
@@ -92,16 +95,19 @@ class ValidationException(AgencyOSException):
         )
 
 
-
 class DomainException(AgencyOSException):
-    def __init__(self, message: str = "A domain error occurred", error_code: str = "DOMAIN_ERROR") -> None:
+    def __init__(
+        self, message: str = "A domain error occurred", error_code: str = "DOMAIN_ERROR"
+    ) -> None:
         super().__init__(
             message=message,
             status_code=status.HTTP_400_BAD_REQUEST,
             error_code=error_code,
         )
 
+
 # ── Exception Handlers ────────────────────────────────────────
+
 
 async def agencyos_exception_handler(
     request: Request,
@@ -114,7 +120,7 @@ async def agencyos_exception_handler(
             "error": {
                 "code": exc.error_code,
                 "message": exc.message,
-            }
+            },
         },
     )
 
@@ -122,6 +128,7 @@ async def agencyos_exception_handler(
 import structlog
 
 logger = structlog.get_logger(__name__)
+
 
 async def generic_exception_handler(
     request: Request,
@@ -135,9 +142,10 @@ async def generic_exception_handler(
             "error": {
                 "code": "INTERNAL_ERROR",
                 "message": "An unexpected error occurred",
-            }
+            },
         },
     )
+
 
 from fastapi.exceptions import RequestValidationError
 from starlette.exceptions import HTTPException as StarletteHTTPException
@@ -154,10 +162,11 @@ async def validation_exception_handler(
             "error": {
                 "code": "VALIDATION_ERROR",
                 "message": "Payload mismatch or missing fields",
-                "details": exc.errors()
-            }
+                "details": exc.errors(),
+            },
         },
     )
+
 
 async def http_exception_handler(
     request: Request,
@@ -170,6 +179,6 @@ async def http_exception_handler(
             "error": {
                 "code": "HTTP_ERROR",
                 "message": exc.detail,
-            }
+            },
         },
     )

@@ -24,8 +24,10 @@ from domain.user.models import User
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
+
 def get_password_hash(password: str) -> str:
     return pwd_context.hash(password)
+
 
 async def seed_demo_data():
     engine = create_async_engine(settings.DATABASE_URL, echo=False)
@@ -35,9 +37,14 @@ async def seed_demo_data():
         print("Truncating tables...")
         # Be careful, this truncates all major tables!
         tables = [
-            "activities", "meetings", "opportunities", "leads",
-            "projects", "clients",
-            "expenses", "revenues"
+            "activities",
+            "meetings",
+            "opportunities",
+            "leads",
+            "projects",
+            "clients",
+            "expenses",
+            "revenues",
         ]
         for table in tables:
             await db.execute(text(f"TRUNCATE TABLE {table} CASCADE;"))
@@ -45,6 +52,7 @@ async def seed_demo_data():
 
         print("Querying existing user...")
         from sqlalchemy import select
+
         result = await db.execute(select(User).limit(1))
         user = result.scalar_one_or_none()
         if not user:
@@ -61,7 +69,7 @@ async def seed_demo_data():
                 business_name=f"Demo Corp {i}",
                 email=f"john{i}@democorp.com",
                 status="NEW",
-                score=random.randint(40, 95)
+                score=random.randint(40, 95),
             )
             db.add(lead)
             lead_ids.append(lid)
@@ -69,17 +77,23 @@ async def seed_demo_data():
 
         print("Creating Opportunities...")
         now = datetime.now(UTC)
-        opp_stages = [PipelineStage.NEW, PipelineStage.QUALIFIED, PipelineStage.PROPOSAL, PipelineStage.WON, PipelineStage.LOST]
+        opp_stages = [
+            PipelineStage.NEW,
+            PipelineStage.QUALIFIED,
+            PipelineStage.PROPOSAL,
+            PipelineStage.WON,
+            PipelineStage.LOST,
+        ]
         for i, lid in enumerate(lead_ids):
             opp = Opportunity(
                 id=uuid.uuid4(),
                 lead_id=lid,
-                title=f"Website Redesign - Demo Corp {i+1}",
+                title=f"Website Redesign - Demo Corp {i + 1}",
                 pipeline_stage=random.choice(opp_stages),
                 value=random.randint(5000, 50000),
                 probability=random.randint(10, 90),
                 owner_id=user_id,
-                expected_close_date=now + timedelta(days=random.randint(5, 60))
+                expected_close_date=now + timedelta(days=random.randint(5, 60)),
             )
             db.add(opp)
         await db.commit()
@@ -94,7 +108,7 @@ async def seed_demo_data():
                 primary_contact_name=f"Jane Doe {i}",
                 primary_contact_email=f"jane{i}@client.com",
                 status="ACTIVE",
-                monthly_retainer=random.choice([0, 1000, 2500, 5000])
+                monthly_retainer=random.choice([0, 1000, 2500, 5000]),
             )
             db.add(client)
             client_ids.append(cid)
@@ -107,7 +121,7 @@ async def seed_demo_data():
                 amount=random.randint(1000, 15000),
                 received_date=now - timedelta(days=random.randint(1, 30)),
                 description=f"Invoice #{1000 + i}",
-                status="RECEIVED"
+                status="RECEIVED",
             )
             db.add(rev)
 
@@ -118,12 +132,13 @@ async def seed_demo_data():
                 expense_date=now - timedelta(days=random.randint(1, 30)),
                 description=f"Software Subscription {i}",
                 category="SOFTWARE",
-                status="PAID"
+                status="PAID",
             )
             db.add(exp)
         await db.commit()
 
         print("Demo data seeded successfully!")
+
 
 if __name__ == "__main__":
     asyncio.run(seed_demo_data())

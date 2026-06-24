@@ -81,7 +81,6 @@ ROLES: list[dict] = [
             "documents:read",
             "documents:create",
             "documents:delete",
-
         ],
         "description": "Client delivery operations",
     },

@@ -13,5 +13,6 @@ async def main():
     await redis.delete("login:attempts:admin@agencyos.io")
     print("Unlocked user.")
 
+
 if __name__ == "__main__":
     asyncio.run(main())

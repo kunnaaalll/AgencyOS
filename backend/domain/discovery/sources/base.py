@@ -40,11 +40,15 @@ class BaseDiscoverySource(ABC):
         rate_limiter = get_rate_limiter()
         await rate_limiter.acquire(self.source_name)
 
-        log = logger.bind(source=self.source_name, industry=industry, location=location, limit=limit)
+        log = logger.bind(
+            source=self.source_name, industry=industry, location=location, limit=limit
+        )
         log.info("Starting discovery")
 
         try:
-            results = await self._retry(self._discover, industry=industry, location=location, limit=limit)
+            results = await self._retry(
+                self._discover, industry=industry, location=location, limit=limit
+            )
             log.info("Discovery complete", count=len(results))
             return results
         except Exception as e:

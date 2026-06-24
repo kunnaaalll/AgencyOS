@@ -7,10 +7,12 @@ from domain.documents.enums import DocumentType
 
 # ── Documents ──────────────────────────────────────────────────
 
+
 class DocumentCreate(BaseModel):
     name: str
     client_id: uuid.UUID | None = None
     document_type: DocumentType = DocumentType.GENERAL
+
 
 class DocumentResponse(BaseModel):
     id: uuid.UUID
@@ -29,7 +31,9 @@ class DocumentResponse(BaseModel):
     class Config:
         from_attributes = True
 
+
 # ── Credentials ────────────────────────────────────────────────
+
 
 class CredentialRecordCreate(BaseModel):
     provider: str
@@ -37,11 +41,13 @@ class CredentialRecordCreate(BaseModel):
     account_email: str | None = None
     notes: str | None = None
 
+
 class CredentialRecordUpdate(BaseModel):
     provider: str | None = None
     account_email: str | None = None
     notes: str | None = None
     last_verified_at: datetime | None = None
+
 
 class CredentialRecordResponse(BaseModel):
     id: uuid.UUID

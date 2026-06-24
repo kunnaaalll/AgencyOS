@@ -18,12 +18,14 @@ router = APIRouter(prefix="/analysis", tags=["Analysis"])
 
 
 async def get_redis_pool():
-    return await create_pool(RedisSettings(
-        host=settings.REDIS_HOST,
-        port=settings.REDIS_PORT,
-        password=settings.REDIS_PASSWORD,
-        database=0
-    ))
+    return await create_pool(
+        RedisSettings(
+            host=settings.REDIS_HOST,
+            port=settings.REDIS_PORT,
+            password=settings.REDIS_PASSWORD,
+            database=0,
+        )
+    )
 
 
 from fastapi import Request
@@ -34,7 +36,7 @@ async def run_website_analysis(
     request: Request,
     lead_id: UUID,
     db: AsyncSession = Depends(get_db),
-    _ = Depends(require_permission("analysis:create"))
+    _=Depends(require_permission("analysis:create")),
 ) -> dict[str, str]:
     """Enqueue a background job to analyze the website of a given lead."""
     # Check if lead exists
@@ -59,12 +61,10 @@ async def run_website_analysis(
 async def get_website_analysis(
     lead_id: UUID,
     db: AsyncSession = Depends(get_db),
-    _ = Depends(require_permission("analysis:read"))
+    _=Depends(require_permission("analysis:read")),
 ) -> Any:
     """Get website analysis results for a specific lead."""
-    result = await db.execute(
-        select(WebsiteAnalysis).where(WebsiteAnalysis.lead_id == lead_id)
-    )
+    result = await db.execute(select(WebsiteAnalysis).where(WebsiteAnalysis.lead_id == lead_id))
     analysis = result.scalar_one_or_none()
 
     if not analysis:
@@ -75,8 +75,7 @@ async def get_website_analysis(
 
 @router.get("", response_model=list[WebsiteAnalysisResponse])
 async def list_analyses(
-    db: AsyncSession = Depends(get_db),
-    _ = Depends(require_permission("analysis:read"))
+    db: AsyncSession = Depends(get_db), _=Depends(require_permission("analysis:read"))
 ) -> Any:
     """List all website analyses."""
     result = await db.execute(select(WebsiteAnalysis).order_by(WebsiteAnalysis.analyzed_at.desc()))

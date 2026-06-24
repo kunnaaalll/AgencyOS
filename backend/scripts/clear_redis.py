@@ -7,4 +7,5 @@ async def clear():
     redis = await get_redis()
     await redis.flushall()
 
+
 asyncio.run(clear())

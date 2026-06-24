@@ -27,7 +27,9 @@ class WorkflowExecution(Base):
     __tablename__ = "workflow_executions"
 
     workflow_name: Mapped[str] = mapped_column(String(255), nullable=False, index=True)
-    status: Mapped[WorkflowStatus] = mapped_column(Enum(WorkflowStatus), default=WorkflowStatus.PENDING, nullable=False, index=True)
+    status: Mapped[WorkflowStatus] = mapped_column(
+        Enum(WorkflowStatus), default=WorkflowStatus.PENDING, nullable=False, index=True
+    )
     started_at: Mapped[datetime | None] = mapped_column(nullable=True)
     completed_at: Mapped[datetime | None] = mapped_column(nullable=True)
     duration_ms: Mapped[int | None] = mapped_column(Integer, nullable=True)

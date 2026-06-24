@@ -11,8 +11,12 @@ from domain.outreach.enums import DraftStatus, OutreachChannel
 
 class OutreachDraft(Base):
     __tablename__ = "outreach_drafts"
-    lead_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("leads.id", ondelete="CASCADE"), nullable=False, index=True)
-    qualification_id: Mapped[uuid.UUID | None] = mapped_column(ForeignKey("ai_qualifications.id", ondelete="SET NULL"), nullable=True)
+    lead_id: Mapped[uuid.UUID] = mapped_column(
+        ForeignKey("leads.id", ondelete="CASCADE"), nullable=False, index=True
+    )
+    qualification_id: Mapped[uuid.UUID | None] = mapped_column(
+        ForeignKey("ai_qualifications.id", ondelete="SET NULL"), nullable=True
+    )
 
     channel = Column(SQLEnum(OutreachChannel), nullable=False)
     status = Column(SQLEnum(DraftStatus), nullable=False, default=DraftStatus.DRAFT)

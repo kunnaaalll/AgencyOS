@@ -11,6 +11,7 @@ class LeadStatus(str, Enum):
     WON = "WON"
     LOST = "LOST"
 
+
 class Priority(str, Enum):
     HIGH = "HIGH"
     MEDIUM = "MEDIUM"

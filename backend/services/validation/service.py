@@ -43,8 +43,8 @@ MIN_COMPLETENESS_SCORE = 60
 # Indian phone number patterns
 INDIAN_PHONE_PATTERN = re.compile(
     r"^(\+?91[\-\s]?)?[6-9]\d{9}$|"  # Mobile: starts with 6-9, 10 digits
-    r"^0\d{2,4}[\-\s]?\d{6,8}$|"    # Landline with STD code
-    r"^\d{10}$"                       # 10 digits mobile
+    r"^0\d{2,4}[\-\s]?\d{6,8}$|"  # Landline with STD code
+    r"^\d{10}$"  # 10 digits mobile
 )
 
 EMAIL_PATTERN = re.compile(r"^[a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,}$")

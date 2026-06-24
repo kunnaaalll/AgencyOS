@@ -38,15 +38,11 @@ class DiscoveryMetricsService:
         since = now - timedelta(days=days)
 
         # Total counts
-        total_q = await session.execute(
-            select(func.count(RawBusiness.id))
-        )
+        total_q = await session.execute(select(func.count(RawBusiness.id)))
         total_discovered = total_q.scalar() or 0
 
         valid_q = await session.execute(
-            select(func.count(RawBusiness.id)).where(
-                RawBusiness.validation_status == "VALID"
-            )
+            select(func.count(RawBusiness.id)).where(RawBusiness.validation_status == "VALID")
         )
         total_validated = valid_q.scalar() or 0
 
@@ -71,16 +67,12 @@ class DiscoveryMetricsService:
         duplicate_rate = (
             round((total_duplicates / total_discovered) * 100, 1) if total_discovered > 0 else 0.0
         )
-        promotion_rate = (
-            round((total_promoted / max(total_validated, 1)) * 100, 1)
-        )
+        promotion_rate = round((total_promoted / max(total_validated, 1)) * 100, 1)
 
         # Businesses per hour (last 24h)
         last_24h = now - timedelta(hours=24)
         recent_q = await session.execute(
-            select(func.count(RawBusiness.id)).where(
-                RawBusiness.created_at >= last_24h
-            )
+            select(func.count(RawBusiness.id)).where(RawBusiness.created_at >= last_24h)
         )
         recent_count = recent_q.scalar() or 0
         businesses_per_hour = round(recent_count / 24, 1)
@@ -112,9 +104,7 @@ class DiscoveryMetricsService:
         )
 
     @staticmethod
-    async def get_daily_counts(
-        session: AsyncSession, days: int = 30
-    ) -> list[DailyDiscoveryCount]:
+    async def get_daily_counts(session: AsyncSession, days: int = 30) -> list[DailyDiscoveryCount]:
         """Return daily discovery counts for the last N days."""
         since = datetime.now(UTC) - timedelta(days=days)
 
@@ -129,15 +119,10 @@ class DiscoveryMetricsService:
         )
 
         rows = result.all()
-        return [
-            DailyDiscoveryCount(date=str(row.date), count=row.count)
-            for row in rows
-        ]
+        return [DailyDiscoveryCount(date=str(row.date), count=row.count) for row in rows]
 
     @staticmethod
-    async def get_top_industries(
-        session: AsyncSession, limit: int = 10
-    ) -> list[TopItem]:
+    async def get_top_industries(session: AsyncSession, limit: int = 10) -> list[TopItem]:
         """Return top industries by number of discovered businesses."""
         result = await session.execute(
             select(
@@ -152,9 +137,7 @@ class DiscoveryMetricsService:
         return [TopItem(name=row.industry, count=row.count) for row in result.all()]
 
     @staticmethod
-    async def get_top_locations(
-        session: AsyncSession, limit: int = 10
-    ) -> list[TopItem]:
+    async def get_top_locations(session: AsyncSession, limit: int = 10) -> list[TopItem]:
         """Return top cities by number of discovered businesses."""
         result = await session.execute(
             select(
@@ -182,8 +165,7 @@ class DiscoveryMetricsService:
                 func.sum(
                     func.cast(RawBusiness.is_duplicate.is_(True), type_=func.count().type)
                 ).label("duplicates"),
-            )
-            .group_by(RawBusiness.source)
+            ).group_by(RawBusiness.source)
         )
 
         # Runtime from DiscoveryRun

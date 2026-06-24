@@ -132,7 +132,11 @@ class DiscoveryOrchestrator:
                     str(bulk_job.id),
                 )
             except Exception as e:
-                logger.error("Failed to enqueue bulk_discovery_job", error=str(e), bulk_job_id=str(bulk_job.id))
+                logger.error(
+                    "Failed to enqueue bulk_discovery_job",
+                    error=str(e),
+                    bulk_job_id=str(bulk_job.id),
+                )
         else:
             logger.warning("redis_unavailable", action="skipping enqueue of bulk_discovery_job")
 

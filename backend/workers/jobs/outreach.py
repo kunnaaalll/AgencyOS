@@ -10,6 +10,7 @@ from services.outreach.service import OutreachGenerationService
 
 logger = structlog.get_logger()
 
+
 async def generate_outreach_job(ctx: dict, lead_id: str, channel: str) -> dict:
     logger.info(f"Starting Outreach Generation job for lead_id={lead_id} channel={channel}")
 
@@ -42,7 +43,9 @@ async def generate_outreach_job(ctx: dict, lead_id: str, channel: str) -> dict:
             service = OutreachGenerationService(db)
             draft = await service.generate_outreach(lead, analysis, qualification, outreach_channel)
 
-            logger.info(f"Successfully generated outreach draft_id={draft.id} for lead_id={lead_id}")
+            logger.info(
+                f"Successfully generated outreach draft_id={draft.id} for lead_id={lead_id}"
+            )
             return {"success": True, "draft_id": draft.id}
 
         except Exception as e:

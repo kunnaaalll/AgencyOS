@@ -6,6 +6,7 @@ class Priority(str, Enum):
     MEDIUM = "MEDIUM"
     LOW = "LOW"
 
+
 class QualificationStatus(str, Enum):
     QUALIFIED = "QUALIFIED"
     REVIEW_REQUIRED = "REVIEW_REQUIRED"

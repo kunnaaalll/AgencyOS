@@ -32,7 +32,9 @@ class Notification(Base):
     )
     title: Mapped[str] = mapped_column(String(255), nullable=False)
     message: Mapped[str] = mapped_column(Text, nullable=False)
-    type: Mapped[NotificationType] = mapped_column(Enum(NotificationType), default=NotificationType.INFO, nullable=False)
+    type: Mapped[NotificationType] = mapped_column(
+        Enum(NotificationType), default=NotificationType.INFO, nullable=False
+    )
     is_read: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False, index=True)
 
     # Relationship to user

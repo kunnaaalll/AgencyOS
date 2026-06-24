@@ -10,6 +10,7 @@ class ClientCreatedEvent(BaseEvent):
     opportunity_id: str = ""
     business_name: str = ""
 
+
 @dataclass
 class ClientHealthChangedEvent(BaseEvent):
     event_type: str = "client.health_changed"

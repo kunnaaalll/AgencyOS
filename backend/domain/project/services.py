@@ -15,7 +15,11 @@ from events.dispatcher import dispatch_event
 class ProjectService:
     @staticmethod
     async def get_projects(db: AsyncSession, client_id: uuid.UUID) -> Sequence[Project]:
-        stmt = select(Project).where(Project.client_id == client_id).order_by(Project.created_at.desc())
+        stmt = (
+            select(Project)
+            .where(Project.client_id == client_id)
+            .order_by(Project.created_at.desc())
+        )
         result = await db.execute(stmt)
         return result.scalars().all()
 
@@ -29,8 +33,10 @@ class ProjectService:
         return project
 
     @staticmethod
-    async def create_project(db: AsyncSession, client_id: uuid.UUID, data: ProjectCreate) -> Project:
-        await ClientService.get_client(db, client_id) # Verify client exists
+    async def create_project(
+        db: AsyncSession, client_id: uuid.UUID, data: ProjectCreate
+    ) -> Project:
+        await ClientService.get_client(db, client_id)  # Verify client exists
 
         project = Project(
             client_id=client_id,
@@ -45,15 +51,15 @@ class ProjectService:
 
         await dispatch_event(
             ProjectCreatedEvent(
-                project_id=str(project.id),
-                client_id=str(project.client_id),
-                name=project.name
+                project_id=str(project.id), client_id=str(project.client_id), name=project.name
             )
         )
         return project
 
     @staticmethod
-    async def update_project(db: AsyncSession, project_id: uuid.UUID, data: ProjectUpdate) -> Project:
+    async def update_project(
+        db: AsyncSession, project_id: uuid.UUID, data: ProjectUpdate
+    ) -> Project:
         project = await ProjectService.get_project(db, project_id)
 
         update_data = data.model_dump(exclude_unset=True)

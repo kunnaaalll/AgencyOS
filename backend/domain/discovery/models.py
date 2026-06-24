@@ -82,9 +82,7 @@ class RawBusiness(Base):
 
     # Pipeline state
     completeness_score: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
-    validation_status: Mapped[str] = mapped_column(
-        String(50), nullable=False, default="PENDING"
-    )
+    validation_status: Mapped[str] = mapped_column(String(50), nullable=False, default="PENDING")
     enriched_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     is_duplicate: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
 

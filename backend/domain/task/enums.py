@@ -7,6 +7,7 @@ class TaskStatus(str, Enum):
     REVIEW = "REVIEW"
     DONE = "DONE"
 
+
 class TaskPriority(str, Enum):
     LOW = "LOW"
     MEDIUM = "MEDIUM"

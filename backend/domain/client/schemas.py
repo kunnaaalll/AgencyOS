@@ -20,8 +20,10 @@ class ClientBase(BaseModel):
     renewal_probability: int = 50
     notes: str | None = None
 
+
 class ClientCreate(ClientBase):
     opportunity_id: uuid.UUID | None = None
+
 
 class ClientUpdate(BaseModel):
     business_name: str | None = None
@@ -37,6 +39,7 @@ class ClientUpdate(BaseModel):
     renewal_probability: int | None = None
     notes: str | None = None
 
+
 class ClientResponse(ClientBase):
     id: uuid.UUID
     opportunity_id: uuid.UUID | None = None
@@ -44,6 +47,7 @@ class ClientResponse(ClientBase):
     updated_at: datetime
 
     model_config = ConfigDict(from_attributes=True)
+
 
 class ClientStats(BaseModel):
     active_clients: int

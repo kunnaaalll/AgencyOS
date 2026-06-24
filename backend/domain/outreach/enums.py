@@ -7,6 +7,7 @@ class OutreachChannel(str, Enum):
     WHATSAPP = "WHATSAPP"
     CALL = "CALL"
 
+
 class DraftStatus(str, Enum):
     DRAFT = "DRAFT"
     APPROVED = "APPROVED"

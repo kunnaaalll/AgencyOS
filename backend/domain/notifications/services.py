@@ -30,7 +30,15 @@ class NotificationService:
             await self.db.flush()
         return db_notif
 
-    async def list_notifications(self, user_id: UUID, limit: int = 50, offset: int = 0) -> list[Notification]:
-        stmt = select(Notification).where(Notification.user_id == user_id).order_by(Notification.created_at.desc()).limit(limit).offset(offset)
+    async def list_notifications(
+        self, user_id: UUID, limit: int = 50, offset: int = 0
+    ) -> list[Notification]:
+        stmt = (
+            select(Notification)
+            .where(Notification.user_id == user_id)
+            .order_by(Notification.created_at.desc())
+            .limit(limit)
+            .offset(offset)
+        )
         result = await self.db.execute(stmt)
         return list(result.scalars().all())

@@ -18,11 +18,15 @@ class BackupRecordBase(BaseModel):
     started_at: datetime | None = None
     completed_at: datetime | None = None
 
+
 from pydantic import AliasChoices, BaseModel, Field
 
 
 class BackupRecordCreate(BaseModel):
-    backup_type: str = Field(..., validation_alias=AliasChoices("backup_type", "type", "backupType"))
+    backup_type: str = Field(
+        ..., validation_alias=AliasChoices("backup_type", "type", "backupType")
+    )
+
 
 class BackupRecordResponse(BackupRecordBase):
     model_config = ConfigDict(from_attributes=True)

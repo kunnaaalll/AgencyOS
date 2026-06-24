@@ -77,7 +77,9 @@ class BrowserPool:
                 logger.info("Browser launched", index=i)
 
             self._initialized = True
-            logger.info("BrowserPool initialized", total_contexts=BROWSER_COUNT * CONTEXTS_PER_BROWSER)
+            logger.info(
+                "BrowserPool initialized", total_contexts=BROWSER_COUNT * CONTEXTS_PER_BROWSER
+            )
 
     async def shutdown(self):
         """Close all browsers and stop Playwright."""

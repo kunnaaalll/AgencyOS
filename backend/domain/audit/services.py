@@ -2,7 +2,6 @@
 AgencyOS V2 — Audit Services
 """
 
-
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 

@@ -15,7 +15,12 @@ class WorkflowExecutionService:
         self.db = db
 
     async def list_executions(self, limit: int = 100, offset: int = 0) -> list[WorkflowExecution]:
-        stmt = select(WorkflowExecution).order_by(WorkflowExecution.created_at.desc()).limit(limit).offset(offset)
+        stmt = (
+            select(WorkflowExecution)
+            .order_by(WorkflowExecution.created_at.desc())
+            .limit(limit)
+            .offset(offset)
+        )
         result = await self.db.execute(stmt)
         return list(result.scalars().all())
 

@@ -45,7 +45,10 @@ async def get_current_user(
         raise InvalidTokenException("Token has been revoked")
 
     from sqlalchemy.orm import selectinload
-    result = await db.execute(select(User).options(selectinload(User.role)).where(User.id == payload.sub))
+
+    result = await db.execute(
+        select(User).options(selectinload(User.role)).where(User.id == payload.sub)
+    )
     user = result.scalar_one_or_none()
 
     if not user:
@@ -120,7 +123,9 @@ def require_roles(roles: list) -> Callable:
 
         role_values = [r.value if hasattr(r, "value") else str(r) for r in roles]
         if current_user.role.name not in role_values:
-            raise ForbiddenException(f"Permission denied. Required one of roles: {', '.join(role_values)}")
+            raise ForbiddenException(
+                f"Permission denied. Required one of roles: {', '.join(role_values)}"
+            )
 
         return current_user
 

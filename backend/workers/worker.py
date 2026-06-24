@@ -68,9 +68,9 @@ class WorkerSettings:
     )
 
     # Job timeouts
-    job_timeout = 600          # 10 minutes (extended for bulk discovery)
-    keep_result = 3600         # Keep results for 1 hour
-    max_tries = 3              # Retry failed jobs up to 3 times
+    job_timeout = 600  # 10 minutes (extended for bulk discovery)
+    keep_result = 3600  # Keep results for 1 hour
+    max_tries = 3  # Retry failed jobs up to 3 times
     retry_jobs = True
 
     # Startup / shutdown hooks (BrowserPool lifecycle)

@@ -253,6 +253,7 @@ class AuthService:
 
     async def _get_user_by_email(self, email: str) -> User | None:
         from sqlalchemy.orm import selectinload
+
         result = await self.db.execute(
             select(User).options(selectinload(User.role)).where(User.email == email.lower().strip())
         )
@@ -260,6 +261,7 @@ class AuthService:
 
     async def _get_user_by_id(self, user_id: str) -> User | None:
         from sqlalchemy.orm import selectinload
+
         result = await self.db.execute(
             select(User).options(selectinload(User.role)).where(User.id == user_id)
         )

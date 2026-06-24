@@ -1,7 +1,7 @@
 """Initial schema: organizations, roles, users
 
 Revision ID: 0001_initial_schema
-Revises: 
+Revises:
 Create Date: 2026-06-21 00:00:00.000000
 """
 

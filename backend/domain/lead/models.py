@@ -42,6 +42,7 @@ class Lead(Base):
         "LeadAnalysis", back_populates="lead", uselist=False, cascade="all, delete-orphan"
     )
 
+
 class LeadAnalysis(Base):
     __tablename__ = "lead_analyses"
 
@@ -58,9 +59,9 @@ class LeadAnalysis(Base):
     total_score: Mapped[int | None] = mapped_column(Integer, nullable=True)
 
     summary: Mapped[str | None] = mapped_column(String, nullable=True)
-    pain_points: Mapped[list[str]] = mapped_column(JSONB, server_default='[]', nullable=False)
-    strengths: Mapped[list[str]] = mapped_column(JSONB, server_default='[]', nullable=False)
-    weaknesses: Mapped[list[str]] = mapped_column(JSONB, server_default='[]', nullable=False)
+    pain_points: Mapped[list[str]] = mapped_column(JSONB, server_default="[]", nullable=False)
+    strengths: Mapped[list[str]] = mapped_column(JSONB, server_default="[]", nullable=False)
+    weaknesses: Mapped[list[str]] = mapped_column(JSONB, server_default="[]", nullable=False)
 
     analyzed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
 

@@ -71,9 +71,9 @@ class JustDialSource(BaseDiscoverySource):
                 for selector in [
                     'button:has-text("Accept")',
                     'button:has-text("OK")',
-                    '.popup-close',
+                    ".popup-close",
                     '[class*="close"]',
-                    '#modal-close',
+                    "#modal-close",
                 ]:
                     try:
                         btn = page.locator(selector).first
@@ -103,9 +103,7 @@ class JustDialSource(BaseDiscoverySource):
 
         return results
 
-    def _parse_listings(
-        self, html: str, industry: str, location: str, limit: int
-    ) -> list[dict]:
+    def _parse_listings(self, html: str, industry: str, location: str, limit: int) -> list[dict]:
         """Parse JustDial listing HTML."""
         soup = BeautifulSoup(html, "html.parser")
         results = []

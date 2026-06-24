@@ -12,7 +12,9 @@ from domain.finance.enums import ExpenseStatus, RevenueStatus
 class Revenue(Base):
     __tablename__ = "revenues"
 
-    client_id: Mapped[uuid.UUID | None] = mapped_column(ForeignKey("clients.id", ondelete="SET NULL"), nullable=True)
+    client_id: Mapped[uuid.UUID | None] = mapped_column(
+        ForeignKey("clients.id", ondelete="SET NULL"), nullable=True
+    )
     amount: Mapped[float] = mapped_column(Numeric(12, 2), nullable=False)
     currency: Mapped[str] = mapped_column(String(10), default="USD", nullable=False)
     description: Mapped[str | None] = mapped_column(Text, nullable=True)
@@ -21,7 +23,9 @@ class Revenue(Base):
     payment_method: Mapped[str | None] = mapped_column(String(255), nullable=True)
 
     status: Mapped[RevenueStatus] = mapped_column(
-        SQLEnum(RevenueStatus, name="revenuestatus_enum"), default=RevenueStatus.PENDING, nullable=False
+        SQLEnum(RevenueStatus, name="revenuestatus_enum"),
+        default=RevenueStatus.PENDING,
+        nullable=False,
     )
 
     client = relationship("Client")
@@ -38,7 +42,9 @@ class Expense(Base):
     expense_date: Mapped[date | None] = mapped_column(Date, nullable=True)
 
     status: Mapped[ExpenseStatus] = mapped_column(
-        SQLEnum(ExpenseStatus, name="expensestatus_enum"), default=ExpenseStatus.PENDING, nullable=False
+        SQLEnum(ExpenseStatus, name="expensestatus_enum"),
+        default=ExpenseStatus.PENDING,
+        nullable=False,
     )
 
 
@@ -54,7 +60,9 @@ class Founder(Base):
 class Distribution(Base):
     __tablename__ = "distributions"
 
-    founder_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("founders.id", ondelete="CASCADE"), nullable=False)
+    founder_id: Mapped[uuid.UUID] = mapped_column(
+        ForeignKey("founders.id", ondelete="CASCADE"), nullable=False
+    )
     period_start: Mapped[date] = mapped_column(Date, nullable=False)
     period_end: Mapped[date] = mapped_column(Date, nullable=False)
     amount: Mapped[float] = mapped_column(Numeric(12, 2), nullable=False)

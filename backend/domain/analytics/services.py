@@ -32,7 +32,6 @@ from domain.task.models import Task
 
 
 class AnalyticsService:
-
     @staticmethod
     async def get_growth_metrics(db: AsyncSession) -> GrowthMetricsResponse:
         # Total Leads
@@ -41,10 +40,17 @@ class AnalyticsService:
 
         # Qualified Leads
         qualified_leads_query = await db.execute(
-            select(func.count(Lead.id)).where(Lead.status.in_([
-                LeadStatus.QUALIFIED, LeadStatus.CONTACTED, LeadStatus.MEETING,
-                LeadStatus.PROPOSAL, LeadStatus.WON
-            ]))
+            select(func.count(Lead.id)).where(
+                Lead.status.in_(
+                    [
+                        LeadStatus.QUALIFIED,
+                        LeadStatus.CONTACTED,
+                        LeadStatus.MEETING,
+                        LeadStatus.PROPOSAL,
+                        LeadStatus.WON,
+                    ]
+                )
+            )
         )
         qualified_leads = qualified_leads_query.scalar() or 0
 
@@ -56,13 +62,23 @@ class AnalyticsService:
 
         # Proposals
         proposals_query = await db.execute(
-            select(func.count(Opportunity.id)).where(Opportunity.pipeline_stage == PipelineStage.PROPOSAL)
+            select(func.count(Opportunity.id)).where(
+                Opportunity.pipeline_stage == PipelineStage.PROPOSAL
+            )
         )
         proposal_count = proposals_query.scalar() or 0
 
         # Win Rate
-        won_query = await db.execute(select(func.count(Opportunity.id)).where(Opportunity.pipeline_stage == PipelineStage.WON))
-        lost_query = await db.execute(select(func.count(Opportunity.id)).where(Opportunity.pipeline_stage == PipelineStage.LOST))
+        won_query = await db.execute(
+            select(func.count(Opportunity.id)).where(
+                Opportunity.pipeline_stage == PipelineStage.WON
+            )
+        )
+        lost_query = await db.execute(
+            select(func.count(Opportunity.id)).where(
+                Opportunity.pipeline_stage == PipelineStage.LOST
+            )
+        )
         won = won_query.scalar() or 0
         lost = lost_query.scalar() or 0
         total_closed = won + lost
@@ -76,10 +92,14 @@ class AnalyticsService:
         )
         new_clients_this_month = new_clients_query.scalar() or 0
 
-        active_clients_query = await db.execute(select(func.count(Client.id)).where(Client.status == ClientStatus.ACTIVE))
+        active_clients_query = await db.execute(
+            select(func.count(Client.id)).where(Client.status == ClientStatus.ACTIVE)
+        )
         active_clients = active_clients_query.scalar() or 0
 
-        churned_clients_query = await db.execute(select(func.count(Client.id)).where(Client.status == ClientStatus.CHURNED))
+        churned_clients_query = await db.execute(
+            select(func.count(Client.id)).where(Client.status == ClientStatus.CHURNED)
+        )
         churned_clients = churned_clients_query.scalar() or 0
 
         total_clients_query = await db.execute(select(func.count(Client.id)))
@@ -88,14 +108,21 @@ class AnalyticsService:
         churn_rate = (churned_clients / total_clients * 100) if total_clients > 0 else 0.0
 
         # Lead Funnel (Group By Status)
-        funnel_result = await db.execute(select(Lead.status, func.count(Lead.id)).group_by(Lead.status))
-        lead_funnel = [LeadFunnelData(stage=row[0].value if hasattr(row[0], 'value') else str(row[0]), count=row[1] or 0) for row in funnel_result.all()]
+        funnel_result = await db.execute(
+            select(Lead.status, func.count(Lead.id)).group_by(Lead.status)
+        )
+        lead_funnel = [
+            LeadFunnelData(
+                stage=row[0].value if hasattr(row[0], "value") else str(row[0]), count=row[1] or 0
+            )
+            for row in funnel_result.all()
+        ]
 
         # Calculate real trends for charts (last 6 months)
         lead_qualification_trend = []
         client_growth_trend = []
         for i in range(5, -1, -1):
-            start_date = (today.replace(day=1) - timedelta(days=30*i)).replace(day=1)
+            start_date = (today.replace(day=1) - timedelta(days=30 * i)).replace(day=1)
             if start_date.month == 12:
                 end_date = start_date.replace(year=start_date.year + 1, month=1)
             else:
@@ -104,18 +131,21 @@ class AnalyticsService:
             m_str = start_date.strftime("%b %Y")
 
             # Count leads qualified in this month
-            l_q = await db.execute(select(func.count(Lead.id)).where(
-                Lead.status == LeadStatus.QUALIFIED,
-                Lead.created_at >= start_date,
-                Lead.created_at < end_date
-            ))
+            l_q = await db.execute(
+                select(func.count(Lead.id)).where(
+                    Lead.status == LeadStatus.QUALIFIED,
+                    Lead.created_at >= start_date,
+                    Lead.created_at < end_date,
+                )
+            )
             lead_qualification_trend.append(TrendData(date=m_str, value=l_q.scalar() or 0))
 
             # Count clients created in this month
-            c_q = await db.execute(select(func.count(Client.id)).where(
-                Client.created_at >= start_date,
-                Client.created_at < end_date
-            ))
+            c_q = await db.execute(
+                select(func.count(Client.id)).where(
+                    Client.created_at >= start_date, Client.created_at < end_date
+                )
+            )
             client_growth_trend.append(TrendData(date=m_str, value=c_q.scalar() or 0))
 
         return GrowthMetricsResponse(
@@ -130,7 +160,7 @@ class AnalyticsService:
             active_clients=active_clients,
             lead_funnel=lead_funnel,
             lead_qualification_trend=lead_qualification_trend,
-            client_growth_trend=client_growth_trend
+            client_growth_trend=client_growth_trend,
         )
 
     @staticmethod
@@ -140,19 +170,23 @@ class AnalyticsService:
         mrr_result = await db.execute(
             select(func.sum(Revenue.amount))
             .where(Revenue.status == RevenueStatus.RECEIVED)
-            .where(func.extract('month', Revenue.received_date) == today.month)
-            .where(func.extract('year', Revenue.received_date) == today.year)
+            .where(func.extract("month", Revenue.received_date) == today.month)
+            .where(func.extract("year", Revenue.received_date) == today.year)
         )
         mrr = mrr_result.scalar() or 0.0
 
         arr = float(mrr) * 12.0
 
         # Total lifetime revenue
-        total_rev_result = await db.execute(select(func.sum(Revenue.amount)).where(Revenue.status == RevenueStatus.RECEIVED))
+        total_rev_result = await db.execute(
+            select(func.sum(Revenue.amount)).where(Revenue.status == RevenueStatus.RECEIVED)
+        )
         lifetime_revenue = float(total_rev_result.scalar() or 0.0)
 
         # Clients for average revenue
-        active_clients_query = await db.execute(select(func.count(Client.id)).where(Client.status == ClientStatus.ACTIVE))
+        active_clients_query = await db.execute(
+            select(func.count(Client.id)).where(Client.status == ClientStatus.ACTIVE)
+        )
         active_clients = active_clients_query.scalar() or 0
         average_revenue_per_client = float(mrr) / active_clients if active_clients > 0 else 0.0
 
@@ -163,16 +197,18 @@ class AnalyticsService:
         # Financial Trend
         financial_trend = []
         for i in range(5, -1, -1):
-            m_date = today - timedelta(days=30*i)
+            m_date = today - timedelta(days=30 * i)
             m_str = m_date.strftime("%b %Y")
             scale = (6 - i) / 6.0
-            financial_trend.append(FinancialTrendData(
-                date=m_str,
-                revenue=float(mrr) * scale * 1.2,
-                expense=float(mrr) * scale * 0.4,
-                profit=float(mrr) * scale * 0.8,
-                mrr=float(mrr) * scale
-            ))
+            financial_trend.append(
+                FinancialTrendData(
+                    date=m_str,
+                    revenue=float(mrr) * scale * 1.2,
+                    expense=float(mrr) * scale * 0.4,
+                    profit=float(mrr) * scale * 0.8,
+                    mrr=float(mrr) * scale,
+                )
+            )
 
         return RevenueMetricsResponse(
             mrr=float(mrr),
@@ -181,36 +217,42 @@ class AnalyticsService:
             profit_growth_percentage=profit_growth_percentage,
             average_revenue_per_client=average_revenue_per_client,
             lifetime_revenue=lifetime_revenue,
-            financial_trend=financial_trend
+            financial_trend=financial_trend,
         )
 
     @staticmethod
     async def get_sales_metrics(db: AsyncSession) -> SalesMetricsResponse:
         # Pipeline value (All opportunities not closed)
         open_opps_result = await db.execute(
-            select(func.sum(Opportunity.value))
-            .where(Opportunity.pipeline_stage.notin_([PipelineStage.WON, PipelineStage.LOST]))
+            select(func.sum(Opportunity.value)).where(
+                Opportunity.pipeline_stage.notin_([PipelineStage.WON, PipelineStage.LOST])
+            )
         )
         pipeline_value = open_opps_result.scalar() or 0.0
 
         # Weighted pipeline (e.g. sum(value * probability / 100))
         # SQLite doesn't directly support this easily without numeric casting issues, so let's fetch open opps
         open_opps = await db.execute(
-            select(Opportunity.value, Opportunity.probability)
-            .where(Opportunity.pipeline_stage.notin_([PipelineStage.WON, PipelineStage.LOST]))
+            select(Opportunity.value, Opportunity.probability).where(
+                Opportunity.pipeline_stage.notin_([PipelineStage.WON, PipelineStage.LOST])
+            )
         )
-        weighted_pipeline_value = sum((float(val) * float(prob) / 100.0) for val, prob in open_opps.all() if val and prob)
+        weighted_pipeline_value = sum(
+            (float(val) * float(prob) / 100.0) for val, prob in open_opps.all() if val and prob
+        )
 
         # Average deal size (WON opps)
         won_deals_res = await db.execute(
-            select(func.sum(Opportunity.value))
-            .where(Opportunity.pipeline_stage == PipelineStage.WON)
+            select(func.sum(Opportunity.value)).where(
+                Opportunity.pipeline_stage == PipelineStage.WON
+            )
         )
         won_deals_val = won_deals_res.scalar() or 0.0
 
         won_count_res = await db.execute(
-            select(func.count(Opportunity.id))
-            .where(Opportunity.pipeline_stage == PipelineStage.WON)
+            select(func.count(Opportunity.id)).where(
+                Opportunity.pipeline_stage == PipelineStage.WON
+            )
         )
         won_count = won_count_res.scalar() or 0
         average_deal_size = float(won_deals_val) / won_count if won_count > 0 else 0.0
@@ -219,20 +261,37 @@ class AnalyticsService:
         average_sales_cycle_days = 30.0
 
         # Distributions
-        stage_dist_res = await db.execute(select(Opportunity.pipeline_stage, func.count(Opportunity.id)).group_by(Opportunity.pipeline_stage))
-        pipeline_stage_distribution = [DistributionData(name=row[0].value if hasattr(row[0], 'value') else str(row[0]), value=row[1] or 0) for row in stage_dist_res.all()]
+        stage_dist_res = await db.execute(
+            select(Opportunity.pipeline_stage, func.count(Opportunity.id)).group_by(
+                Opportunity.pipeline_stage
+            )
+        )
+        pipeline_stage_distribution = [
+            DistributionData(
+                name=row[0].value if hasattr(row[0], "value") else str(row[0]), value=row[1] or 0
+            )
+            for row in stage_dist_res.all()
+        ]
 
-        won_query = await db.execute(select(func.count(Opportunity.id)).where(Opportunity.pipeline_stage == PipelineStage.WON))
-        lost_query = await db.execute(select(func.count(Opportunity.id)).where(Opportunity.pipeline_stage == PipelineStage.LOST))
+        won_query = await db.execute(
+            select(func.count(Opportunity.id)).where(
+                Opportunity.pipeline_stage == PipelineStage.WON
+            )
+        )
+        lost_query = await db.execute(
+            select(func.count(Opportunity.id)).where(
+                Opportunity.pipeline_stage == PipelineStage.LOST
+            )
+        )
         win_loss_ratio = [
             WinLossData(name="Won", value=won_query.scalar() or 0),
-            WinLossData(name="Lost", value=lost_query.scalar() or 0)
+            WinLossData(name="Lost", value=lost_query.scalar() or 0),
         ]
 
         deal_size_distribution = [
             DistributionData(name="Small", value=10),
             DistributionData(name="Medium", value=5),
-            DistributionData(name="Large", value=2)
+            DistributionData(name="Large", value=2),
         ]
 
         return SalesMetricsResponse(
@@ -243,7 +302,7 @@ class AnalyticsService:
             average_sales_cycle_days=average_sales_cycle_days,
             pipeline_stage_distribution=pipeline_stage_distribution,
             win_loss_ratio=win_loss_ratio,
-            deal_size_distribution=deal_size_distribution
+            deal_size_distribution=deal_size_distribution,
         )
 
     @staticmethod
@@ -260,29 +319,58 @@ class AnalyticsService:
         completed_tasks = completed_tasks_res.scalar() or 0
 
         # Projects
-        active_projects_res = await db.execute(select(func.count(Project.id)).where(Project.status == ProjectStatus.ACTIVE))
-        completed_projects_res = await db.execute(select(func.count(Project.id)).where(Project.status == ProjectStatus.COMPLETED))
+        active_projects_res = await db.execute(
+            select(func.count(Project.id)).where(Project.status == ProjectStatus.ACTIVE)
+        )
+        completed_projects_res = await db.execute(
+            select(func.count(Project.id)).where(Project.status == ProjectStatus.COMPLETED)
+        )
         total_projects_res = await db.execute(select(func.count(Project.id)))
 
         active_projects = active_projects_res.scalar() or 0
         completed_projects = completed_projects_res.scalar() or 0
         total_projects = total_projects_res.scalar() or 0
 
-        project_completion_rate = (completed_projects / total_projects * 100) if total_projects > 0 else 0.0
+        project_completion_rate = (
+            (completed_projects / total_projects * 100) if total_projects > 0 else 0.0
+        )
 
         # Clients Renewals
-        renewals_due_res = await db.execute(select(func.count(Client.id)).where(Client.health_status == HealthStatus.RENEWAL_DUE))
+        renewals_due_res = await db.execute(
+            select(func.count(Client.id)).where(Client.health_status == HealthStatus.RENEWAL_DUE)
+        )
         renewals_due = renewals_due_res.scalar() or 0
 
         # Distributions
-        task_dist_res = await db.execute(select(Task.status, func.count(Task.id)).group_by(Task.status))
-        task_status_distribution = [DistributionData(name=row[0].value if hasattr(row[0], 'value') else str(row[0]), value=row[1] or 0) for row in task_dist_res.all()]
+        task_dist_res = await db.execute(
+            select(Task.status, func.count(Task.id)).group_by(Task.status)
+        )
+        task_status_distribution = [
+            DistributionData(
+                name=row[0].value if hasattr(row[0], "value") else str(row[0]), value=row[1] or 0
+            )
+            for row in task_dist_res.all()
+        ]
 
-        health_dist_res = await db.execute(select(Client.health_status, func.count(Client.id)).group_by(Client.health_status))
-        client_health_distribution = [DistributionData(name=row[0].value if hasattr(row[0], 'value') else str(row[0]), value=row[1] or 0) for row in health_dist_res.all()]
+        health_dist_res = await db.execute(
+            select(Client.health_status, func.count(Client.id)).group_by(Client.health_status)
+        )
+        client_health_distribution = [
+            DistributionData(
+                name=row[0].value if hasattr(row[0], "value") else str(row[0]), value=row[1] or 0
+            )
+            for row in health_dist_res.all()
+        ]
 
-        proj_dist_res = await db.execute(select(Project.status, func.count(Project.id)).group_by(Project.status))
-        project_status_distribution = [DistributionData(name=row[0].value if hasattr(row[0], 'value') else str(row[0]), value=row[1] or 0) for row in proj_dist_res.all()]
+        proj_dist_res = await db.execute(
+            select(Project.status, func.count(Project.id)).group_by(Project.status)
+        )
+        project_status_distribution = [
+            DistributionData(
+                name=row[0].value if hasattr(row[0], "value") else str(row[0]), value=row[1] or 0
+            )
+            for row in proj_dist_res.all()
+        ]
 
         return DeliveryMetricsResponse(
             open_tasks=open_tasks,
@@ -291,7 +379,7 @@ class AnalyticsService:
             renewals_due=renewals_due,
             task_status_distribution=task_status_distribution,
             client_health_distribution=client_health_distribution,
-            project_status_distribution=project_status_distribution
+            project_status_distribution=project_status_distribution,
         )
 
     @staticmethod
@@ -301,7 +389,9 @@ class AnalyticsService:
         projected_mrr = float(summary.mrr or 0.0) * 1.10
         projected_profit = float(summary.net_profit or 0.0) * 1.05
 
-        active_clients_query = await db.execute(select(func.count(Client.id)).where(Client.status == ClientStatus.ACTIVE))
+        active_clients_query = await db.execute(
+            select(func.count(Client.id)).where(Client.status == ClientStatus.ACTIVE)
+        )
         active_clients = active_clients_query.scalar() or 0
 
         projected_clients = int(active_clients * 1.15)
@@ -309,7 +399,9 @@ class AnalyticsService:
         # Real hiring logic based on actual task utilization
         total_tasks_q = await db.execute(select(func.count(Task.id)))
         total_tasks = total_tasks_q.scalar() or 0
-        completed_tasks_q = await db.execute(select(func.count(Task.id)).where(Task.status == TaskStatus.DONE))
+        completed_tasks_q = await db.execute(
+            select(func.count(Task.id)).where(Task.status == TaskStatus.DONE)
+        )
         completed_tasks = completed_tasks_q.scalar() or 0
 
         task_utilization = (completed_tasks / total_tasks * 100.0) if total_tasks > 0 else 0.0
@@ -319,7 +411,9 @@ class AnalyticsService:
 
         if active_clients >= 10 and task_utilization > 85.0:
             hiring_recommendation = True
-            hiring_reason = f"10+ active clients AND Task utilization > 85% (Current: {task_utilization:.1f}%)"
+            hiring_reason = (
+                f"10+ active clients AND Task utilization > 85% (Current: {task_utilization:.1f}%)"
+            )
         elif task_utilization > 95.0:
             hiring_recommendation = True
             hiring_reason = f"Task utilization critically high (Current: {task_utilization:.1f}%)"
@@ -329,7 +423,7 @@ class AnalyticsService:
             projected_profit=projected_profit,
             projected_clients=projected_clients,
             hiring_recommendation=hiring_recommendation,
-            hiring_reason=hiring_reason
+            hiring_reason=hiring_reason,
         )
 
     @staticmethod
@@ -341,9 +435,5 @@ class AnalyticsService:
         forecast = await AnalyticsService.get_forecast(db)
 
         return ExecutiveSummaryResponse(
-            growth=growth,
-            sales=sales,
-            finance=revenue,
-            delivery=delivery,
-            forecast=forecast
+            growth=growth, sales=sales, finance=revenue, delivery=delivery, forecast=forecast
         )

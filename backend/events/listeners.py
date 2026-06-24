@@ -13,6 +13,7 @@ from events.bus import event_bus
 
 logger = structlog.get_logger(__name__)
 
+
 @event_bus.subscribe("crm.opportunity.won")
 async def handle_opportunity_won(event: OpportunityWonEvent) -> None:
     """
@@ -24,6 +25,7 @@ async def handle_opportunity_won(event: OpportunityWonEvent) -> None:
         try:
             # 1. Fetch Opportunity data to populate Client
             import uuid
+
             opp_id = uuid.UUID(event.opportunity_id)
             opp = await CRMService.get_opportunity(db, opp_id)
 
@@ -38,7 +40,7 @@ async def handle_opportunity_won(event: OpportunityWonEvent) -> None:
                 status=ClientStatus.ACTIVE,
                 health_status=HealthStatus.HEALTHY,
                 renewal_probability=80,
-                notes=opp.notes
+                notes=opp.notes,
             )
 
             # 2. Create Client
@@ -49,7 +51,7 @@ async def handle_opportunity_won(event: OpportunityWonEvent) -> None:
             project_data = ProjectCreate(
                 name=f"Onboarding: {client.business_name}",
                 description="Default onboarding project created from CRM conversion.",
-                status=ProjectStatus.PLANNING
+                status=ProjectStatus.PLANNING,
             )
 
             project = await ProjectService.create_project(db, client.id, project_data)
@@ -60,6 +62,7 @@ async def handle_opportunity_won(event: OpportunityWonEvent) -> None:
         except Exception as e:
             logger.error("Failed to convert Opportunity to Client", error=str(e))
             await db.rollback()
+
 
 def register_listeners():
     """Import to ensure listeners are registered."""

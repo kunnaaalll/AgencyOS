@@ -65,7 +65,7 @@ async def discover_businesses(
                 "bulk_discovery_started",
                 source=run.source,
                 industry=run.query,
-                location=run.location
+                location=run.location,
             )
             raw_businesses_dicts = await source_instance.discover(
                 industry=run.query or "",
@@ -262,7 +262,12 @@ async def enrich_business(ctx: dict, business_id: str) -> None:
         await session.commit()
         await session.refresh(lead)
 
-        logger.info("Business enriched and automatically promoted to Lead", business_id=business_id, lead_id=str(lead.id), name=business.business_name)
+        logger.info(
+            "Business enriched and automatically promoted to Lead",
+            business_id=business_id,
+            lead_id=str(lead.id),
+            name=business.business_name,
+        )
 
         # Automatically enqueue downstream workflows
         redis = ctx.get("redis")

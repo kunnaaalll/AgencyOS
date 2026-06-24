@@ -10,6 +10,7 @@ class PipelineStage(str, Enum):
     WON = "WON"
     LOST = "LOST"
 
+
 class ActivityType(str, Enum):
     CALL = "CALL"
     EMAIL = "EMAIL"
@@ -18,6 +19,7 @@ class ActivityType(str, Enum):
     NOTE = "NOTE"
     FOLLOW_UP = "FOLLOW_UP"
     MEETING = "MEETING"
+
 
 class MeetingType(str, Enum):
     DISCOVERY = "DISCOVERY"

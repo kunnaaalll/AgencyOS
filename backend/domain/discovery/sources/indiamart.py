@@ -41,7 +41,11 @@ class IndiaMartSource(BaseDiscoverySource):
                 await self._random_delay()
 
                 # Handle any overlays
-                for selector in ['button:has-text("Close")', '.popup-close', "#onetrust-accept-btn-handler"]:
+                for selector in [
+                    'button:has-text("Close")',
+                    ".popup-close",
+                    "#onetrust-accept-btn-handler",
+                ]:
                     try:
                         btn = page.locator(selector).first
                         if await btn.is_visible(timeout=2000):

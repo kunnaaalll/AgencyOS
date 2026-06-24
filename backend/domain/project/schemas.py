@@ -13,8 +13,10 @@ class ProjectBase(BaseModel):
     start_date: datetime | None = None
     due_date: datetime | None = None
 
+
 class ProjectCreate(ProjectBase):
     pass
+
 
 class ProjectUpdate(BaseModel):
     name: str | None = None
@@ -22,6 +24,7 @@ class ProjectUpdate(BaseModel):
     status: ProjectStatus | None = None
     start_date: datetime | None = None
     due_date: datetime | None = None
+
 
 class ProjectResponse(ProjectBase):
     id: uuid.UUID

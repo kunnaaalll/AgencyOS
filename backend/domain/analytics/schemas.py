@@ -1,4 +1,3 @@
-
 from pydantic import BaseModel
 
 
@@ -7,9 +6,11 @@ class LeadFunnelData(BaseModel):
     stage: str
     count: int
 
+
 class TrendData(BaseModel):
     date: str
     value: int
+
 
 class GrowthMetricsResponse(BaseModel):
     total_leads: int
@@ -26,6 +27,7 @@ class GrowthMetricsResponse(BaseModel):
     lead_qualification_trend: list[TrendData]
     client_growth_trend: list[TrendData]
 
+
 # Revenue Metrics
 class FinancialTrendData(BaseModel):
     date: str
@@ -33,6 +35,7 @@ class FinancialTrendData(BaseModel):
     expense: float
     profit: float
     mrr: float
+
 
 class RevenueMetricsResponse(BaseModel):
     mrr: float
@@ -44,14 +47,17 @@ class RevenueMetricsResponse(BaseModel):
 
     financial_trend: list[FinancialTrendData]
 
+
 # Sales Metrics
 class DistributionData(BaseModel):
     name: str
     value: float
 
+
 class WinLossData(BaseModel):
     name: str
     value: int
+
 
 class SalesMetricsResponse(BaseModel):
     pipeline_value: float
@@ -64,6 +70,7 @@ class SalesMetricsResponse(BaseModel):
     win_loss_ratio: list[WinLossData]
     deal_size_distribution: list[DistributionData]
 
+
 # Delivery Metrics
 class DeliveryMetricsResponse(BaseModel):
     open_tasks: int
@@ -75,6 +82,7 @@ class DeliveryMetricsResponse(BaseModel):
     client_health_distribution: list[DistributionData]
     project_status_distribution: list[DistributionData]
 
+
 # Forecast Metrics
 class ForecastResponse(BaseModel):
     projected_mrr: float
@@ -82,6 +90,7 @@ class ForecastResponse(BaseModel):
     projected_clients: int
     hiring_recommendation: bool
     hiring_reason: str | None = None
+
 
 # Executive Summary
 class ExecutiveSummaryResponse(BaseModel):

@@ -34,11 +34,26 @@ DOMAIN_PATTERN = re.compile(
 
 # Skip generic/non-business domains
 SKIP_DOMAINS = {
-    "reddit.com", "redd.it", "imgur.com", "youtube.com", "youtu.be",
-    "google.com", "amazon.com", "amazon.in", "flipkart.com", "twitter.com",
-    "facebook.com", "instagram.com", "whatsapp.com", "linkedin.com",
-    "github.com", "stackoverflow.com", "medium.com", "quora.com",
-    "wikipedia.org", "maps.google.com",
+    "reddit.com",
+    "redd.it",
+    "imgur.com",
+    "youtube.com",
+    "youtu.be",
+    "google.com",
+    "amazon.com",
+    "amazon.in",
+    "flipkart.com",
+    "twitter.com",
+    "facebook.com",
+    "instagram.com",
+    "whatsapp.com",
+    "linkedin.com",
+    "github.com",
+    "stackoverflow.com",
+    "medium.com",
+    "quora.com",
+    "wikipedia.org",
+    "maps.google.com",
 }
 
 # Regex to extract business names from post titles

@@ -33,7 +33,7 @@ async def analyze_website_job(ctx: dict, lead_id: str, website_url: str) -> None
                     overall_score=analysis.overall_score,
                     strengths=analysis.strengths,
                     weaknesses=analysis.weaknesses,
-                    pain_points=analysis.pain_points
+                    pain_points=analysis.pain_points,
                 )
             )
 

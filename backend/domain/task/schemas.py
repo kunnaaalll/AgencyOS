@@ -15,8 +15,10 @@ class TaskBase(BaseModel):
     due_date: datetime | None = None
     completed_at: datetime | None = None
 
+
 class TaskCreate(TaskBase):
     pass
+
 
 class TaskUpdate(BaseModel):
     title: str | None = None
@@ -26,6 +28,7 @@ class TaskUpdate(BaseModel):
     assigned_to: uuid.UUID | None = None
     due_date: datetime | None = None
     completed_at: datetime | None = None
+
 
 class TaskResponse(TaskBase):
     id: uuid.UUID

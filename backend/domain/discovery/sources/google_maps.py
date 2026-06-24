@@ -72,7 +72,9 @@ class GoogleMapsSource(BaseDiscoverySource):
                         break
 
                     # Check if we've reached the end of results
-                    end_marker = await page.query_selector('text="You\'ve reached the end of the list."')
+                    end_marker = await page.query_selector(
+                        'text="You\'ve reached the end of the list."'
+                    )
                     if end_marker:
                         break
 

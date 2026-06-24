@@ -18,13 +18,13 @@ class QualificationService:
         they are passed as the points earned for that category.
         """
         total = (
-            website_quality +
-            seo +
-            instagram_activity +
-            google_reviews +
-            cta_quality +
-            business_activity +
-            growth_potential
+            website_quality
+            + seo
+            + instagram_activity
+            + google_reviews
+            + cta_quality
+            + business_activity
+            + growth_potential
         )
         return min(max(total, 0), 100)
 

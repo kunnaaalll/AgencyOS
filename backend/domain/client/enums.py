@@ -7,6 +7,7 @@ class ClientStatus(str, Enum):
     CHURNED = "CHURNED"
     COMPLETED = "COMPLETED"
 
+
 class HealthStatus(str, Enum):
     HEALTHY = "HEALTHY"
     AT_RISK = "AT_RISK"

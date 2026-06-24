@@ -9,11 +9,13 @@ class LeadCreatedEvent(BaseEvent):
     lead_id: str = ""
     business_name: str = ""
 
+
 @dataclass
 class LeadAnalyzedEvent(BaseEvent):
     event_type: str = "lead.analyzed"
     lead_id: str = ""
     total_score: int = 0
+
 
 @dataclass
 class LeadQualifiedEvent(BaseEvent):

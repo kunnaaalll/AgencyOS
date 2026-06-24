@@ -7,6 +7,7 @@ class OutreachDraftGeneratedEvent(BaseModel):
     draft_id: str
     channel: str
 
+
 class OutreachDraftApprovedEvent(BaseModel):
     type: str = "OutreachDraftApproved"
     lead_id: str

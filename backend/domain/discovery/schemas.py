@@ -5,6 +5,7 @@ from pydantic import BaseModel, ConfigDict
 
 # ── Discovery Run ─────────────────────────────────────────────────────────────
 
+
 class DiscoveryRunCreate(BaseModel):
     source: str
     query: str | None = None
@@ -32,6 +33,7 @@ class DiscoveryRunResponse(BaseModel):
 
 # ── Bulk Discovery Job ────────────────────────────────────────────────────────
 
+
 class BulkDiscoveryRequest(BaseModel):
     industries: list[str]
     locations: list[str]
@@ -58,6 +60,7 @@ class BulkDiscoveryResponse(BaseModel):
 
 
 # ── Raw Business ──────────────────────────────────────────────────────────────
+
 
 class RawBusinessResponse(BaseModel):
     id: uuid.UUID
@@ -94,6 +97,7 @@ class RawBusinessResponse(BaseModel):
 
 # ── Metrics ───────────────────────────────────────────────────────────────────
 
+
 class DailyDiscoveryCount(BaseModel):
     date: str
     count: int
@@ -129,6 +133,7 @@ class DiscoveryMetricsResponse(BaseModel):
 
 
 # ── Business Filters ──────────────────────────────────────────────────────────
+
 
 class BusinessFilters(BaseModel):
     status: str | None = None

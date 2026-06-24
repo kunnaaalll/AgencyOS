@@ -8,15 +8,10 @@ from domain.discovery.schemas import DiscoveryRunCreate
 class DiscoveryService:
     @staticmethod
     async def create_discovery_run(
-        db: AsyncSession,
-        redis: ArqRedis,
-        run_in: DiscoveryRunCreate
+        db: AsyncSession, redis: ArqRedis, run_in: DiscoveryRunCreate
     ) -> DiscoveryRun:
         run = DiscoveryRun(
-            source=run_in.source,
-            query=run_in.query,
-            location=run_in.location,
-            status="PENDING"
+            source=run_in.source, query=run_in.query, location=run_in.location, status="PENDING"
         )
         db.add(run)
         await db.commit()

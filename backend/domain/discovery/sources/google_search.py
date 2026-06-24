@@ -31,12 +31,29 @@ QUERY_PATTERNS = [
 
 # Domains to skip (aggregators, not actual businesses)
 SKIP_DOMAINS = {
-    "justdial.com", "indiamart.com", "sulekha.com", "tradeindia.com",
-    "yellowpages.in", "asklaila.com", "shopclues.com", "amazon.in",
-    "flipkart.com", "zomato.com", "swiggy.com", "practo.com",
-    "booking.com", "tripadvisor.com", "yelp.com", "facebook.com",
-    "twitter.com", "instagram.com", "linkedin.com", "youtube.com",
-    "wikipedia.org", "google.com", "reddit.com",
+    "justdial.com",
+    "indiamart.com",
+    "sulekha.com",
+    "tradeindia.com",
+    "yellowpages.in",
+    "asklaila.com",
+    "shopclues.com",
+    "amazon.in",
+    "flipkart.com",
+    "zomato.com",
+    "swiggy.com",
+    "practo.com",
+    "booking.com",
+    "tripadvisor.com",
+    "yelp.com",
+    "facebook.com",
+    "twitter.com",
+    "instagram.com",
+    "linkedin.com",
+    "youtube.com",
+    "wikipedia.org",
+    "google.com",
+    "reddit.com",
 }
 
 
@@ -108,7 +125,11 @@ class GoogleSearchSource(BaseDiscoverySource):
                     try:
                         async with AsyncWebCrawler(verbose=False) as crawler:
                             crawl_result = await crawler.arun(url=url)
-                            markdown_content = crawl_result.markdown[:5000] if crawl_result and crawl_result.markdown else ""
+                            markdown_content = (
+                                crawl_result.markdown[:5000]
+                                if crawl_result and crawl_result.markdown
+                                else ""
+                            )
                     except Exception as e:
                         logger.warning("Crawl4AI extraction failed", url=url, error=str(e))
 

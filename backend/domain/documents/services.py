@@ -14,13 +14,12 @@ from domain.documents.storage import StorageService
 class DocumentService:
     @staticmethod
     async def upload_document(
-        db: AsyncSession,
-        file: UploadFile,
-        metadata: DocumentCreate,
-        user_id: uuid.UUID
+        db: AsyncSession, file: UploadFile, metadata: DocumentCreate, user_id: uuid.UUID
     ) -> Document:
         # Upload to MinIO
-        storage_key = await StorageService.upload_file(file, bucket=settings.MINIO_BUCKET_NAME, prefix="documents/")
+        storage_key = await StorageService.upload_file(
+            file, bucket=settings.MINIO_BUCKET_NAME, prefix="documents/"
+        )
 
         # Create database record
         doc = Document(
@@ -32,7 +31,7 @@ class DocumentService:
             size=file.size or 0,
             bucket=settings.MINIO_BUCKET_NAME,
             storage_key=storage_key,
-            uploaded_by=user_id
+            uploaded_by=user_id,
         )
         db.add(doc)
         await db.commit()
@@ -68,6 +67,7 @@ class DocumentService:
         url = await StorageService.generate_presigned_url(doc.storage_key, bucket=doc.bucket)
         return url
 
+
 class CredentialService:
     @staticmethod
     async def create_credential(db: AsyncSession, data: CredentialRecordCreate) -> CredentialRecord:
@@ -79,18 +79,24 @@ class CredentialService:
 
     @staticmethod
     async def get_credentials(db: AsyncSession) -> Sequence[CredentialRecord]:
-        result = await db.execute(select(CredentialRecord).order_by(CredentialRecord.created_at.desc()))
+        result = await db.execute(
+            select(CredentialRecord).order_by(CredentialRecord.created_at.desc())
+        )
         return result.scalars().all()
 
     @staticmethod
     async def get_credential(db: AsyncSession, cred_id: uuid.UUID) -> CredentialRecord:
         cred = await db.get(CredentialRecord, cred_id)
         if not cred:
-            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Credential not found")
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND, detail="Credential not found"
+            )
         return cred
 
     @staticmethod
-    async def update_credential(db: AsyncSession, cred_id: uuid.UUID, data: CredentialRecordUpdate) -> CredentialRecord:
+    async def update_credential(
+        db: AsyncSession, cred_id: uuid.UUID, data: CredentialRecordUpdate
+    ) -> CredentialRecord:
         cred = await CredentialService.get_credential(db, cred_id)
         update_data = data.model_dump(exclude_unset=True)
         for key, value in update_data.items():

@@ -14,20 +14,25 @@ from workers.jobs.qualification_ai import qualify_lead_job
 
 logger = structlog.get_logger()
 
+
 async def startup(ctx: dict):
     logger.info("AI Worker starting up...")
+
 
 async def shutdown(ctx: dict):
     logger.info("AI Worker shutting down...")
 
+
 async def dummy_task(ctx: dict) -> None:
     pass
+
 
 FUNCTIONS: list = [
     dummy_task,
     qualify_lead_job,
     generate_outreach_job,
 ]
+
 
 class WorkerSettings:
     """
@@ -46,9 +51,9 @@ class WorkerSettings:
     )
 
     # Job timeouts
-    job_timeout = 300          # 5 minutes
-    keep_result = 3600         # Keep results for 1 hour
-    max_tries = 3              # Retry failed jobs up to 3 times
+    job_timeout = 300  # 5 minutes
+    keep_result = 3600  # Keep results for 1 hour
+    max_tries = 3  # Retry failed jobs up to 3 times
     retry_jobs = True
 
     on_startup = startup

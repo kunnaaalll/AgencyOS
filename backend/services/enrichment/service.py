@@ -102,7 +102,9 @@ class EnrichmentService:
                                 try:
                                     contact_resp = await client.get(contact_url, timeout=5.0)
                                     if contact_resp.status_code == 200:
-                                        contact_soup = BeautifulSoup(contact_resp.text, "html.parser")
+                                        contact_soup = BeautifulSoup(
+                                            contact_resp.text, "html.parser"
+                                        )
                                         email = EnrichmentService._extract_email(contact_soup)
                                         if email:
                                             business["email"] = email
@@ -134,9 +136,8 @@ class EnrichmentService:
             payload["website_title"] = title
 
         # Meta description
-        meta_desc = (
-            soup.find("meta", attrs={"name": "description"})
-            or soup.find("meta", attrs={"property": "og:description"})
+        meta_desc = soup.find("meta", attrs={"name": "description"}) or soup.find(
+            "meta", attrs={"property": "og:description"}
         )
         if meta_desc and meta_desc.get("content"):
             desc = meta_desc["content"].strip()
@@ -179,8 +180,7 @@ class EnrichmentService:
 
         # Analytics detection
         scripts_text = " ".join(
-            s.get("src", "") + (s.string or "")
-            for s in soup.find_all("script")
+            s.get("src", "") + (s.string or "") for s in soup.find_all("script")
         )
         detected_analytics = []
         for tool, signatures in ANALYTICS_SIGNATURES.items():

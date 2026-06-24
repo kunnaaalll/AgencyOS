@@ -17,8 +17,10 @@ class AuditLogBase(BaseModel):
     old_values: dict[str, Any] | None = None
     new_values: dict[str, Any] | None = None
 
+
 class AuditLogCreate(AuditLogBase):
     pass
+
 
 class AuditLogResponse(AuditLogBase):
     model_config = ConfigDict(from_attributes=True)

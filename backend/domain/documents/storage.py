@@ -15,9 +15,7 @@ from core.minio import get_minio_client
 class StorageService:
     @staticmethod
     async def upload_file(
-        file: UploadFile,
-        bucket: str = settings.MINIO_BUCKET_NAME,
-        prefix: str = ""
+        file: UploadFile, bucket: str = settings.MINIO_BUCKET_NAME, prefix: str = ""
     ) -> str:
         """
         Uploads a file to MinIO and returns the storage key.
@@ -40,32 +38,25 @@ class StorageService:
             object_name=storage_key,
             data=file.file,
             length=file_size,
-            part_size=10*1024*1024, # 10MB chunks
-            content_type=file.content_type
+            part_size=10 * 1024 * 1024,  # 10MB chunks
+            content_type=file.content_type,
         )
         return storage_key
 
     @staticmethod
     async def generate_presigned_url(
-        storage_key: str,
-        bucket: str = settings.MINIO_BUCKET_NAME,
-        expires_in_hours: int = 24
+        storage_key: str, bucket: str = settings.MINIO_BUCKET_NAME, expires_in_hours: int = 24
     ) -> str:
         """
         Generate a presigned GET URL for a file.
         """
         client = get_minio_client()
         return client.presigned_get_object(
-            bucket_name=bucket,
-            object_name=storage_key,
-            expires=timedelta(hours=expires_in_hours)
+            bucket_name=bucket, object_name=storage_key, expires=timedelta(hours=expires_in_hours)
         )
 
     @staticmethod
-    async def delete_file(
-        storage_key: str,
-        bucket: str = settings.MINIO_BUCKET_NAME
-    ) -> None:
+    async def delete_file(storage_key: str, bucket: str = settings.MINIO_BUCKET_NAME) -> None:
         """
         Delete a file from MinIO.
         """
@@ -73,4 +64,4 @@ class StorageService:
         try:
             client.remove_object(bucket, storage_key)
         except S3Error:
-            pass # Ignore if not found
+            pass  # Ignore if not found

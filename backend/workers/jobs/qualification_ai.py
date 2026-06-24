@@ -8,6 +8,7 @@ from services.qualification_ai.service import AIQualificationService
 
 logger = structlog.get_logger()
 
+
 async def qualify_lead_job(ctx: dict, lead_id: str) -> dict:
     logger.info(f"Starting AI Qualification job for lead_id={lead_id}")
 
@@ -37,7 +38,9 @@ async def qualify_lead_job(ctx: dict, lead_id: str) -> dict:
             service = AIQualificationService(db)
             qualification = await service.qualify_lead(lead, analysis)
 
-            logger.info(f"Successfully qualified lead_id={lead_id} with status={qualification.qualification_status.value}")
+            logger.info(
+                f"Successfully qualified lead_id={lead_id} with status={qualification.qualification_status.value}"
+            )
             return {"success": True, "qualification_id": qualification.id}
 
         except Exception as e:
