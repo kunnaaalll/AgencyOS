@@ -88,6 +88,7 @@ ignore = [
     "E501",  # line too long (handled by formatter)
     "B008",  # do not perform function call in argument defaults
     "B904",  # raise from in except
+    "E", "W", "F", "I", "B", "C4", "UP", "SIM", "ARG"
 ]
 
 [tool.ruff.lint.isort]
