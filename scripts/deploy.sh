@@ -52,11 +52,11 @@ chmod +x scripts/*.sh
 
 # ── Build Images ─────────────────────────────────────────────
 log "Building production images..."
-docker compose -f docker-compose.prod.yml build
+docker compose --env-file .env.production -f docker-compose.prod.yml build
 
 # ── Deploy ───────────────────────────────────────────────────
 log "Deploying services..."
-docker compose -f docker-compose.prod.yml up -d
+docker compose --env-file .env.production -f docker-compose.prod.yml up -d
 
 # ── Wait for Health ──────────────────────────────────────────
 log "Waiting for services to become healthy..."
@@ -87,7 +87,7 @@ fi
 
 # ── Run Migrations ───────────────────────────────────────────
 log "Running database migrations..."
-docker compose -f docker-compose.prod.yml exec -T backend alembic upgrade head
+docker compose --env-file .env.production -f docker-compose.prod.yml exec -T backend alembic upgrade head
 
 # ── Verify ───────────────────────────────────────────────────
 log "Verifying deployment..."
@@ -96,7 +96,7 @@ if [[ "${HTTP_STATUS}" -eq 200 ]]; then
     log "🎉 Deployment successful! API is healthy."
 else
     error "API health check failed with status ${HTTP_STATUS}"
-    docker compose -f docker-compose.prod.yml logs --tail=30 backend
+    docker compose --env-file .env.production -f docker-compose.prod.yml logs --tail=30 backend
     exit 1
 fi
 

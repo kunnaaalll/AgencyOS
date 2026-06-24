@@ -35,21 +35,21 @@ The script performs health checks, runs database migrations, and verifies API he
 
 ```bash
 cd /opt/agencyos
-docker compose -f docker-compose.prod.yml ps
+docker compose --env-file .env.production -f docker-compose.prod.yml ps
 ```
 
 ### Viewing Logs
 
 Live logs for the backend:
 ```bash
-docker compose -f docker-compose.prod.yml logs -f backend
+docker compose --env-file .env.production -f docker-compose.prod.yml logs -f backend
 ```
 *Note: All logs are also shipped to Loki and available in Grafana.*
 
 ### Restarting a Service
 
 ```bash
-docker compose -f docker-compose.prod.yml restart backend worker
+docker compose --env-file .env.production -f docker-compose.prod.yml restart backend worker
 ```
 
 ## 4. Backups and Restore
@@ -88,7 +88,7 @@ If the database gets corrupted or data needs to be restored:
 3.  Follow the prompts to confirm dropping the current database and applying the restore.
 4.  Restart the backend and workers:
     ```bash
-    docker compose -f docker-compose.prod.yml restart backend worker
+    docker compose --env-file .env.production -f docker-compose.prod.yml restart backend worker
     ```
 
 ## 5. Incident Response
