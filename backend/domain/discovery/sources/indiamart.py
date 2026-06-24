@@ -7,11 +7,12 @@ URL pattern: https://dir.indiamart.com/search.mp?ss={industry}&prdsrc=1
 Extracts: business name, phone, website, category, address.
 """
 
-import re
 import asyncio
+import re
+from urllib.parse import quote
+
 import structlog
 from bs4 import BeautifulSoup
-from urllib.parse import quote
 
 from domain.discovery.sources.base import BaseDiscoverySource
 from utils.browser_pool import get_browser_pool

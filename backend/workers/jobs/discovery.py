@@ -9,7 +9,7 @@ Jobs:
 """
 
 import uuid
-from datetime import datetime, UTC
+from datetime import UTC, datetime
 
 import structlog
 from sqlalchemy import select

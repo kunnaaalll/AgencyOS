@@ -4,22 +4,20 @@ AgencyOS V2.1 — ARQ Worker Configuration
 Phase 9.1: Enterprise Discovery Pipeline
 """
 
+import structlog
 from arq.connections import RedisSettings as ArqRedisSettings
 
 from core.config import settings
-
-from workers.jobs.discovery import (
-    discover_businesses,
-    validate_business,
-    enrich_business,
-    bulk_discovery_job,
-)
-from workers.jobs.analysis import analyze_website_job
-from workers.jobs.qualification_ai import qualify_lead_job
-from workers.jobs.outreach import generate_outreach_job
 from utils.browser_pool import initialize_browser_pool, shutdown_browser_pool
-
-import structlog
+from workers.jobs.analysis import analyze_website_job
+from workers.jobs.discovery import (
+    bulk_discovery_job,
+    discover_businesses,
+    enrich_business,
+    validate_business,
+)
+from workers.jobs.outreach import generate_outreach_job
+from workers.jobs.qualification_ai import qualify_lead_job
 
 logger = structlog.get_logger()
 

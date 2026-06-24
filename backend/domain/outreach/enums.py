@@ -1,5 +1,6 @@
 from enum import Enum
 
+
 class OutreachChannel(str, Enum):
     EMAIL = "EMAIL"
     LINKEDIN = "LINKEDIN"

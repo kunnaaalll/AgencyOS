@@ -1,7 +1,8 @@
 from abc import ABC, abstractmethod
-from bs4 import BeautifulSoup
-from duckduckgo_search import DDGS
+
 from crawl4ai import AsyncWebCrawler
+from duckduckgo_search import DDGS
+
 
 class DiscoverySource(ABC):
     @abstractmethod
@@ -16,7 +17,7 @@ class Crawl4AISource(DiscoverySource):
     async def discover(self, query: str, location: str, limit: int) -> list[dict]:
         results = []
         search_query = f"{query} businesses in {location}"
-        
+
         # 1. Use DDGS to find target URLs
         urls_to_scrape = []
         with DDGS() as ddgs:
@@ -28,16 +29,16 @@ class Crawl4AISource(DiscoverySource):
                         "title": res.get("title", ""),
                         "search_snippet": res.get("body", "")
                     })
-        
+
         # 2. Use Crawl4AI to scrape the sites for deep context
         async with AsyncWebCrawler(verbose=True) as crawler:
             for item in urls_to_scrape:
                 try:
                     crawl_result = await crawler.arun(url=item["url"])
-                    
+
                     # Extract raw markdown which is perfect for LLM parsing downstream
                     markdown_content = crawl_result.markdown
-                    
+
                     results.append({
                         "business_name": item["title"],
                         "website": item["url"],
@@ -72,7 +73,7 @@ class Crawl4AISource(DiscoverySource):
                             "search_snippet": item["search_snippet"]
                         }
                     })
-                
+
         return results
 
 # Keep simple DDG Search for very fast non-scraping fallback
@@ -80,7 +81,7 @@ class GoogleSearchSource(DiscoverySource):
     async def discover(self, query: str, location: str, limit: int) -> list[dict]:
         results = []
         search_query = f"{query} businesses in {location}"
-        
+
         with DDGS() as ddgs:
             ddg_results = ddgs.text(search_query, max_results=limit)
             for res in ddg_results:

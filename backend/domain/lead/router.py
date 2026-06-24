@@ -36,7 +36,7 @@ async def list_leads(
         query = query.where(Lead.is_published == is_published)
     if min_score is not None:
         query = query.where(Lead.score >= min_score)
-    
+
     result = await db.execute(query.offset(skip).limit(limit))
     return result.scalars().all()
 

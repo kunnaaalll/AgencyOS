@@ -20,13 +20,12 @@ Endpoints:
 
 import math
 import uuid
-from typing import Optional
 
-from fastapi import APIRouter, Depends, HTTPException, Query, Request
-from sqlalchemy import select, and_, func
-from sqlalchemy.ext.asyncio import AsyncSession
-from arq.connections import ArqRedis
 import structlog
+from arq.connections import ArqRedis
+from fastapi import APIRouter, Depends, HTTPException, Query, Request
+from sqlalchemy import and_, func, select
+from sqlalchemy.ext.asyncio import AsyncSession
 
 logger = structlog.get_logger(__name__)
 
@@ -36,11 +35,10 @@ from domain.discovery.models import DiscoveryBulkJob, DiscoveryRun, RawBusiness
 from domain.discovery.schemas import (
     BulkDiscoveryRequest,
     BulkDiscoveryResponse,
+    DiscoveryMetricsResponse,
     DiscoveryRunCreate,
     DiscoveryRunResponse,
-    DiscoveryMetricsResponse,
     PaginatedBusinessesResponse,
-    RawBusinessResponse,
 )
 from domain.discovery.sources import ALL_SOURCES
 from domain.user.models import User
@@ -112,7 +110,7 @@ async def list_discovery_runs(
             }
             for row in counts_res.all()
         }
-        
+
         responses = []
         for r in runs:
             cmap = counts_map.get(r.id, {})
@@ -231,12 +229,12 @@ async def list_bulk_jobs(
 async def list_raw_businesses(
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(get_current_user),
-    status: Optional[str] = Query(None, description="Filter by validation_status"),
-    source: Optional[str] = Query(None, description="Filter by source"),
-    industry: Optional[str] = Query(None, description="Filter by industry"),
-    city: Optional[str] = Query(None, description="Filter by city"),
-    min_completeness: Optional[int] = Query(None, description="Minimum completeness score"),
-    is_duplicate: Optional[bool] = Query(None, description="Filter duplicates"),
+    status: str | None = Query(None, description="Filter by validation_status"),
+    source: str | None = Query(None, description="Filter by source"),
+    industry: str | None = Query(None, description="Filter by industry"),
+    city: str | None = Query(None, description="Filter by city"),
+    min_completeness: int | None = Query(None, description="Minimum completeness score"),
+    is_duplicate: bool | None = Query(None, description="Filter duplicates"),
     page: int = Query(1, ge=1),
     limit: int = Query(50, ge=1, le=200),
 ):

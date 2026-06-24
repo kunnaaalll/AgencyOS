@@ -3,9 +3,10 @@ AgencyOS V2 — Backup Models
 """
 
 import enum
-from sqlalchemy import String, Integer, Enum
-from sqlalchemy.orm import Mapped, mapped_column
 from datetime import datetime
+
+from sqlalchemy import Enum, Integer, String
+from sqlalchemy.orm import Mapped, mapped_column
 
 from core.database import Base
 

@@ -3,7 +3,6 @@ from uuid import UUID
 
 from core.database import AsyncSessionFactory
 from domain.analysis.events import WebsiteAnalyzedEvent
-from domain.analysis.models import WebsiteAnalysis
 from events.bus import EventBus
 from services.analysis.service import WebsiteAnalysisService
 
@@ -17,15 +16,15 @@ async def analyze_website_job(ctx: dict, lead_id: str, website_url: str) -> None
         lead_uuid = UUID(lead_id)
         async with AsyncSessionFactory() as session:
             service = WebsiteAnalysisService(session)
-            
+
             # Run analysis
             analysis = await service.analyze_website(lead_uuid, website_url)
-            
+
             # Save analysis to db
             session.add(analysis)
             await session.commit()
             await session.refresh(analysis)
-            
+
             # Publish event
             await EventBus.publish(
                 WebsiteAnalyzedEvent(
@@ -37,7 +36,7 @@ async def analyze_website_job(ctx: dict, lead_id: str, website_url: str) -> None
                     pain_points=analysis.pain_points
                 )
             )
-            
+
             logger.info(f"Website analysis completed for lead {lead_id}")
     except Exception as e:
         logger.error(f"Failed to analyze website for lead {lead_id}: {e}", exc_info=True)

@@ -9,10 +9,10 @@ Config:
 
 import asyncio
 import random
-import structlog
 from contextlib import asynccontextmanager
 
-from playwright.async_api import async_playwright, Browser, BrowserContext, Page, Playwright
+import structlog
+from playwright.async_api import Browser, BrowserContext, Page, Playwright, async_playwright
 
 from utils.user_agent_rotator import UserAgentRotator
 

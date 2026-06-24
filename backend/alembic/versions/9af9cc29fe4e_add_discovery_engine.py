@@ -5,25 +5,26 @@ Revises: 6739b4d54c03
 Create Date: 2026-06-21 02:43:23.231186
 """
 
-from typing import Sequence, Union
+from collections.abc import Sequence
 
-from alembic import op
 import sqlalchemy as sa
 
+from alembic import op
 
 # revision identifiers, used by Alembic
 revision: str = '9af9cc29fe4e'
-down_revision: Union[str, None] = '6739b4d54c03'
-branch_labels: Union[str, Sequence[str], None] = None
-depends_on: Union[str, Sequence[str], None] = None
+down_revision: str | None = '6739b4d54c03'
+branch_labels: str | Sequence[str] | None = None
+depends_on: str | Sequence[str] | None = None
 
 
 from sqlalchemy.dialects import postgresql
 
+
 def upgrade() -> None:
     # Drop old table if exists
     op.drop_table('discovery_jobs', )
-    
+
     # Create new tables
     op.create_table('discovery_runs',
         sa.Column('id', sa.Uuid(), nullable=False),
@@ -42,7 +43,7 @@ def upgrade() -> None:
         sa.PrimaryKeyConstraint('id')
     )
     op.create_index(op.f('ix_discovery_runs_id'), 'discovery_runs', ['id'], unique=False)
-    
+
     op.create_table('raw_businesses',
         sa.Column('id', sa.Uuid(), nullable=False),
         sa.Column('created_at', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=False),

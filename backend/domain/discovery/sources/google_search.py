@@ -12,9 +12,10 @@ No browser needed — uses the duckduckgo_search library directly.
 
 import asyncio
 import re
+
 import structlog
-from duckduckgo_search import DDGS
 from crawl4ai import AsyncWebCrawler
+from duckduckgo_search import DDGS
 
 from domain.discovery.sources.base import BaseDiscoverySource
 

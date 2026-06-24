@@ -12,8 +12,9 @@ Strategy:
 Anti-blocking: randomized delays, stealth context, mouse movement simulation.
 """
 
-import re
 import asyncio
+import re
+
 import structlog
 from bs4 import BeautifulSoup
 

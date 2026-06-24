@@ -4,14 +4,13 @@ AgencyOS V2.1 — AI Worker Engine
 This worker handles lightweight AI and API-based tasks without initializing the BrowserPool.
 """
 
+import structlog
 from arq.connections import RedisSettings as ArqRedisSettings
+
 from core.config import settings
 from core.queue_names import QUEUE_AI
-
-from workers.jobs.qualification_ai import qualify_lead_job
 from workers.jobs.outreach import generate_outreach_job
-
-import structlog
+from workers.jobs.qualification_ai import qualify_lead_job
 
 logger = structlog.get_logger()
 

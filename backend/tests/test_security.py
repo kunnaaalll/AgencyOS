@@ -122,9 +122,9 @@ class TestUnauthorizedAccess:
     @pytest.mark.asyncio
     async def test_protected_endpoint_expired_token(self, client: AsyncClient):
         # An expired token should return 401
-        import time
-        from core.security import _create_token
         from datetime import timedelta
+
+        from core.security import _create_token
 
         expired_token = _create_token(
             subject="fake-user-id",

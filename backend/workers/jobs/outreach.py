@@ -1,20 +1,18 @@
 import structlog
-from arq.connections import ArqRedis
-from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 
 from core.database import AsyncSessionFactory
-from domain.lead.models import Lead
 from domain.analysis.models import WebsiteAnalysis
-from domain.qualification_ai.models import AIQualification
+from domain.lead.models import Lead
 from domain.outreach.enums import OutreachChannel
+from domain.qualification_ai.models import AIQualification
 from services.outreach.service import OutreachGenerationService
 
 logger = structlog.get_logger()
 
 async def generate_outreach_job(ctx: dict, lead_id: str, channel: str) -> dict:
     logger.info(f"Starting Outreach Generation job for lead_id={lead_id} channel={channel}")
-    
+
     async with AsyncSessionFactory() as db:
         try:
             # Get the lead
@@ -31,7 +29,7 @@ async def generate_outreach_job(ctx: dict, lead_id: str, channel: str) -> dict:
                 .order_by(WebsiteAnalysis.created_at.desc())
             )
             analysis = analysis_result.scalars().first()
-            
+
             # Get the most recent qualification
             qualification_result = await db.execute(
                 select(AIQualification)
@@ -43,10 +41,10 @@ async def generate_outreach_job(ctx: dict, lead_id: str, channel: str) -> dict:
             outreach_channel = OutreachChannel(channel)
             service = OutreachGenerationService(db)
             draft = await service.generate_outreach(lead, analysis, qualification, outreach_channel)
-            
+
             logger.info(f"Successfully generated outreach draft_id={draft.id} for lead_id={lead_id}")
             return {"success": True, "draft_id": draft.id}
-            
+
         except Exception as e:
             logger.error(f"Error generating outreach for lead_id={lead_id}: {str(e)}")
             await db.rollback()

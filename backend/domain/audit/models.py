@@ -3,9 +3,10 @@ AgencyOS V2 — Audit Log Models
 """
 
 import uuid
-from sqlalchemy import String, ForeignKey
-from sqlalchemy.orm import Mapped, mapped_column, relationship
+
+from sqlalchemy import ForeignKey, String
 from sqlalchemy.dialects.postgresql import JSONB
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from core.database import Base
 

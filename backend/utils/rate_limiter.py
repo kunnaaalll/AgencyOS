@@ -5,10 +5,11 @@ Enforces a maximum of 1 request per second per source to ensure
 responsible scraping practices and avoid IP bans.
 """
 
-import time
 import asyncio
-import structlog
+import time
+
 import redis.asyncio as aioredis
+import structlog
 
 from core.config import settings
 

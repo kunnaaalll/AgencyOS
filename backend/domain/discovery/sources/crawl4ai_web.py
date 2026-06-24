@@ -1,6 +1,7 @@
 import structlog
 from crawl4ai import AsyncWebCrawler
 from duckduckgo_search import DDGS
+
 from domain.discovery.sources.base import BaseDiscoverySource
 
 logger = structlog.get_logger()
@@ -11,9 +12,9 @@ class Crawl4AISource(BaseDiscoverySource):
     async def _discover(self, industry: str, location: str, limit: int) -> list[dict]:
         results = []
         search_query = f"{industry} businesses in {location}"
-        
+
         logger.info("Crawl4AI starting search", query=search_query, limit=limit)
-        
+
         # 1. Find targets
         urls_to_scrape = []
         with DDGS() as ddgs:
@@ -25,17 +26,17 @@ class Crawl4AISource(BaseDiscoverySource):
                         "title": res.get("title", ""),
                         "search_snippet": res.get("body", "")
                     })
-        
+
         logger.info("Found URLs to scrape", count=len(urls_to_scrape))
-        
+
         # 2. Extract with Crawl4AI
         async with AsyncWebCrawler(verbose=True) as crawler:
             for item in urls_to_scrape:
                 try:
                     crawl_result = await crawler.arun(url=item["url"])
-                    
+
                     markdown_content = crawl_result.markdown
-                    
+
                     results.append(self._make_business_dict(
                         business_name=item["title"],
                         industry=industry,
@@ -63,5 +64,5 @@ class Crawl4AISource(BaseDiscoverySource):
                             "error": str(e)
                         }
                     ))
-                
+
         return results

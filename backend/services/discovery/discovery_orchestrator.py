@@ -8,12 +8,13 @@ Responsibilities:
   - Support retrying failed queries
 """
 
-import uuid
 import asyncio
+import uuid
+
 import structlog
 from arq.connections import ArqRedis
-from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from domain.discovery.models import DiscoveryBulkJob
 from domain.discovery.sources import ALL_SOURCES
@@ -150,8 +151,8 @@ class DiscoveryOrchestrator:
         Enqueue individual discovery run jobs for each query combination.
         Called by bulk_discovery_job worker.
         """
-        from domain.discovery.models import DiscoveryRun
         from core.database import AsyncSessionFactory
+        from domain.discovery.models import DiscoveryRun
 
         async with AsyncSessionFactory() as session:
             query_pairs = list(DiscoveryOrchestrator.generate_query_matrix(industries, locations))

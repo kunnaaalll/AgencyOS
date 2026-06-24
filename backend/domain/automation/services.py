@@ -2,11 +2,13 @@
 AgencyOS V2 — Automation OS Services
 """
 
-from sqlalchemy import select
-from sqlalchemy.ext.asyncio import AsyncSession
 from uuid import UUID
 
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
+
 from .models import WorkflowExecution
+
 
 class WorkflowExecutionService:
     def __init__(self, db: AsyncSession):

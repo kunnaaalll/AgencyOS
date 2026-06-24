@@ -1,21 +1,24 @@
 import asyncio
-import sys
 import os
+import sys
+
 sys.path.append(os.getcwd())
 
-from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession
+from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
 from sqlalchemy.orm import sessionmaker
+
+from core.database import Base
 from domain.analytics.services import AnalyticsService
 from domain.finance.services import FinanceService
-from core.database import Base
+
 
 async def test():
     engine = create_async_engine("sqlite+aiosqlite:///:memory:", echo=False)
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
-    
+
     Session = sessionmaker(engine, class_=AsyncSession, expire_on_commit=False)
-    
+
     async with Session() as db:
         print("Testing FinanceSummary...")
         try:

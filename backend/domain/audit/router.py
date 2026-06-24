@@ -4,10 +4,11 @@ AgencyOS V2 — Audit Log Router
 
 from fastapi import APIRouter, Depends
 from sqlalchemy.ext.asyncio import AsyncSession
-from core.database import get_db
+
 from api.deps import get_current_active_user
-from domain.user.models import User
+from core.database import get_db
 from core.exceptions import ForbiddenException
+from domain.user.models import User
 
 from .schemas import AuditLogResponse
 from .services import AuditLogService

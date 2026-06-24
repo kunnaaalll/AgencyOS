@@ -2,12 +2,13 @@
 AgencyOS V2 — Audit Services
 """
 
+
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
-from uuid import UUID
 
 from .models import AuditLog
 from .schemas import AuditLogCreate
+
 
 class AuditLogService:
     def __init__(self, db: AsyncSession):

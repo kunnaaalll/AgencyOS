@@ -1,15 +1,15 @@
 from typing import Any
 from uuid import UUID
 
+from arq import create_pool
+from arq.connections import RedisSettings
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
-from arq import create_pool
-from arq.connections import RedisSettings
 
-from api.deps import get_current_user, require_permission
-from core.database import get_db
+from api.deps import require_permission
 from core.config import settings
+from core.database import get_db
 from domain.analysis.models import WebsiteAnalysis
 from domain.analysis.schemas import WebsiteAnalysisResponse
 from domain.lead.models import Lead
@@ -28,6 +28,7 @@ async def get_redis_pool():
 
 from fastapi import Request
 
+
 @router.post("/run/{lead_id}", status_code=status.HTTP_202_ACCEPTED)
 async def run_website_analysis(
     request: Request,
@@ -40,7 +41,7 @@ async def run_website_analysis(
     lead = await db.get(Lead, lead_id)
     if not lead:
         raise HTTPException(status_code=404, detail="Lead not found")
-        
+
     if not lead.website:
         raise HTTPException(status_code=400, detail="Lead does not have a website to analyze")
 
@@ -48,9 +49,9 @@ async def run_website_analysis(
     redis_pool = getattr(request.app.state, "redis", None)
     if not redis_pool:
         return {"message": "Redis is currently unavailable. Job could not be enqueued."}
-        
+
     await redis_pool.enqueue_job("analyze_website_job", str(lead_id), lead.website)
-    
+
     return {"message": "Website analysis job enqueued successfully"}
 
 
@@ -65,10 +66,10 @@ async def get_website_analysis(
         select(WebsiteAnalysis).where(WebsiteAnalysis.lead_id == lead_id)
     )
     analysis = result.scalar_one_or_none()
-    
+
     if not analysis:
         raise HTTPException(status_code=404, detail="Analysis not found for this lead")
-        
+
     return analysis
 
 

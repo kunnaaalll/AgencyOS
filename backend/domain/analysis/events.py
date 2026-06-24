@@ -1,5 +1,4 @@
 from dataclasses import dataclass, field
-from typing import Any
 from uuid import UUID
 
 from events.base import BaseEvent
@@ -10,7 +9,7 @@ class WebsiteAnalyzedEvent(BaseEvent):
     """Fired when a website analysis is completed."""
 
     event_type: str = "analysis.website_analyzed"
-    
+
     lead_id: UUID | None = None
     analysis_id: UUID | None = None
     overall_score: int | None = None

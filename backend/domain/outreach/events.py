@@ -1,5 +1,6 @@
 from pydantic import BaseModel
 
+
 class OutreachDraftGeneratedEvent(BaseModel):
     type: str = "OutreachDraftGenerated"
     lead_id: str

@@ -11,8 +11,9 @@ Merges best available data from both records when a duplicate is found.
 """
 
 import re
+
 import structlog
-from sqlalchemy import or_, select
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from domain.discovery.models import RawBusiness

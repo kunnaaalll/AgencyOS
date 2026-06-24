@@ -3,9 +3,10 @@ AgencyOS V2 — Automation OS Models
 """
 
 import enum
-from sqlalchemy import String, Integer, Text, Enum
-from sqlalchemy.orm import Mapped, mapped_column
 from datetime import datetime
+
+from sqlalchemy import Enum, Integer, String, Text
+from sqlalchemy.orm import Mapped, mapped_column
 
 from core.database import Base
 

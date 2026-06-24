@@ -10,9 +10,20 @@ from jose import JWTError
 from sqlalchemy import select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from core.audit import audit_account_locked, audit_login, audit_login_failed, audit_logout, audit_password_change
+from core.audit import (
+    audit_account_locked,
+    audit_login,
+    audit_login_failed,
+    audit_logout,
+    audit_password_change,
+)
 from core.config import settings
-from core.exceptions import InvalidTokenException, RateLimitException, UnauthorizedException, ValidationException
+from core.exceptions import (
+    InvalidTokenException,
+    RateLimitException,
+    UnauthorizedException,
+    ValidationException,
+)
 from core.redis import get_redis
 from core.security import (
     create_access_token,

@@ -1,7 +1,5 @@
-import asyncio
 import logging
 from uuid import UUID
-from urllib.parse import urlparse
 
 import httpx
 import trafilatura
@@ -20,7 +18,7 @@ class WebsiteAnalysisService:
 
     async def analyze_website(self, lead_id: UUID, url: str) -> WebsiteAnalysis:
         logger.info(f"Analyzing website: {url} for lead {lead_id}")
-        
+
         # Ensure url has scheme
         if not url.startswith("http"):
             url = f"https://{url}"
@@ -34,11 +32,11 @@ class WebsiteAnalysisService:
             "social": 0,
             "digital_maturity": 0
         }
-        
+
         strengths = []
         weaknesses = []
         pain_points = []
-        
+
         html_content = ""
         is_https = url.startswith("https")
         if is_https:
@@ -52,13 +50,13 @@ class WebsiteAnalysisService:
         try:
             async with async_playwright() as p:
                 browser = await p.chromium.launch(headless=True)
-                
+
                 # Desktop View
                 context = await browser.new_context()
                 page = await context.new_page()
                 await page.goto(url, wait_until="domcontentloaded", timeout=30000)
                 html_content = await page.content()
-                
+
                 # Mobile View check
                 mobile_context = await browser.new_context(
                     viewport={"width": 375, "height": 812},
@@ -70,10 +68,10 @@ class WebsiteAnalysisService:
                     await mobile_page.goto(url, wait_until="domcontentloaded", timeout=15000)
                     scores["mobile"] += 5  # Successfully rendered mobile
                     strengths.append("Website renders successfully on mobile.")
-                except Exception as e:
+                except Exception:
                     weaknesses.append("Failed to render on mobile devices.")
                     pain_points.append("Loss of mobile traffic due to rendering issues.")
-                
+
                 await browser.close()
         except Exception as e:
             logger.error(f"Playwright error for {url}: {e}")
@@ -84,7 +82,7 @@ class WebsiteAnalysisService:
                     html_content = resp.text
             except Exception as httpx_e:
                 logger.error(f"HTTPX fallback failed for {url}: {httpx_e}")
-        
+
         if not html_content:
             weaknesses.append("Could not fetch website content.")
             return WebsiteAnalysis(
@@ -103,22 +101,22 @@ class WebsiteAnalysisService:
             )
 
         soup = BeautifulSoup(html_content, "html.parser")
-        
+
         # ── Website Quality (0-20) ──
         # HTTPS +5 (already added)
         if soup.title and soup.title.string:
             scores["website"] += 5
         else:
             weaknesses.append("Missing page title.")
-            
+
         if soup.find("meta", {"name": "description"}):
             scores["website"] += 5
         else:
             weaknesses.append("Missing meta description.")
-            
+
         if soup.find("link", {"rel": lambda x: x and "icon" in x.lower()}):
             scores["website"] += 5
-            
+
         # ── SEO Score (0-20) ──
         h1_tags = soup.find_all("h1")
         if h1_tags:
@@ -128,14 +126,14 @@ class WebsiteAnalysisService:
         else:
             weaknesses.append("Missing H1 tag.")
             pain_points.append("Poor SEO visibility due to missing main heading.")
-            
+
         if soup.find("meta", property="og:title") or soup.find("meta", property="og:image"):
             scores["seo"] += 5
-            
+
         if soup.find("script", type="application/ld+json"):
             scores["seo"] += 5
             strengths.append("Uses structured data (Schema.org).")
-            
+
         images = soup.find_all("img")
         missing_alts = sum(1 for img in images if not img.get("alt"))
         if images and missing_alts == 0:
@@ -148,22 +146,22 @@ class WebsiteAnalysisService:
         viewport = soup.find("meta", {"name": "viewport"})
         if viewport and "width=device-width" in viewport.get("content", ""):
             scores["mobile"] += 10
-            
+
         # ── CTA Score (0-15) ──
         text_content = soup.get_text().lower()
         has_cta = False
         if soup.find("form"):
             scores["cta"] += 5
             has_cta = True
-            
+
         if "tel:" in html_content or "phone" in text_content:
             scores["cta"] += 5
             has_cta = True
-            
+
         if "wa.me/" in html_content or "whatsapp" in text_content:
             scores["cta"] += 5
             has_cta = True
-            
+
         if not has_cta:
             weaknesses.append("No clear call-to-action detected.")
             pain_points.append("Potential loss of leads due to missing inquiry options.")
@@ -182,7 +180,7 @@ class WebsiteAnalysisService:
         for name, domain in social_links.items():
             if soup.find("a", href=lambda href: href and domain in href):
                 found_socials += 1
-                
+
         scores["social"] = min(15, found_socials * 3)
         if found_socials > 2:
             strengths.append("Strong social media presence.")
@@ -193,13 +191,13 @@ class WebsiteAnalysisService:
         if "google-analytics.com" in html_content or "gtag" in html_content:
             scores["digital_maturity"] += 5
             strengths.append("Analytics tracking is implemented.")
-            
+
         if "intercom" in html_content or "drift.com" in html_content or "crisp.chat" in html_content:
             scores["digital_maturity"] += 5
-            
+
         if "pixel" in html_content.lower() or "connect.facebook.net" in html_content:
             scores["digital_maturity"] += 5
-            
+
         # ── Calculate Overall Score ──
         overall = sum(scores.values()) // len(scores)
 
@@ -222,5 +220,5 @@ class WebsiteAnalysisService:
             weaknesses=weaknesses,
             pain_points=pain_points
         )
-        
+
         return analysis

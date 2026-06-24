@@ -11,13 +11,13 @@ Queries the database to produce:
   - Businesses per hour throughput
 """
 
-from datetime import datetime, timedelta, UTC
+from datetime import UTC, datetime, timedelta
 
 import structlog
-from sqlalchemy import func, select, and_, cast, Date
+from sqlalchemy import Date, cast, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from domain.discovery.models import RawBusiness, DiscoveryRun
+from domain.discovery.models import DiscoveryRun, RawBusiness
 from domain.discovery.schemas import (
     DailyDiscoveryCount,
     DiscoveryMetricsResponse,

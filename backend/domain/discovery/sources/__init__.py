@@ -1,13 +1,13 @@
 """Discovery sources package."""
 
 from domain.discovery.sources.base import BaseDiscoverySource
+from domain.discovery.sources.clutch import ClutchSource
+from domain.discovery.sources.crawl4ai_web import Crawl4AISource
 from domain.discovery.sources.google_maps import GoogleMapsSource
 from domain.discovery.sources.google_search import GoogleSearchSource
-from domain.discovery.sources.justdial import JustDialSource
 from domain.discovery.sources.indiamart import IndiaMartSource
-from domain.discovery.sources.clutch import ClutchSource
+from domain.discovery.sources.justdial import JustDialSource
 from domain.discovery.sources.reddit import RedditSource
-from domain.discovery.sources.crawl4ai_web import Crawl4AISource
 
 # Source registry — maps source name → class
 SOURCE_REGISTRY: dict[str, type[BaseDiscoverySource]] = {

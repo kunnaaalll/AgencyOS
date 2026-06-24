@@ -21,9 +21,9 @@ Additional validations:
 """
 
 import re
-import asyncio
+
 import structlog
-from httpx import AsyncClient, TimeoutException, RequestError
+from httpx import AsyncClient, RequestError, TimeoutException
 
 logger = structlog.get_logger()
 

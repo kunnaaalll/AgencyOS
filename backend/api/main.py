@@ -9,23 +9,27 @@ from contextlib import asynccontextmanager
 
 import structlog
 from fastapi import FastAPI, Request, Response
+from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import ORJSONResponse
-from prometheus_fastapi_instrumentator import Instrumentator
 from slowapi import Limiter, _rate_limit_exceeded_handler
 from slowapi.errors import RateLimitExceeded
 from slowapi.util import get_remote_address
+from starlette.exceptions import HTTPException as StarletteHTTPException
 
 from api.router import api_router
-from core.audit import set_audit_context
+from core.audit import register_audit_listeners, set_audit_context
 from core.config import settings
-from core.exceptions import AgencyOSException, agencyos_exception_handler, generic_exception_handler, validation_exception_handler, http_exception_handler
-from fastapi.exceptions import RequestValidationError
-from starlette.exceptions import HTTPException as StarletteHTTPException
+from core.exceptions import (
+    AgencyOSException,
+    agencyos_exception_handler,
+    generic_exception_handler,
+    http_exception_handler,
+    validation_exception_handler,
+)
 from core.logging import configure_logging
 from core.minio import ensure_bucket_exists
 from events.listeners import register_listeners
-from core.audit import register_audit_listeners
 
 logger = structlog.get_logger(__name__)
 
@@ -39,6 +43,7 @@ limiter = Limiter(
 
 from arq import create_pool
 from arq.connections import RedisSettings
+
 
 @asynccontextmanager
 async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:

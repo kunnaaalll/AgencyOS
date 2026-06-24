@@ -2,12 +2,14 @@
 AgencyOS V2 — Notification Services
 """
 
+from uuid import UUID
+
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
-from uuid import UUID
 
 from .models import Notification
 from .schemas import NotificationCreate
+
 
 class NotificationService:
     def __init__(self, db: AsyncSession):

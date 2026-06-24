@@ -2,12 +2,13 @@
 AgencyOS V2 — Notifications Router
 """
 
-from fastapi import APIRouter, Depends, HTTPException
-from sqlalchemy.ext.asyncio import AsyncSession
 from uuid import UUID
 
-from core.database import get_db
+from fastapi import APIRouter, Depends, HTTPException
+from sqlalchemy.ext.asyncio import AsyncSession
+
 from api.deps import get_current_active_user
+from core.database import get_db
 from domain.user.models import User
 
 from .schemas import NotificationResponse

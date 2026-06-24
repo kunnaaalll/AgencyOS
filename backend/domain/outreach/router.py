@@ -1,19 +1,18 @@
 from typing import Any
-from uuid import UUID
 
+from arq import create_pool
+from arq.connections import RedisSettings
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
-from arq import create_pool
-from arq.connections import RedisSettings
 
-from api.deps import get_current_user, require_permission
-from core.database import get_db
+from api.deps import require_permission
 from core.config import settings
+from core.database import get_db
+from domain.lead.models import Lead
+from domain.outreach.enums import DraftStatus, OutreachChannel
 from domain.outreach.models import OutreachDraft
 from domain.outreach.schemas import OutreachDraftResponse, OutreachDraftUpdate
-from domain.outreach.enums import OutreachChannel, DraftStatus
-from domain.lead.models import Lead
 from events.bus import EventBus
 
 router = APIRouter(prefix="/outreach", tags=["Outreach"])
@@ -27,6 +26,7 @@ async def get_redis_pool():
     ))
 
 from fastapi import Request
+
 
 @router.post("/generate/{lead_id}", status_code=status.HTTP_202_ACCEPTED)
 async def generate_outreach(
@@ -47,12 +47,13 @@ async def generate_outreach(
     if not redis_pool:
         # Graceful fallback if Redis is down
         return {"message": "Redis is currently unavailable. Job could not be enqueued."}
-        
+
     await redis_pool.enqueue_job("generate_outreach_job", str(lead_id), channel.value)
-    
+
     return {"message": f"AI outreach generation job for channel {channel.value} enqueued successfully"}
 
 from sqlalchemy.orm import joinedload
+
 
 @router.get("/{draft_id}", response_model=OutreachDraftResponse)
 async def get_outreach_draft(
@@ -100,19 +101,19 @@ async def update_outreach_draft(
     draft = result.scalars().first()
     if not draft:
         raise HTTPException(status_code=404, detail="Outreach draft not found")
-        
+
     update_dict = update_data.model_dump(exclude_unset=True)
-    
+
     status_changed_to_approved = False
     if "status" in update_dict and update_dict["status"] == DraftStatus.APPROVED and draft.status != DraftStatus.APPROVED:
         status_changed_to_approved = True
 
     for key, value in update_dict.items():
         setattr(draft, key, value)
-        
+
     await db.commit()
     await db.refresh(draft)
-    
+
     if status_changed_to_approved:
         # Emit event
         await EventBus.publish({
@@ -121,5 +122,5 @@ async def update_outreach_draft(
             "draft_id": draft.id,
             "channel": draft.channel.value
         })
-        
+
     return draft

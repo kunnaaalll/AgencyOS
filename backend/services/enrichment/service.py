@@ -14,10 +14,10 @@ Discovers automatically from business website:
 """
 
 import re
-import structlog
-from datetime import datetime, UTC
+from datetime import UTC, datetime
 from urllib.parse import urljoin, urlparse
 
+import structlog
 from bs4 import BeautifulSoup
 from httpx import AsyncClient, TimeoutException
 

@@ -39,7 +39,8 @@ class RevenueResponse(RevenueBase):
         from_attributes = True
 
 # -- Expense Schemas --
-from pydantic import BaseModel, Field, AliasChoices
+from pydantic import AliasChoices, BaseModel, Field
+
 
 class ExpenseBase(BaseModel):
     category: str

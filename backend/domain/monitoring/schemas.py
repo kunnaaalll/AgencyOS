@@ -4,6 +4,7 @@ AgencyOS V2 — Monitoring Schemas
 
 from pydantic import BaseModel
 
+
 class SystemHealthResponse(BaseModel):
     postgres_health: bool
     redis_health: bool

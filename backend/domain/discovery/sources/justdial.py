@@ -9,11 +9,11 @@ Extracts: business name, phone, website, address, category, rating.
 Anti-blocking: realistic UA, cookie acceptance, human-like delays.
 """
 
-import re
 import asyncio
+import re
+
 import structlog
 from bs4 import BeautifulSoup
-from urllib.parse import quote
 
 from domain.discovery.sources.base import BaseDiscoverySource
 from utils.browser_pool import get_browser_pool

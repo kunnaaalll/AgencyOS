@@ -1,5 +1,7 @@
 from datetime import datetime
+
 from pydantic import BaseModel, ConfigDict
+
 from domain.qualification_ai.enums import Priority, QualificationStatus
 
 

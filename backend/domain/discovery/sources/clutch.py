@@ -7,11 +7,11 @@ Targets: /agencies, /developers, /it-services listings.
 Extracts: company name, website, location, employee count, review count.
 """
 
-import re
 import asyncio
+import re
+
 import structlog
 from bs4 import BeautifulSoup
-from urllib.parse import quote
 
 from domain.discovery.sources.base import BaseDiscoverySource
 from utils.browser_pool import get_browser_pool

@@ -2,6 +2,7 @@
 from fastapi import APIRouter, Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from api.deps import require_roles
 from core.database import get_db
 from domain.analytics.schemas import (
     DeliveryMetricsResponse,
@@ -12,7 +13,6 @@ from domain.analytics.schemas import (
     SalesMetricsResponse,
 )
 from domain.analytics.services import AnalyticsService
-from api.deps import require_roles
 
 # All founders can read analytics. The dashboard should be accessible to those with proper access.
 # If there is a permission "analytics:read", we can use AuthGuard.require_permissions(["analytics:read"])

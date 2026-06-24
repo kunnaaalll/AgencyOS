@@ -2,10 +2,13 @@
 AgencyOS V2 — Notification Schemas
 """
 
-from pydantic import BaseModel, ConfigDict
-from uuid import UUID
 from datetime import datetime
+from uuid import UUID
+
+from pydantic import BaseModel, ConfigDict
+
 from .models import NotificationType
+
 
 class NotificationBase(BaseModel):
     title: str

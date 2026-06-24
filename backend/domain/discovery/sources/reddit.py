@@ -9,8 +9,9 @@ Subreddits: r/mumbai, r/india, r/startups, r/smallbusiness, r/entrepreneur
 Extracts: business name from post titles, domains mentioned in body/links.
 """
 
-import re
 import asyncio
+import re
+
 import structlog
 from duckduckgo_search import DDGS
 

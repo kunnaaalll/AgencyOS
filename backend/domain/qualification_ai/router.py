@@ -1,18 +1,17 @@
 from typing import Any
-from uuid import UUID
 
+from arq import create_pool
+from arq.connections import RedisSettings
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
-from arq import create_pool
-from arq.connections import RedisSettings
 
-from api.deps import get_current_user, require_permission
-from core.database import get_db
+from api.deps import require_permission
 from core.config import settings
+from core.database import get_db
+from domain.lead.models import Lead
 from domain.qualification_ai.models import AIQualification
 from domain.qualification_ai.schemas import AIQualificationResponse
-from domain.lead.models import Lead
 
 router = APIRouter(prefix="/qualification", tags=["Qualification"])
 
@@ -27,6 +26,7 @@ async def get_redis_pool():
 
 
 from fastapi import Request
+
 
 @router.post("/run/{lead_id}", status_code=status.HTTP_202_ACCEPTED)
 async def run_qualification(
@@ -45,13 +45,14 @@ async def run_qualification(
     redis_pool = getattr(request.app.state, "redis", None)
     if not redis_pool:
         return {"message": "Redis is currently unavailable. Job could not be enqueued."}
-        
+
     await redis_pool.enqueue_job("qualify_lead_job", str(lead_id))
-    
+
     return {"message": "AI qualification job enqueued successfully"}
 
 
 from sqlalchemy.orm import joinedload
+
 
 @router.get("/{lead_id}", response_model=AIQualificationResponse)
 async def get_qualification(
@@ -67,10 +68,10 @@ async def get_qualification(
         .order_by(AIQualification.created_at.desc())
     )
     qualification = result.scalars().first()
-    
+
     if not qualification:
         raise HTTPException(status_code=404, detail="Qualification not found for this lead")
-        
+
     return qualification
 
 

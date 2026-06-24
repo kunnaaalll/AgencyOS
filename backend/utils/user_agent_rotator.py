@@ -7,7 +7,6 @@ Chrome, Firefox, Safari, and Edge. Rotates per request to avoid bot detection.
 
 import random
 
-
 # Curated list of realistic, diverse user agents (2023-2024 browsers)
 USER_AGENTS: list[str] = [
     # Chrome on Windows

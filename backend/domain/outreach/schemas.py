@@ -1,6 +1,8 @@
 from datetime import datetime
+
 from pydantic import BaseModel, ConfigDict
-from domain.outreach.enums import OutreachChannel, DraftStatus
+
+from domain.outreach.enums import DraftStatus, OutreachChannel
 
 
 class OutreachDraftBase(BaseModel):

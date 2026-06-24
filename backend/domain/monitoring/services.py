@@ -2,15 +2,17 @@
 AgencyOS V2 — Monitoring Services
 """
 
-import os
-from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import text
-from core.database import check_database_connection
-from core.redis import check_redis_connection, get_redis
-from core.minio import check_minio_connection
-from core.meilisearch import check_meilisearch_connection
-from .schemas import SystemHealthResponse
 from arq.constants import default_queue_name
+from sqlalchemy import text
+from sqlalchemy.ext.asyncio import AsyncSession
+
+from core.database import check_database_connection
+from core.meilisearch import check_meilisearch_connection
+from core.minio import check_minio_connection
+from core.redis import check_redis_connection, get_redis
+
+from .schemas import SystemHealthResponse
+
 
 class SystemMonitorService:
     def __init__(self, db: AsyncSession):
@@ -43,7 +45,7 @@ class SystemMonitorService:
         try:
             res = await self.db.execute(text("SELECT pg_size_pretty(pg_database_size(current_database()))"))
             storage_usage = res.scalar() or "0 bytes"
-        except Exception as e:
+        except Exception:
             pass
 
         return SystemHealthResponse(

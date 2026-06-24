@@ -1,27 +1,26 @@
 import asyncio
-import uuid
+import os
 import random
 import sys
-import os
+import uuid
+
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-from datetime import datetime, timedelta, timezone
-from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession
-from sqlalchemy.orm import sessionmaker
-from sqlalchemy import text
+from datetime import UTC, datetime, timedelta
+
 from passlib.context import CryptContext
+from sqlalchemy import text
+from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
+from sqlalchemy.orm import sessionmaker
+
+from core.config import settings
+from domain.client.models import Client
+from domain.crm.enums import PipelineStage
+from domain.crm.models import Opportunity
+from domain.finance.models import Expense, Revenue
+from domain.lead.models import Lead
 
 # Import models
 from domain.user.models import User
-from domain.organization.models import Organization
-from domain.lead.models import Lead
-from domain.crm.models import Opportunity, Meeting, Activity
-from domain.client.models import Client
-from domain.project.models import Project
-from domain.task.models import Task
-from domain.finance.models import Revenue, Expense
-from domain.role.models import Role
-from domain.crm.enums import PipelineStage, ActivityType, MeetingType
-from core.config import settings
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
@@ -43,7 +42,7 @@ async def seed_demo_data():
         for table in tables:
             await db.execute(text(f"TRUNCATE TABLE {table} CASCADE;"))
         await db.commit()
-        
+
         print("Querying existing user...")
         from sqlalchemy import select
         result = await db.execute(select(User).limit(1))
@@ -69,7 +68,7 @@ async def seed_demo_data():
         await db.commit()
 
         print("Creating Opportunities...")
-        now = datetime.now(timezone.utc)
+        now = datetime.now(UTC)
         opp_stages = [PipelineStage.NEW, PipelineStage.QUALIFIED, PipelineStage.PROPOSAL, PipelineStage.WON, PipelineStage.LOST]
         for i, lid in enumerate(lead_ids):
             opp = Opportunity(
@@ -111,7 +110,7 @@ async def seed_demo_data():
                 status="RECEIVED"
             )
             db.add(rev)
-            
+
         for i in range(10):
             exp = Expense(
                 id=uuid.uuid4(),

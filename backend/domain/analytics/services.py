@@ -100,9 +100,9 @@ class AnalyticsService:
                 end_date = start_date.replace(year=start_date.year + 1, month=1)
             else:
                 end_date = start_date.replace(month=start_date.month + 1)
-            
+
             m_str = start_date.strftime("%b %Y")
-            
+
             # Count leads qualified in this month
             l_q = await db.execute(select(func.count(Lead.id)).where(
                 Lead.status == LeadStatus.QUALIFIED,
@@ -110,7 +110,7 @@ class AnalyticsService:
                 Lead.created_at < end_date
             ))
             lead_qualification_trend.append(TrendData(date=m_str, value=l_q.scalar() or 0))
-            
+
             # Count clients created in this month
             c_q = await db.execute(select(func.count(Client.id)).where(
                 Client.created_at >= start_date,
@@ -311,9 +311,9 @@ class AnalyticsService:
         total_tasks = total_tasks_q.scalar() or 0
         completed_tasks_q = await db.execute(select(func.count(Task.id)).where(Task.status == TaskStatus.DONE))
         completed_tasks = completed_tasks_q.scalar() or 0
-        
+
         task_utilization = (completed_tasks / total_tasks * 100.0) if total_tasks > 0 else 0.0
-        
+
         hiring_recommendation = False
         hiring_reason = "Current capacity is sufficient."
 
@@ -322,7 +322,7 @@ class AnalyticsService:
             hiring_reason = f"10+ active clients AND Task utilization > 85% (Current: {task_utilization:.1f}%)"
         elif task_utilization > 95.0:
             hiring_recommendation = True
-            hiring_reason = f"Task utilization critically high (Current: {task_utilization:.1f}%)" 
+            hiring_reason = f"Task utilization critically high (Current: {task_utilization:.1f}%)"
 
         return ForecastResponse(
             projected_mrr=projected_mrr,

@@ -5,8 +5,10 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from sqlalchemy import text
+
 from core.database import AsyncSessionFactory
 from core.security import hash_password
+
 
 async def main():
     async with AsyncSessionFactory() as session:

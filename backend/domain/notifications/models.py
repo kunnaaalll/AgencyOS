@@ -4,7 +4,8 @@ AgencyOS V2 — Notification Models
 
 import enum
 import uuid
-from sqlalchemy import String, Boolean, ForeignKey, Enum, Text
+
+from sqlalchemy import Boolean, Enum, ForeignKey, String, Text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from core.database import Base

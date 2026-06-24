@@ -2,20 +2,21 @@
 AgencyOS V2 — Backup Router
 """
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends
 from sqlalchemy.ext.asyncio import AsyncSession
-from core.database import get_db
-from api.deps import get_current_active_user
-from domain.user.models import User
-from core.exceptions import ForbiddenException
 
-from .schemas import BackupRecordResponse, BackupRecordCreate
+from api.deps import get_current_active_user
+from core.database import get_db
+from core.exceptions import ForbiddenException
+from domain.user.models import User
+
+from .schemas import BackupRecordCreate, BackupRecordResponse
 from .services import BackupService
 
 # Since the spec requested GET /api/v1/backups and POST /api/v1/backups,
 # but also GET /api/v1/monitoring/backups. We'll map them appropriately.
 # Let's map this domain to "/monitoring/backups" OR just "/backups".
-# Spec explicitly states: 
+# Spec explicitly states:
 # Monitoring: GET /api/v1/monitoring/backups
 # Backup: GET /api/v1/backups, POST /api/v1/backups
 # We'll use prefix="/backups" and later alias the monitoring one.
