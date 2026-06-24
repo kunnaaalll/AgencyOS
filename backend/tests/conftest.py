@@ -44,22 +44,45 @@ def event_loop():
     yield loop
     loop.close()
 
-
 @pytest_asyncio.fixture(autouse=True)
+async def reset_redis_pool():
+    import core.redis
+    core.redis._pool = None
+    
+    redis = await core.redis.get_redis()
+    await redis.flushdb()
+    
+    yield
+    
+    redis = await core.redis.get_redis()
+    await redis.flushdb()
+    core.redis._pool = None
+
+@pytest_asyncio.fixture(scope="session", autouse=True)
 async def setup_database():
-    """Create tables before each test, drop after."""
+    """Create tables once per session."""
     async with test_engine.begin() as conn:
+        await conn.run_sync(Base.metadata.drop_all)
         await conn.run_sync(Base.metadata.create_all)
     yield
     async with test_engine.begin() as conn:
         await conn.run_sync(Base.metadata.drop_all)
 
-
 @pytest_asyncio.fixture
 async def db_session() -> AsyncGenerator[AsyncSession, None]:
-    """Provide a test database session."""
-    async with TestSessionFactory() as session:
-        yield session
+    """Provide a test database session using nested transactions."""
+    async with test_engine.connect() as conn:
+        await conn.begin()
+        await conn.begin_nested()
+        
+        async_session = AsyncSession(
+            conn, expire_on_commit=False, join_transaction_mode="create_savepoint"
+        )
+        
+        yield async_session
+        
+        await async_session.close()
+        await conn.rollback()
 
 
 @pytest_asyncio.fixture

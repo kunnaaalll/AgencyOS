@@ -167,26 +167,26 @@ async def audit_security_event(
     user_agent: str | None = None,
 ) -> None:
     """Record a security audit event directly in the audit log."""
-    from sqlalchemy import text
+    from domain.audit.models import AuditLog
 
     _user_id = user_id or audit_user_id.get()
     _ip = ip_address or audit_ip_address.get()
     _ua = user_agent or audit_user_agent.get()
 
+    if _user_id == "":
+        _user_id = None
+
     await db_session.execute(
-        text("""
-            INSERT INTO audit_logs (entity_type, entity_id, action, user_id, ip_address, user_agent, new_values)
-            VALUES (:entity_type, :entity_id, :action, :user_id, :ip_address, :user_agent, :new_values)
-        """),
-        {
-            "entity_type": entity_type,
-            "entity_id": entity_id,
-            "action": action.value,
-            "user_id": _user_id,
-            "ip_address": _ip,
-            "user_agent": _ua,
-            "new_values": str(details) if details else None,
-        },
+        AuditLog.__table__.insert().values(
+            entity_type=entity_type,
+            entity_id=entity_id,
+            action=action.value,
+            user_id=_user_id,
+            ip_address=_ip,
+            user_agent=_ua,
+            old_values=None,
+            new_values=details,
+        )
     )
 
     logger.info(
