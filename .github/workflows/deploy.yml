@@ -1,30 +1,20 @@
 # ============================================================
-# AgencyOS V2.1 — Manual Production Deployment
-# Trigger: manual (workflow_dispatch) only — NO auto-deploy
+# AgencyOS V2.1 — Automatic Production Deployment
+# Trigger: push to main branch and manual (workflow_dispatch)
 # ============================================================
 
 name: Deploy to Production
 
 on:
+  push:
+    branches:
+      - main
   workflow_dispatch:
-    inputs:
-      environment:
-        description: 'Deployment environment'
-        required: true
-        default: 'production'
-        type: choice
-        options:
-          - production
-      confirm:
-        description: 'Type "deploy" to confirm'
-        required: true
-        type: string
 
 jobs:
   deploy:
-    name: Deploy to Oracle Cloud
+    name: Deploy to Google Cloud
     runs-on: ubuntu-latest
-    if: github.event.inputs.confirm == 'deploy'
     environment: production
     steps:
       - name: Checkout code
@@ -33,9 +23,9 @@ jobs:
       - name: Deploy via SSH
         uses: appleboy/ssh-action@v1
         with:
-          host: ${{ secrets.ORACLE_HOST }}
-          username: ${{ secrets.ORACLE_USER }}
-          key: ${{ secrets.ORACLE_SSH_KEY }}
+          host: ${{ secrets.GCP_HOST }}
+          username: ${{ secrets.GCP_USER }}
+          key: ${{ secrets.GCP_SSH_KEY }}
           script: |
             set -e
             cd /opt/agencyos
