@@ -15,9 +15,17 @@ from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_asyn
 from api.main import app
 from core.database import Base, get_db
 from core.security import hash_password
+import os
 
-# Use SQLite for testing (fast, no external deps)
-TEST_DATABASE_URL = "sqlite+aiosqlite:///./test.db"
+from sqlalchemy.ext.compiler import compiles
+from sqlalchemy.dialects.postgresql import JSONB
+
+@compiles(JSONB, "sqlite")
+def compile_jsonb_sqlite(type_, compiler, **kw):
+    return "JSON"
+
+# Use PostgreSQL if provided (e.g. in CI), fallback to SQLite
+TEST_DATABASE_URL = os.getenv("DATABASE_URL", "sqlite+aiosqlite:///./test.db")
 
 test_engine = create_async_engine(TEST_DATABASE_URL, echo=False)
 TestSessionFactory = async_sessionmaker(
