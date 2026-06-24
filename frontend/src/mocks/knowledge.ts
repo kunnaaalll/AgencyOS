@@ -3,6 +3,7 @@ import { KnowledgeArticle } from '../features/knowledge/types';
 export const mockKnowledgeArticles: KnowledgeArticle[] = [
   {
     id: 'ka-1',
+    slug: 'slug-1',
     title: 'Client Onboarding Playbook',
     content: '1. Welcome Email\n2. Setup Slack Connect\n3. Kickoff Call\n...',
     status: 'PUBLISHED',
@@ -14,6 +15,7 @@ export const mockKnowledgeArticles: KnowledgeArticle[] = [
   },
   {
     id: 'ka-2',
+    slug: 'slug-2',
     title: 'SEO Audit Checklist',
     content: 'Check technical SEO, content, backlink profile...',
     status: 'PUBLISHED',
@@ -25,6 +27,7 @@ export const mockKnowledgeArticles: KnowledgeArticle[] = [
   },
   {
     id: 'ka-3',
+    slug: 'slug-3',
     title: 'Objection Handling Scripts',
     content: 'When they say "too expensive", reply with...',
     status: 'DRAFT',

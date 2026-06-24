@@ -2,14 +2,12 @@ import React from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { outreachApi } from '../api/outreachApi';
 import { Link } from '@tanstack/react-router';
-import { useDemoQuery } from '@/lib/useDemoQuery';
-import { mockOutreachDrafts } from '@/mocks';
 
 export const OutreachListPage: React.FC = () => {
-  const { data: drafts, isLoading, error } = useDemoQuery({
+  const { data: drafts, isLoading, error } = useQuery({
     queryKey: ['outreach_drafts'],
-    queryFn: outreachApi.getDrafts,
-  }, mockOutreachDrafts);
+    queryFn: () => outreachApi.getDrafts(),
+  });
 
   if (isLoading) return <div className="p-8">Loading outreach drafts...</div>;
   if (error) return <div className="p-8 text-red-500">Failed to load outreach drafts.</div>;

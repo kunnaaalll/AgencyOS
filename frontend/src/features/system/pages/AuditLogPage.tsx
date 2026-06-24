@@ -1,12 +1,11 @@
-import { useDemoQuery } from '@/lib/useDemoQuery'
+import { useQuery } from '@tanstack/react-query'
 import { getAuditLogs } from '../api'
-import { mockAuditLogs } from '@/mocks'
 
 export function AuditLogPage() {
-  const { data: logs, isLoading } = useDemoQuery({
+  const { data: logs, isLoading } = useQuery({
     queryKey: ['audit-logs'],
     queryFn: getAuditLogs,
-  }, mockAuditLogs)
+  })
 
   return (
     <div className="p-8">

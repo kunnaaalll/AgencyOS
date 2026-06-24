@@ -246,7 +246,7 @@ export function DiscoveryRunsPage() {
                 <TableCell>{run.businesses_validated}</TableCell>
                 <TableCell>{new Date(run.created_at).toLocaleDateString()}</TableCell>
                 <TableCell>
-                  <Link to={`/discovery/runs/${run.id}`} className="text-[var(--color-primary)] hover:underline font-medium">
+                  <Link to="/discovery/runs/$id" params={{ id: run.id }} className="text-[var(--color-primary)] hover:underline font-medium">
                     View
                   </Link>
                 </TableCell>

@@ -1,13 +1,12 @@
 import { Store } from '@tanstack/react-store'
 import { Opportunity, PipelineStage } from '@/features/crm/types'
-import { mockOpportunities } from '@/mocks'
 
 interface CRMState {
   opportunities: Opportunity[]
 }
 
 export const crmStore = new Store<CRMState>({
-  opportunities: mockOpportunities as unknown as Opportunity[],
+  opportunities: [],
 })
 
 export function addOpportunity(opp: Opportunity) {

@@ -7,7 +7,7 @@ export function RawBusinessesPage() {
 
   const { data: businesses, isLoading } = useQuery({
     queryKey: ['raw-businesses'],
-    queryFn: discoveryApi.getBusinesses,
+    queryFn: () => discoveryApi.getBusinesses(),
   });
 
   const promoteMutation = useMutation({
@@ -42,9 +42,9 @@ export function RawBusinessesPage() {
           <tbody>
             {isLoading ? (
               <tr><td colSpan={8} className="p-4 text-center">Loading...</td></tr>
-            ) : businesses?.items?.length === 0 ? (
+            ) : (businesses as any)?.items?.length === 0 ? (
               <tr><td colSpan={8} className="p-4 text-center">No businesses discovered yet.</td></tr>
-            ) : businesses?.items?.map((business: any) => (
+            ) : (businesses as any)?.items?.map((business: any) => (
               <tr key={business.id} className="border-b hover:bg-gray-50">
                 <td className="p-4 font-medium">{business.business_name}</td>
                 <td className="p-4 capitalize">{business.industry || '-'}</td>

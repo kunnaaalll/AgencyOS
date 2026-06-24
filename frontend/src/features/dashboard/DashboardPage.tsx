@@ -1,6 +1,4 @@
 import { useQuery } from '@tanstack/react-query'
-import { useDemoQuery } from '@/lib/useDemoQuery'
-import { dashboardMock, mockFinanceData, mockSystemData } from '@/mocks'
 import api from '@/lib/api'
 import { HealthCard } from '@/components/health/HealthCard'
 import type { SystemHealth } from '@/types'
@@ -29,40 +27,35 @@ export function DashboardPage() {
     refetch: refetchHealth,
     isFetching: isFetchingHealth,
     dataUpdatedAt: healthUpdatedAt,
-  } = useDemoQuery({
+  } = useQuery({
     queryKey: ['health'],
     queryFn: async (): Promise<SystemHealth> => {
       const { data } = await api.get<SystemHealth>('/health')
       return data
     },
     refetchInterval: 30_000,
-  }, mockSystemData)
+  })
 
   const {
     data: crmStats,
     isLoading: isLoadingStats,
     refetch: refetchStats,
     isFetching: isFetchingStats,
-  } = useDemoQuery({
+  } = useQuery({
     queryKey: ['crmStats'],
     queryFn: crmApi.getStats,
     refetchInterval: 60_000,
-  }, dashboardMock.kpis)
+  })
 
   const {
     data: clientStats,
     isLoading: isLoadingClientStats,
     refetch: refetchClientStats,
     isFetching: isFetchingClientStats,
-  } = useDemoQuery({
+  } = useQuery({
     queryKey: ['clientStats'],
     queryFn: clientsApi.getStats,
     refetchInterval: 60_000,
-  }, {
-    active_clients: dashboardMock.kpis.activeClients,
-    monthly_retainer_revenue: dashboardMock.kpis.mrr,
-    at_risk_clients: 2,
-    renewals_due: 4
   })
 
   const {
@@ -70,11 +63,11 @@ export function DashboardPage() {
     isLoading: isLoadingFinance,
     refetch: refetchFinance,
     isFetching: isFetchingFinance,
-  } = useDemoQuery({
+  } = useQuery({
     queryKey: ['financeStats'],
     queryFn: financeApi.getSummary,
     refetchInterval: 60_000,
-  }, mockFinanceData)
+  })
 
   const lastChecked = healthUpdatedAt
     ? new Date(healthUpdatedAt).toLocaleTimeString()
@@ -195,7 +188,7 @@ export function DashboardPage() {
               <div className="flex justify-between items-start">
                 <div>
                   <p className="text-claude-body-sm font-semibold text-[var(--color-muted)] tracking-wide uppercase mb-2">Monthly Retainer</p>
-                  <p className="text-claude-display-lg text-[var(--color-ink)]">₹{(clientStats.mrr ?? 0).toLocaleString()}</p>
+                  <p className="text-claude-display-lg text-[var(--color-ink)]">₹{(clientStats.monthly_retainer_revenue ?? 0).toLocaleString()}</p>
                 </div>
                 <div className="p-2 rounded-lg bg-[var(--color-surface-soft)]"><IndianRupee className="w-5 h-5 text-[var(--color-ink)]" /></div>
               </div>

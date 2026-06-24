@@ -64,7 +64,7 @@ export function Sidebar() {
   const location = useLocation();
   const navigate = useNavigate();
   const { user } = useStore(authStore);
-  const navGroups = getNavGroups(user?.role_name);
+  const navGroups = getNavGroups(user?.role_name || undefined);
 
   const handleLogout = () => {
     logout();

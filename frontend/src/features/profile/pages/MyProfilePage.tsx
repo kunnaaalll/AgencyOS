@@ -34,7 +34,7 @@ const containerVariants = {
 
 const itemVariants = {
   hidden: { opacity: 0, y: 20 },
-  visible: { opacity: 1, y: 0, transition: { duration: 0.4, ease: [0.16, 1, 0.3, 1] } }
+  visible: { opacity: 1, y: 0, transition: { duration: 0.4 } }
 };
 
 export function MyProfilePage() {
@@ -53,7 +53,7 @@ export function MyProfilePage() {
             <User className="w-8 h-8 text-white" />
           </div>
           <div>
-            <h1 className="text-3xl font-semibold tracking-tight text-gray-900 mb-1">{user?.name || 'Co-Founder'}</h1>
+            <h1 className="text-3xl font-semibold tracking-tight text-gray-900 mb-1">{user?.first_name || 'Co-Founder'}</h1>
             <p className="text-gray-500 font-medium text-sm capitalize">{user?.role_name || 'Sales Partner'}</p>
           </div>
         </div>

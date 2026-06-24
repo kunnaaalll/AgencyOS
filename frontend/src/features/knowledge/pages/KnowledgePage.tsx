@@ -3,17 +3,14 @@ import { useQuery } from '@tanstack/react-query';
 import { Link } from '@tanstack/react-router';
 import { Plus, Search, BookOpen, Clock, Tag } from 'lucide-react';
 import { KnowledgeAPI } from '../api';
-import { KnowledgeArticle } from '../types';
-import { useDemoQuery } from '@/lib/useDemoQuery';
-import { mockKnowledgeArticles } from '@/mocks';
 
 export function KnowledgePage() {
   const [searchTerm, setSearchTerm] = useState('');
   
-  const { data: articles = [], isLoading } = useDemoQuery({
+  const { data: articles = [], isLoading } = useQuery({
     queryKey: ['knowledge_articles'],
     queryFn: KnowledgeAPI.getArticles,
-  }, mockKnowledgeArticles);
+  });
 
   const filteredArticles = articles.filter(article => 
     article.title.toLowerCase().includes(searchTerm.toLowerCase())
@@ -66,7 +63,8 @@ export function KnowledgePage() {
           {filteredArticles.map(article => (
             <Link 
               key={article.id} 
-              to={`/knowledge/${article.id}/edit`}
+              to="/knowledge/$id/edit" 
+              params={{ id: article.id }}
               className="group bg-white p-6 rounded-2xl border border-neutral-200 hover:border-neutral-300 hover:shadow-sm transition-all"
             >
               <div className="flex justify-between items-start mb-4">

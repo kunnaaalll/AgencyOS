@@ -106,7 +106,8 @@ export function BulkDiscoveryPage() {
     queryKey: ['bulk-job', activeJobId],
     queryFn: () => discoveryApi.getBulkJob(activeJobId!),
     enabled: !!activeJobId,
-    refetchInterval: (data) => {
+    refetchInterval: (query) => {
+      const data = query.state.data;
       if (data?.status === 'RUNNING' || data?.status === 'PENDING') return 5000;
       return false;
     },

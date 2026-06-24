@@ -24,8 +24,6 @@ import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { PipelineStage, Opportunity } from '../types';
 import { crmApi } from '../api';
-import { DEMO_MODE } from '@/config/demo';
-import { mockOpportunities } from '@/mocks';
 
 
 const STAGES = [
@@ -121,13 +119,9 @@ export function CRMBoardPage() {
   }, []);
 
   const loadData = async () => {
-    if (DEMO_MODE) {
-      setLoading(false);
-      return;
-    }
     try {
       const data = await crmApi.getOpportunities();
-      // In a real app we'd dispatch data to store
+      crmStore.setState((state) => ({ ...state, opportunities: data }));
     } catch (error) {
       console.error('Failed to load opportunities:', error);
     } finally {
@@ -178,15 +172,11 @@ export function CRMBoardPage() {
       updateOpportunityStageLocal(activeId, targetStage as PipelineStage);
 
       try {
-        if (!DEMO_MODE) {
-          await crmApi.updateOpportunity(activeId, { pipeline_stage: targetStage });
-        }
+        await crmApi.updateOpportunity(activeId, { pipeline_stage: targetStage });
       } catch (error) {
         console.error('Failed to update stage:', error);
-        if (!DEMO_MODE) {
-          // Revert optimistic update only if NOT in demo mode
-          updateOpportunityStageLocal(activeId, prevStage);
-        }
+        // Revert optimistic update
+        updateOpportunityStageLocal(activeId, prevStage);
       }
     }
   };

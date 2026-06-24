@@ -7,9 +7,9 @@ export const mockAuditLogs: AuditLog[] = [
     action: 'UPDATE',
     entity_type: 'Lead',
     entity_id: 'lead-89',
-    details: { old_status: 'NEW', new_status: 'QUALIFIED' },
-    created_at: new Date(Date.now() - 1000 * 60 * 5).toISOString(),
-    ip_address: '192.168.1.1'
+    old_values: { status: 'NEW' },
+    new_values: { status: 'QUALIFIED' },
+    created_at: new Date(Date.now() - 1000 * 60 * 5).toISOString()
   },
   {
     id: 'log-2',
@@ -17,9 +17,9 @@ export const mockAuditLogs: AuditLog[] = [
     action: 'CREATE',
     entity_type: 'Project',
     entity_id: 'proj-12',
-    details: { name: 'Acme Website Redesign' },
-    created_at: new Date(Date.now() - 1000 * 60 * 60 * 2).toISOString(),
-    ip_address: '192.168.1.4'
+    old_values: null,
+    new_values: { name: 'Acme Website Redesign' },
+    created_at: new Date(Date.now() - 1000 * 60 * 60 * 2).toISOString()
   },
   {
     id: 'log-3',
@@ -27,8 +27,8 @@ export const mockAuditLogs: AuditLog[] = [
     action: 'DELETE',
     entity_type: 'Document',
     entity_id: 'doc-55',
-    details: { file_name: 'old_contract.pdf' },
-    created_at: new Date(Date.now() - 1000 * 60 * 60 * 24).toISOString(),
-    ip_address: '192.168.1.1'
+    old_values: { file_name: 'old_contract.pdf' },
+    new_values: null,
+    created_at: new Date(Date.now() - 1000 * 60 * 60 * 24).toISOString()
   }
 ];

@@ -11,7 +11,7 @@ import {
   AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar
 } from 'recharts';
 import { cn } from '@/lib/utils';
-import { useDemoQuery } from '@/lib/useDemoQuery';
+import { useQuery } from '@tanstack/react-query';
 import { getSystemHealth } from '@/features/system/api';
 import { mockSystemHealth } from '@/mocks/system';
 import { AnimatedCounter } from '@/components/ui/AnimatedCounter';
@@ -52,7 +52,7 @@ const containerVariants = {
 
 const itemVariants = {
   hidden: { opacity: 0, y: 20 },
-  visible: { opacity: 1, y: 0, transition: { duration: 0.4, ease: [0.16, 1, 0.3, 1] } }
+  visible: { opacity: 1, y: 0, transition: { duration: 0.4 } }
 };
 
 export function ExecutiveDashboardPage() {
@@ -71,11 +71,11 @@ export function ExecutiveDashboardPage() {
     return `₹${val.toLocaleString('en-IN')}`;
   };
 
-  const { data: health } = useDemoQuery({
+  const { data: health } = useQuery({
     queryKey: ['system-health'],
     queryFn: getSystemHealth,
     enabled: isAdmin
-  }, mockSystemHealth as any);
+  });
 
   return (
     <motion.div 

@@ -7,8 +7,6 @@ import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContai
 import { financeApi } from '../api'
 import type { FinanceSummary } from '../types'
 import { DEMO_MODE } from '@/config/demo'
-import { mockFinanceData } from '@/mocks'
-
 const mockTrendData = [
   { name: 'Jan', revenue: 4000, expenses: 2400, profit: 1600 },
   { name: 'Feb', revenue: 3000, expenses: 1398, profit: 1602 },
@@ -24,22 +22,6 @@ export function FinanceDashboardPage() {
   const [isLoading, setIsLoading] = useState(true)
 
   useEffect(() => {
-    if (DEMO_MODE) {
-      setSummary({
-        mrr: mockFinanceData.twelveMonthsRevenue[11].revenue,
-        net_profit: mockFinanceData.twelveMonthsRevenue[11].revenue - mockFinanceData.twelveMonthsExpenses[11].expense,
-        reserve_fund: mockFinanceData.cashReserve,
-        total_revenue: mockFinanceData.twelveMonthsRevenue.reduce((a, b) => a + b.revenue, 0),
-        total_expenses: mockFinanceData.twelveMonthsExpenses.reduce((a, b) => a + b.expense, 0),
-        distribution_pool: mockFinanceData.distributions,
-        previous_mrr: mockFinanceData.twelveMonthsRevenue[10].revenue,
-        mrr_growth: 15,
-        profit_margin: 20
-      })
-      setIsLoading(false)
-      return
-    }
-
     financeApi.getSummary()
       .then(setSummary)
       .catch(console.error)

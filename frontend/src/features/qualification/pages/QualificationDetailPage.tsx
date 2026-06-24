@@ -8,7 +8,7 @@ export const QualificationDetailPage: React.FC = () => {
 
   const { data: q, isLoading, error } = useQuery({
     queryKey: ['qualification', leadId],
-    queryFn: () => qualificationApi.getQualificationByLead(leadId!),
+    queryFn: () => qualificationApi.getQualificationByLeadId(leadId!),
     enabled: !!leadId,
   });
 
@@ -68,7 +68,7 @@ export const QualificationDetailPage: React.FC = () => {
               <dd className="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">
                 <ul className="list-disc pl-5 space-y-1">
                   {q.pain_points && q.pain_points.length > 0 ? (
-                    q.pain_points.map((point, idx) => (
+                    q.pain_points.map((point: string, idx: number) => (
                       <li key={idx}>{point}</li>
                     ))
                   ) : (

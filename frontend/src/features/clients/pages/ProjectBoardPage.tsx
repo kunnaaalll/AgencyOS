@@ -18,8 +18,6 @@ import {
 import { CSS } from '@dnd-kit/utilities';
 import { clientsApi } from '../api';
 import { Task, TaskStatus } from '../types';
-import { useDemoQuery } from '@/lib/useDemoQuery';
-import { mockTasksData } from '@/mocks';
 
 interface SortableTaskProps {
   task: Task;
@@ -100,11 +98,11 @@ export function ProjectBoardPage() {
   const { id } = useParams({ strict: false });
   const queryClient = useQueryClient();
 
-  const { data: tasks, isLoading } = useDemoQuery({
+  const { data: tasks, isLoading } = useQuery({
     queryKey: ['project-tasks', id],
     queryFn: () => clientsApi.getTasks(id as string),
     enabled: !!id,
-  }, mockTasksData);
+  });
 
   const updateTaskMutation = useMutation({
     mutationFn: ({ taskId, status }: { taskId: string, status: TaskStatus }) =>

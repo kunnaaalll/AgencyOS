@@ -6,11 +6,8 @@ interface SkeletonProps extends React.HTMLAttributes<HTMLDivElement> {}
 
 export function Skeleton({ className, ...props }: SkeletonProps) {
   return (
-    <motion.div
-      initial={{ opacity: 0.4 }}
-      animate={{ opacity: 1 }}
-      transition={{ repeat: Infinity, duration: 1.2, repeatType: 'reverse' }}
-      className={cn("animate-pulse rounded-md bg-white/50", className)}
+    <div
+      className={cn("animate-pulse rounded-md bg-[var(--color-surface-soft)]", className)}
       {...props}
     />
   );

@@ -1,6 +1,4 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { useDemoQuery } from '@/lib/useDemoQuery';
-import { mockClientsData } from '@/mocks';
 import {
   createColumnHelper,
   flexRender,
@@ -13,7 +11,7 @@ import {
 } from '@tanstack/react-table';
 import { useState } from 'react';
 import { clientsApi } from '../api';
-import { type Client } from '../types';
+import { type Client, HealthStatus, ClientStatus } from '../types';
 import { Link } from '@tanstack/react-router';
 import { Search, ChevronDown, ChevronUp, Plus, X } from 'lucide-react';
 
@@ -73,10 +71,10 @@ function AddClientModal({ isOpen, onClose, onAdd }: { isOpen: boolean, onClose: 
               onAdd({
                 ...formData,
                 id: `client-custom-${Date.now()}`,
-                health_status: 'HEALTHY',
+                health_status: HealthStatus.HEALTHY,
                 renewal_probability: 95,
                 contract_end_date: new Date(Date.now() + 31536000000).toISOString(),
-                status: 'ACTIVE'
+                status: ClientStatus.ACTIVE
               });
               onClose();
             }}
@@ -150,10 +148,10 @@ const columns = [
 export function ClientsListPage() {
   const queryClient = useQueryClient();
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
-  const { data: clients, isLoading } = useDemoQuery({
+  const { data: clients, isLoading } = useQuery({
     queryKey: ['clients'],
     queryFn: clientsApi.getClients,
-  }, mockClientsData);
+  });
 
   const [sorting, setSorting] = useState<SortingState>([]);
   const [globalFilter, setGlobalFilter] = useState('');
