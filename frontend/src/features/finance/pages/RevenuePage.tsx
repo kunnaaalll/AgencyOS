@@ -11,7 +11,7 @@ export function RevenuePage() {
 
   useEffect(() => {
     financeApi.getRevenues()
-      .then(setRevenues)
+      .then(data => setRevenues(Array.isArray(data) ? data : (data as any)?.items || []))
       .catch(console.error)
       .finally(() => setIsLoading(false))
   }, [])
@@ -44,7 +44,13 @@ export function RevenuePage() {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {revenues.map((revenue) => (
+            {(!Array.isArray(revenues) || revenues.length === 0) ? (
+              <TableRow>
+                <TableCell colSpan={6} className="text-center text-muted py-8">
+                  No revenue records found.
+                </TableCell>
+              </TableRow>
+            ) : revenues.map((revenue) => (
               <TableRow key={revenue.id}>
                 <TableCell>{revenue.received_date ? new Date(revenue.received_date).toLocaleDateString() : 'N/A'}</TableCell>
                 <TableCell className="font-medium">{revenue.description || 'No description'}</TableCell>

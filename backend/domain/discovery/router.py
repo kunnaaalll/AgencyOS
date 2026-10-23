@@ -310,16 +310,39 @@ async def promote_business_to_lead(
     if not business:
         raise HTTPException(status_code=404, detail="Business not found")
 
+    from domain.lead.enums import LeadStatus, Priority
     from domain.lead.models import Lead
+
+    # Calculate High-Ticket Buying Power & Intent Score
+    score = 75
+    if business.review_count:
+        if business.review_count >= 50:
+            score += 15
+        elif business.review_count >= 20:
+            score += 10
+    if business.rating and business.rating >= 4.0:
+        score += 5
+    score = min(score, 99)
+
+    priority = Priority.HIGH if score >= 85 else Priority.MEDIUM
 
     lead = Lead(
         business_name=business.business_name,
         email=business.email,
         phone=business.phone,
         website=business.website,
-        source="Discovery Engine",
-        status="NEW",
-        is_published=False,
+        city=business.city,
+        state=business.state,
+        country=business.country,
+        industry=business.industry,
+        google_maps_url=business.google_maps_url,
+        instagram_url=business.instagram_url,
+        linkedin_url=business.linkedin_url,
+        source=f"Discovery Engine ({business.source})",
+        status=LeadStatus.NEW,
+        is_published=True,
+        score=score,
+        priority=priority,
     )
     db.add(lead)
 
@@ -334,6 +357,78 @@ async def promote_business_to_lead(
 
     await db.commit()
     return {"message": "Promoted to lead successfully", "lead_id": str(lead.id)}
+
+
+@router.post("/businesses/promote-clean-batch")
+async def promote_clean_batch(
+    min_completeness: int = Query(60, ge=40, le=100),
+    require_phone: bool = Query(True),
+    require_website: bool = Query(True),
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    """Batch promote only high-quality, clean records with complete data to Hot Leads."""
+    if not current_user.has_permission("discovery:update") or not current_user.has_permission(
+        "leads:create"
+    ):
+        raise HTTPException(status_code=403, detail="Not enough permissions")
+
+    from domain.lead.enums import LeadStatus, Priority
+    from domain.lead.models import Lead
+
+    query = select(RawBusiness).where(
+        RawBusiness.is_duplicate.is_(False),
+        RawBusiness.completeness_score >= min_completeness,
+    )
+    if require_phone:
+        query = query.where(RawBusiness.phone.isnot(None), RawBusiness.phone != "")
+    if require_website:
+        query = query.where(RawBusiness.website.isnot(None), RawBusiness.website != "")
+
+    result = await db.execute(query.limit(100))
+    businesses = result.scalars().all()
+
+    promoted_count = 0
+    for b in businesses:
+        # Check if already in leads
+        lead_check = await db.execute(
+            select(Lead).where(Lead.business_name == b.business_name).limit(1)
+        )
+        if lead_check.scalar_one_or_none():
+            continue
+
+        score = 75
+        if b.review_count and b.review_count >= 50:
+            score += 15
+        elif b.review_count and b.review_count >= 20:
+            score += 10
+        if b.rating and b.rating >= 4.0:
+            score += 5
+        score = min(score, 99)
+
+        lead = Lead(
+            business_name=b.business_name,
+            email=b.email,
+            phone=b.phone,
+            website=b.website,
+            city=b.city,
+            state=b.state,
+            country=b.country,
+            industry=b.industry,
+            google_maps_url=b.google_maps_url,
+            instagram_url=b.instagram_url,
+            linkedin_url=b.linkedin_url,
+            source=f"Clean Batch Engine ({b.source})",
+            status=LeadStatus.NEW,
+            is_published=True,
+            score=score,
+            priority=Priority.HIGH if score >= 85 else Priority.MEDIUM,
+        )
+        db.add(lead)
+        promoted_count += 1
+
+    await db.commit()
+    return {"message": f"Successfully promoted {promoted_count} clean hot leads", "promoted_count": promoted_count}
 
 
 @router.delete("/businesses/{business_id}/duplicate")

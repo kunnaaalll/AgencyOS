@@ -1,12 +1,18 @@
 import React from "react";
 import { Link } from "@tanstack/react-router";
-import { useAnalysisList } from "../api/analysisApi";
+import { useAnalysisList, WebsiteAnalysis } from "../api/analysisApi";
 
 export const AnalysisListPage: React.FC = () => {
   const { data: analyses, isLoading, isError } = useAnalysisList();
 
   if (isLoading) return <div className="p-8">Loading analyses...</div>;
   if (isError) return <div className="p-8 text-red-500">Failed to load analyses.</div>;
+
+  const list: WebsiteAnalysis[] = Array.isArray(analyses)
+    ? (analyses as WebsiteAnalysis[])
+    : Array.isArray((analyses as any)?.items)
+    ? (analyses as any).items
+    : [];
 
   return (
     <div className="p-8">
@@ -29,41 +35,42 @@ export const AnalysisListPage: React.FC = () => {
             </tr>
           </thead>
           <tbody className="bg-white divide-y divide-gray-200">
-            {analyses?.map((analysis) => (
-              <tr key={analysis.id}>
-                <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                  {analysis.lead_id} {/* Using lead_id as business placeholder */}
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                  <a href={analysis.website_url} target="_blank" rel="noreferrer" className="text-blue-600 hover:underline">
-                    {analysis.website_url}
-                  </a>
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                  <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">
-                    {analysis.overall_score}
-                  </span>
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{analysis.website_score}</td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{analysis.seo_score}</td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{analysis.cta_score}</td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                  {analysis.analyzed_at ? new Date(analysis.analyzed_at).toLocaleDateString() : 'N/A'}
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                  {/* Assuming route exists */}
-                  <Link to="/analysis" className="text-indigo-600 hover:text-indigo-900">
-                    View Details
-                  </Link>
-                </td>
-              </tr>
-            ))}
-            {analyses?.length === 0 && (
+            {list.length === 0 ? (
               <tr>
-                <td colSpan={8} className="px-6 py-4 text-center text-sm text-gray-500">
+                <td colSpan={8} className="px-6 py-8 text-center text-sm text-gray-500">
                   No analyses found.
                 </td>
               </tr>
+            ) : (
+              list.map((analysis: WebsiteAnalysis) => (
+                <tr key={analysis.id}>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                    {analysis.lead_id} {/* Using lead_id as business placeholder */}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                    <a href={analysis.website_url} target="_blank" rel="noreferrer" className="text-blue-600 hover:underline">
+                      {analysis.website_url}
+                    </a>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                    <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">
+                      {analysis.overall_score}
+                    </span>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{analysis.website_score}</td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{analysis.seo_score}</td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{analysis.cta_score}</td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                    {analysis.analyzed_at ? new Date(analysis.analyzed_at).toLocaleDateString() : 'N/A'}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                    {/* Assuming route exists */}
+                    <Link to="/analysis" className="text-indigo-600 hover:text-indigo-900">
+                      View Details
+                    </Link>
+                  </td>
+                </tr>
+              ))
             )}
           </tbody>
         </table>

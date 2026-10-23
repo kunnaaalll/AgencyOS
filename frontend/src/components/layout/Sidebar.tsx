@@ -16,9 +16,11 @@ const getNavGroups = (role?: string) => {
       title: 'Growth OS',
       items: [
         { name: 'Dashboard', path: '/dashboard', icon: Home },
-        { name: 'Hot Leads', path: '/leads/hot', icon: Target },
-        { name: 'My Leads', path: '/leads/my', icon: Briefcase },
-        { name: 'CRM', path: '/crm', icon: Briefcase },
+        { name: 'Lead Discovery', path: '/discovery/runs', icon: Search },
+        { name: 'All Leads', path: '/leads', icon: Target },
+        { name: 'Website Audits', path: '/analysis', icon: Activity },
+        { name: 'Qualifications', path: '/qualifications', icon: Zap },
+        { name: 'CRM Pipeline', path: '/crm', icon: Briefcase },
         { name: 'Outreach', path: '/outreach', icon: Send },
       ]
     },

@@ -40,6 +40,9 @@ jobs:
             echo "=== Running migrations ==="
             docker compose --env-file .env.production -f docker-compose.prod.yml exec -T backend alembic upgrade head
 
+            echo "=== Ensuring database seed ==="
+            docker compose --env-file .env.production -f docker-compose.prod.yml exec -T backend python -m scripts.seed
+
             echo "=== Waiting for health check ==="
             sleep 15
 

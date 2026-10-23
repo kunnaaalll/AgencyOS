@@ -61,8 +61,11 @@ class Settings(BaseSettings):
     # ── CORS ──────────────────────────────────────────────────
     CORS_ORIGINS: str = "http://localhost:5173"
 
-    # ── FreeLLM API ───────────────────────────────────────────
+    # ── FreeLLM / OpenRouter API ──────────────────────────────
     FREELLM_API_BASE: str = "http://localhost:5174/playground"
+    OPENROUTER_API_KEY: str = ""
+    OPENROUTER_MODEL: str = "meta-llama/llama-3.3-70b-instruct:free"
+    OPENROUTER_API_BASE: str = "https://openrouter.ai/api/v1"
 
     # ── Security ──────────────────────────────────────────────
     RATE_LIMIT_PER_MINUTE: int = 100

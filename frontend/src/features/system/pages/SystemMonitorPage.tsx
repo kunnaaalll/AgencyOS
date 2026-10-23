@@ -67,7 +67,7 @@ export function SystemMonitorPage() {
       <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 overflow-hidden">
         {workflowsLoading ? (
           <div className="p-4 text-gray-500">Loading workflows...</div>
-        ) : workflows && workflows.length > 0 ? (
+        ) : Array.isArray(workflows) && workflows.length > 0 ? (
           <table className="w-full text-left">
             <thead className="bg-gray-50 dark:bg-gray-900/50">
               <tr>

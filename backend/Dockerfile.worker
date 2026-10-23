@@ -27,6 +27,7 @@ RUN uv venv /opt/venv && \
     uv pip install --python /opt/venv/bin/python --no-cache .
 
 # Install Playwright browsers
+ENV PLAYWRIGHT_BROWSERS_PATH=/ms-playwright
 RUN /opt/venv/bin/playwright install --with-deps chromium
 
 # ── Development Stage ─────────────────────────────────────────
@@ -66,8 +67,9 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     && rm -rf /var/lib/apt/lists/*
 
 COPY --from=builder /opt/venv /opt/venv
-# Copy Playwright browsers from builder
-COPY --from=builder /root/.cache/ms-playwright /home/agencyos/.cache/ms-playwright
+ENV PLAYWRIGHT_BROWSERS_PATH=/ms-playwright
+COPY --from=builder /ms-playwright /ms-playwright
+RUN chmod -R 755 /ms-playwright
 
 ENV PATH="/opt/venv/bin:$PATH"
 
@@ -75,8 +77,7 @@ COPY . .
 
 # Create non-root user
 RUN groupadd -r agencyos && useradd -r -g agencyos -d /app -s /sbin/nologin agencyos && \
-    chown -R agencyos:agencyos /app && \
-    chown -R agencyos:agencyos /home/agencyos
+    chown -R agencyos:agencyos /app
 
 USER agencyos
 

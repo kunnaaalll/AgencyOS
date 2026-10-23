@@ -228,11 +228,11 @@ export function DiscoveryRunsPage() {
           <TableBody>
             {isLoading ? (
               <TableRow><TableCell colSpan={7} className="text-center text-[var(--color-muted)] py-8">Loading...</TableCell></TableRow>
-            ) : runs?.length === 0 ? (
+            ) : (!Array.isArray(runs) || runs.length === 0) ? (
               <TableRow><TableCell colSpan={7} className="text-center text-[var(--color-muted)] py-8">No runs found.</TableCell></TableRow>
-            ) : runs?.map(run => (
+            ) : runs.map(run => (
               <TableRow key={run.id}>
-                <TableCell className="capitalize">{run.source.replace('_', ' ')}</TableCell>
+                <TableCell className="capitalize">{run.source ? run.source.replace('_', ' ') : 'Google Maps'}</TableCell>
                 <TableCell>{run.query} {run.location ? `in ${run.location}` : ''}</TableCell>
                 <TableCell>
                   <span className={`px-2.5 py-1 rounded-full text-xs font-semibold uppercase tracking-wide ${

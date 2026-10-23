@@ -28,6 +28,8 @@ services:
     ports:
       - "80:80"
       - "443:443"
+    environment:
+      TRAEFIK_CERTIFICATESRESOLVERS_LETSENCRYPT_ACME_EMAIL: ${TRAEFIK_ACME_EMAIL:-admin@agencyos.io}
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock:ro
       - traefik_certs:/certs
@@ -225,7 +227,7 @@ services:
       - "traefik.http.routers.backend.rule=Host(`api.${DOMAIN}`)"
       - "traefik.http.routers.backend.entrypoints=websecure"
       - "traefik.http.routers.backend.tls.certresolver=letsencrypt"
-      - "traefik.http.routers.backend.middlewares=secure-headers@file,rate-limit@file,cors-headers@file"
+      - "traefik.http.routers.backend.middlewares=secure-headers@file,rate-limit@file"
       - "traefik.http.services.backend.loadbalancer.server.port=8000"
       - "logging=promtail"
 
@@ -247,11 +249,12 @@ services:
         condition: service_healthy
       redis:
         condition: service_healthy
+    shm_size: 1gb
     deploy:
       resources:
         limits:
-          cpus: '1.0'
-          memory: 1G
+          cpus: '2.0'
+          memory: 3G
     labels:
       - "logging=promtail"
 

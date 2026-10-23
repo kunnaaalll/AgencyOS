@@ -47,16 +47,35 @@ set -a
 source .env.production
 set +a
 
+# ── Coexistence / Standalone Mode Selection ─────────────────
+MODE="${DEPLOY_MODE:-coexist}"
+if [[ "${1:-}" == "--standalone" ]]; then
+    MODE="standalone"
+elif [[ "${1:-}" == "--coexist" ]]; then
+    MODE="coexist"
+fi
+
+if [[ "${MODE}" == "coexist" ]]; then
+    COMPOSE_CMD="docker compose --env-file .env.production -f docker-compose.prod.yml -f docker-compose.coexist.yml"
+    log "🛡️  Running in SAFE COEXISTENCE MODE"
+    log "   - Ports 80 and 443 are UNTOUCHED (Existing sites protected)"
+    log "   - Frontend bound to ${FRONTEND_BIND:-127.0.0.1:8088}"
+    log "   - Backend bound to ${BACKEND_BIND:-127.0.0.1:8000}"
+else
+    COMPOSE_CMD="docker compose --env-file .env.production -f docker-compose.prod.yml"
+    log "🚀 Running in STANDALONE MODE (Traefik on ports 80 & 443)"
+fi
+
 # ── Make Scripts Executable ──────────────────────────────────
 chmod +x scripts/*.sh
 
 # ── Build Images ─────────────────────────────────────────────
 log "Building production images..."
-docker compose --env-file .env.production -f docker-compose.prod.yml build
+${COMPOSE_CMD} build
 
 # ── Deploy ───────────────────────────────────────────────────
 log "Deploying services..."
-docker compose --env-file .env.production -f docker-compose.prod.yml up -d
+${COMPOSE_CMD} up -d
 
 # ── Wait for Health ──────────────────────────────────────────
 log "Waiting for services to become healthy..."
@@ -87,16 +106,20 @@ fi
 
 # ── Run Migrations ───────────────────────────────────────────
 log "Running database migrations..."
-docker compose --env-file .env.production -f docker-compose.prod.yml exec -T backend alembic upgrade head
+${COMPOSE_CMD} exec -T backend alembic upgrade head
+
+# ── Seed Database (idempotent) ───────────────────────────────
+log "Ensuring database seed..."
+${COMPOSE_CMD} exec -T backend python -m scripts.seed
 
 # ── Verify ───────────────────────────────────────────────────
 log "Verifying deployment..."
-HTTP_STATUS=$(docker compose --env-file .env.production -f docker-compose.prod.yml exec -T backend curl -s -o /dev/null -w "%{http_code}" http://localhost:8000/api/health) || HTTP_STATUS="000"
+HTTP_STATUS=$(${COMPOSE_CMD} exec -T backend curl -s -o /dev/null -w "%{http_code}" http://localhost:8000/api/health) || HTTP_STATUS="000"
 if [[ "${HTTP_STATUS}" -eq 200 ]]; then
     log "🎉 Deployment successful! API is healthy."
 else
     error "API health check failed with status ${HTTP_STATUS}"
-    docker compose --env-file .env.production -f docker-compose.prod.yml logs --tail=30 backend
+    ${COMPOSE_CMD} logs --tail=30 backend
     exit 1
 fi
 
@@ -105,12 +128,24 @@ echo ""
 log "═══════════════════════════════════════════════"
 log "  AgencyOS V2.1 — Deployment Complete"
 log "═══════════════════════════════════════════════"
-log "  API:      https://api.${DOMAIN:-yourdomain.com}"
-log "  App:      https://app.${DOMAIN:-yourdomain.com}"
-log "  Grafana:  https://grafana.${DOMAIN:-yourdomain.com}"
+if [[ "${MODE}" == "coexist" ]]; then
+    log "  Mode:      COEXISTENCE (Safe for shared servers)"
+    log "  Frontend:  http://127.0.0.1:8088"
+    log "  Backend:   http://127.0.0.1:8000"
+    log "───────────────────────────────────────────────"
+    log "  Host Nginx Routing Step:"
+    log "  1. Copy config: sudo cp infra/nginx/agencyos_host.conf /etc/nginx/sites-available/agencyos.conf"
+    log "  2. Link:        sudo ln -s /etc/nginx/sites-available/agencyos.conf /etc/nginx/sites-enabled/"
+    log "  3. Reload:      sudo nginx -t && sudo systemctl reload nginx"
+    log "  4. SSL Certs:   sudo certbot --nginx -d app.${DOMAIN} -d api.${DOMAIN}"
+else
+    log "  Mode:      STANDALONE (Traefik managed)"
+    log "  API:       https://api.${DOMAIN:-yourdomain.com}"
+    log "  App:       https://app.${DOMAIN:-yourdomain.com}"
+    log "  Grafana:   https://grafana.${DOMAIN:-yourdomain.com}"
+fi
 log "═══════════════════════════════════════════════"
 echo ""
 log "Next steps:"
 log "  1. Set up backup cron: crontab -e → 0 2 * * * cd $(pwd) && ./scripts/backup-cron.sh"
-log "  2. Configure Telegram alerts in .env.production"
-log "  3. Verify SSL certs: curl -I https://api.${DOMAIN:-yourdomain.com}"
+log "  2. Configure Telegram alerts in .env.production (optional)"

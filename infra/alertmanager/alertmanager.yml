@@ -11,35 +11,20 @@ route:
   group_wait: 30s
   group_interval: 5m
   repeat_interval: 4h
-  receiver: 'telegram'
-
-  routes:
-    - match:
-        severity: critical
-      receiver: 'telegram'
-      repeat_interval: 1h
-    - match:
-        severity: warning
-      receiver: 'telegram'
-      repeat_interval: 4h
+  receiver: 'default-receiver'
 
 receivers:
-  - name: 'telegram'
-    telegram_configs:
-      - bot_token: '${TELEGRAM_BOT_TOKEN}'
-        chat_id: ${TELEGRAM_CHAT_ID}
-        parse_mode: 'HTML'
-        message: |
-          {{ range .Alerts }}
-          <b>🚨 {{ .Labels.alertname }}</b>
-          <b>Severity:</b> {{ .Labels.severity }}
-          <b>Status:</b> {{ .Status }}
-          <b>Summary:</b> {{ .Annotations.summary }}
-          <b>Description:</b> {{ .Annotations.description }}
-          <b>Started:</b> {{ .StartsAt.Format "2006-01-02 15:04:05" }}
-          {{ if .EndsAt }}<b>Ended:</b> {{ .EndsAt.Format "2006-01-02 15:04:05" }}{{ end }}
-          ---
-          {{ end }}
+  - name: 'default-receiver'
+    webhook_configs:
+      - url: 'http://127.0.0.1:9093'
+        send_resolved: true
+        # To enable Telegram notifications, configure a telegram receiver below
+        # and set receiver: 'telegram' in the route block.
+  # - name: 'telegram'
+  #   telegram_configs:
+  #     - bot_token: '<YOUR_BOT_TOKEN>'
+  #       chat_id: <YOUR_CHAT_ID_AS_INT>
+  #       parse_mode: 'HTML'
 
 inhibit_rules:
   - source_match:

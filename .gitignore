@@ -60,3 +60,4 @@ logs/
 .AppleDouble
 .LSOverride
 /backups/
+vendor/

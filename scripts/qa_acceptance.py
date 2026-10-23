@@ -4,7 +4,7 @@ import os
 import sys
 import subprocess
 
-API_BASE = "http://localhost:8000/api/v1"
+API_BASE = os.getenv("API_BASE", "http://localhost:8000/api/v1")
 
 class QAClient:
     def __init__(self):

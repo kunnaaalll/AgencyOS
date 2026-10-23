@@ -14,22 +14,73 @@ This runbook covers the daily operations, deployment, and disaster recovery proc
 *   **Search Engine:** Meilisearch v1.7
 *   **Monitoring Stack:** Prometheus, Grafana, Loki, Promtail, Alertmanager, Node Exporter, Postgres/Redis Exporters
 
-## 2. Deployment
+## 2. Server Specifications & Production Endpoints
 
-### Initial Setup
+*   **Host Server:** Oracle Cloud Infrastructure (`VM.Standard.A1.Flex`, 4 OCPU ARM64, 24 GB RAM, Always Free)
+*   **Public IP:** `147.224.203.127`
+*   **Wildcard DNS:** `147.224.203.127.nip.io` (Auto-resolves to server IP with Let's Encrypt TLS)
 
-1.  Provision an Oracle Cloud VM (ARM64, 24GB RAM, 200GB Block Volume).
-2.  Install Docker and Docker Compose.
-3.  Clone the repository: `git clone <repo-url> /opt/agencyos && cd /opt/agencyos`
-4.  Copy `.env.production.example` to `.env.production` and fill in **ALL** missing values (no `CHANGE_ME` allowed).
-5.  Run the deployment script: `./scripts/deploy.sh`
+| Service | Production URL | Description |
+| :--- | :--- | :--- |
+| **Frontend Web App** | `https://app.147.224.203.127.nip.io` | Main AgencyOS Dashboard & Workspaces |
+| **Backend API** | `https://api.147.224.203.127.nip.io` | FastAPI Core Endpoints |
+| **Swagger UI** | `https://api.147.224.203.127.nip.io/docs` | Interactive OpenAPI documentation |
+| **Grafana** | `https://grafana.147.224.203.127.nip.io` | Observability & metrics dashboards |
+| **MinIO Console** | `https://minio.147.224.203.127.nip.io` | S3-compatible object storage console |
+| **LiteLLM Proxy** | `https://llm.147.224.203.127.nip.io` | AI model routing & proxy |
+
+## 3. Deployment
+
+### Firewall & OCI Security List Prerequisites
+
+Ensure the following ports are open in the OCI Security List (`ampere-vcn`) and local `iptables`/`ufw`:
+*   `80/tcp` (HTTP -> Traefik HTTP-01 Let's Encrypt challenge & redirect)
+*   `443/tcp` (HTTPS -> Traefik secure entrypoint)
+
+```bash
+# On the server (if ufw/iptables is active):
+sudo iptables -I INPUT 6 -m state --state NEW -p tcp --dport 80 -j ACCEPT
+sudo iptables -I INPUT 6 -m state --state NEW -p tcp --dport 443 -j ACCEPT
+sudo netfilter-persistent save
+```
+
+### Initial Setup & Launch (Zero-Disturbance Coexistence Mode)
+
+When deploying to a server with existing active websites/proxies (Nginx, Caddy, Apache):
+1.  Connect to the server:
+    ```bash
+    ssh -i "/Applications/My Mac/Setup/A1-SERVER/ampere_ssh_key" ubuntu@147.224.203.127
+    ```
+2.  Clone or sync the repository to `/opt/agencyos`:
+    ```bash
+    sudo mkdir -p /opt/agencyos && sudo chown -R ubuntu:ubuntu /opt/agencyos
+    cd /opt/agencyos
+    git clone <repo-url> .
+    ```
+3.  Deploy in Coexistence Mode (Default):
+    ```bash
+    ./scripts/deploy.sh
+    # or explicitly: ./scripts/deploy.sh --coexist
+    ```
+    *This runs all AgencyOS microservices in an isolated Docker network, disables Traefik so ports 80/443 are never touched, and binds Frontend to loopback `127.0.0.1:8088` and Backend to `127.0.0.1:8000`.*
+
+4.  Link host Nginx (takes 10 seconds, zero downtime for existing sites):
+    ```bash
+    sudo cp infra/nginx/agencyos_host.conf /etc/nginx/sites-available/agencyos.conf
+    sudo ln -s /etc/nginx/sites-available/agencyos.conf /etc/nginx/sites-enabled/
+    sudo nginx -t && sudo systemctl reload nginx
+    ```
+5.  Generate SSL via Certbot (optional):
+    ```bash
+    sudo certbot --nginx -d app.147.224.203.127.nip.io -d api.147.224.203.127.nip.io
+    ```
 
 ### Normal Updates
 
-Deployments are handled via GitHub Actions manually or by running `./scripts/deploy.sh` on the server.
-The script performs health checks, runs database migrations, and verifies API health before considering the deployment successful.
+Deployments are handled automatically via GitHub Actions upon push to `main`, or by running `./scripts/deploy.sh` directly on the server.
+The script performs pre-flight checks, image builds, automated migrations, database seeding, and health checks before marking the deployment successful.
 
-## 3. Operations & Maintenance
+## 4. Operations & Maintenance
 
 ### Checking Service Status
 

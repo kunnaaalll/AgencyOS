@@ -8,6 +8,7 @@ from playwright.async_api import async_playwright
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from domain.analysis.models import WebsiteAnalysis
+from services.harvey.signals import HarveySignalDetector
 
 logger = logging.getLogger(__name__)
 
@@ -42,7 +43,15 @@ class WebsiteAnalysisService:
         # Playwright for rendering
         try:
             async with async_playwright() as p:
-                browser = await p.chromium.launch(headless=True)
+                browser = await p.chromium.launch(
+                    headless=True,
+                    args=[
+                        "--no-sandbox",
+                        "--disable-setuid-sandbox",
+                        "--disable-dev-shm-usage",
+                        "--disable-gpu",
+                    ],
+                )
 
                 # Desktop View
                 context = await browser.new_context()
@@ -192,6 +201,19 @@ class WebsiteAnalysisService:
 
         if "pixel" in html_content.lower() or "connect.facebook.net" in html_content:
             scores["digital_maturity"] += 5
+
+        # ── Harvey Buying Signals Detection ──
+        try:
+            detected_signals = HarveySignalDetector.detect_signals(html_content, soup, url)
+            for sig in detected_signals:
+                if sig.is_positive:
+                    strengths.append(f"[{sig.signal_id}] {sig.name} ({sig.evidence})")
+                else:
+                    weaknesses.append(f"[{sig.signal_id}] {sig.name} ({sig.description})")
+                    if sig.pitch_angle:
+                        pain_points.append(f"{sig.name}: {sig.pitch_angle}")
+        except Exception as sig_err:
+            logger.warning(f"Failed to detect Harvey signals: {sig_err}")
 
         # ── Calculate Overall Score ──
         overall = sum(scores.values()) // len(scores)

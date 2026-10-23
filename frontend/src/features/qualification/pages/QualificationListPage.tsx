@@ -1,6 +1,6 @@
 import React from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { qualificationApi } from '../api/qualificationApi';
+import { qualificationApi, QualificationResponse } from '../api/qualificationApi';
 import { Link } from '@tanstack/react-router';
 
 export const QualificationListPage: React.FC = () => {
@@ -11,6 +11,12 @@ export const QualificationListPage: React.FC = () => {
 
   if (isLoading) return <div className="p-8">Loading qualifications...</div>;
   if (error) return <div className="p-8 text-red-500">Failed to load qualifications.</div>;
+
+  const list: QualificationResponse[] = Array.isArray(qualifications)
+    ? (qualifications as QualificationResponse[])
+    : Array.isArray((qualifications as any)?.items)
+    ? (qualifications as any).items
+    : [];
 
   return (
     <div className="p-8">
@@ -32,45 +38,46 @@ export const QualificationListPage: React.FC = () => {
             </tr>
           </thead>
           <tbody className="bg-white divide-y divide-gray-200">
-            {qualifications?.map((q) => (
-              <tr key={q.id}>
-                <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                  {q.business_name || q.lead_id}
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                  <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
-                    q.priority === 'HIGH' ? 'bg-green-100 text-green-800' : 
-                    q.priority === 'MEDIUM' ? 'bg-yellow-100 text-yellow-800' : 
-                    'bg-gray-100 text-gray-800'
-                  }`}>
-                    {q.priority}
-                  </span>
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                  {q.opportunity_score}/100
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                  {q.qualification_status}
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                  {q.recommended_package || '-'}
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                  {(q.confidence * 100).toFixed(0)}%
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                  <Link to="/qualifications/$leadId" params={{ leadId: q.lead_id }} className="text-indigo-600 hover:text-indigo-900">
-                    View
-                  </Link>
-                </td>
-              </tr>
-            ))}
-            {qualifications?.length === 0 && (
+            {list.length === 0 ? (
               <tr>
-                <td colSpan={7} className="px-6 py-4 text-center text-sm text-gray-500">
+                <td colSpan={7} className="px-6 py-8 text-center text-sm text-gray-500">
                   No qualifications found.
                 </td>
               </tr>
+            ) : (
+              list.map((q: QualificationResponse) => (
+                <tr key={q.id}>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                    {q.business_name || q.lead_id}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                    <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
+                      q.priority === 'HIGH' ? 'bg-green-100 text-green-800' : 
+                      q.priority === 'MEDIUM' ? 'bg-yellow-100 text-yellow-800' : 
+                      'bg-gray-100 text-gray-800'
+                    }`}>
+                      {q.priority}
+                    </span>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                    {q.opportunity_score}/100
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                    {q.qualification_status}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                    {q.recommended_package || '-'}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                    {(q.confidence * 100).toFixed(0)}%
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                    <Link to="/qualifications/$leadId" params={{ leadId: q.lead_id }} className="text-indigo-600 hover:text-indigo-900">
+                      View
+                    </Link>
+                  </td>
+                </tr>
+              ))
             )}
           </tbody>
         </table>

@@ -80,6 +80,17 @@ export const fetchLeadAnalysisById = async (leadId: string): Promise<LeadAnalysi
   return data
 }
 
+export const updateLead = async (id: string, updates: Partial<Lead>): Promise<Lead> => {
+  const { data } = await api.patch(`/leads/${id}`, updates)
+  return data
+}
+
+export const promoteCleanBatch = async (minCompleteness = 60): Promise<{ message: string; promoted_count: number }> => {
+  const { data } = await api.post(`/discovery/businesses/promote-clean-batch?min_completeness=${minCompleteness}&require_phone=true&require_website=true`)
+  return data
+}
+
+
 // ── Discovery APIs ─────────────────────────────────────────────────────────────
 
 export interface RawBusiness {

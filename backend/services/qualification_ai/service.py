@@ -37,22 +37,61 @@ class AIQualificationService:
         usage = None
 
         try:
-            response = await acompletion(
-                model="openai/auto",
-                api_base=settings.FREELLM_API_BASE,
-                messages=[
-                    {
-                        "role": "system",
-                        "content": "You are an expert AI business qualification engine. Output ONLY valid JSON matching the exact schema requested, with no markdown formatting or extra text.",
-                    },
-                    {"role": "user", "content": prompt},
-                ],
-                response_format={"type": "json_object"},
-            )
+            if settings.OPENROUTER_API_KEY:
+                model_used = settings.OPENROUTER_MODEL
+                if not model_used.startswith("openrouter/"):
+                    model_used = f"openrouter/{model_used}"
+
+                try:
+                    response = await acompletion(
+                        model=model_used,
+                        api_key=settings.OPENROUTER_API_KEY,
+                        messages=[
+                            {
+                                "role": "system",
+                                "content": "You are an expert AI business qualification engine. Output ONLY valid JSON matching the exact schema requested, with no markdown formatting or extra text.",
+                            },
+                            {"role": "user", "content": prompt},
+                        ],
+                        response_format={"type": "json_object"},
+                    )
+                except Exception as model_err:
+                    if any(k in str(model_err).lower() for k in ["403", "404", "429", "harness", "unavailable"]):
+                        logger.warning(f"Model {model_used} unavailable on OpenRouter, falling back to openrouter/free: {model_err}")
+                        model_used = "openrouter/free"
+                        response = await acompletion(
+                            model="openrouter/free",
+                            api_key=settings.OPENROUTER_API_KEY,
+                            messages=[
+                                {
+                                    "role": "system",
+                                    "content": "You are an expert AI business qualification engine. Output ONLY valid JSON matching the exact schema requested, with no markdown formatting or extra text.",
+                                },
+                                {"role": "user", "content": prompt},
+                            ],
+                            response_format={"type": "json_object"},
+                        )
+                    else:
+                        raise
+            else:
+                model_used = "freellmapi/auto"
+                response = await acompletion(
+                    model="openai/auto",
+                    api_base=settings.FREELLM_API_BASE,
+                    messages=[
+                        {
+                            "role": "system",
+                            "content": "You are an expert AI business qualification engine. Output ONLY valid JSON matching the exact schema requested, with no markdown formatting or extra text.",
+                        },
+                        {"role": "user", "content": prompt},
+                    ],
+                    response_format={"type": "json_object"},
+                )
             response_content = response.choices[0].message.content
             usage = response.usage
         except Exception as e:
-            error_msg = "AI qualification failed via FreeLLM API: " + str(e)
+            provider = "OpenRouter" if settings.OPENROUTER_API_KEY else "FreeLLM API"
+            error_msg = f"AI qualification failed via {provider}: {str(e)}"
             logger.error(error_msg, exc_info=True)
             raise DomainException(error_msg)
 

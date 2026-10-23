@@ -38,7 +38,7 @@ http:
         stsIncludeSubdomains: true
         stsPreload: true
         referrerPolicy: "strict-origin-when-cross-origin"
-        contentSecurityPolicy: "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self' https://fonts.gstatic.com; connect-src 'self'; frame-ancestors 'none'; base-uri 'self'; form-action 'self'"
+        contentSecurityPolicy: "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; img-src 'self' data: https:; font-src 'self' https://fonts.gstatic.com; connect-src 'self' https: wss:; frame-ancestors 'none'; base-uri 'self'; form-action 'self'"
         permissionsPolicy: "camera=(), microphone=(), geolocation=(), payment=()"
         customResponseHeaders:
           X-Robots-Tag: "noindex, nofollow"

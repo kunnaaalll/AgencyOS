@@ -13,14 +13,15 @@ export function FounderPage() {
   useEffect(() => {
     Promise.all([financeApi.getFounders(), financeApi.getSummary()])
       .then(([foundersData, summaryData]) => {
-        setFounders(foundersData)
+        setFounders(Array.isArray(foundersData) ? foundersData : (foundersData as any)?.items || [])
         setSummary(summaryData)
       })
       .catch(console.error)
       .finally(() => setIsLoading(false))
   }, [])
 
-  const totalEquity = founders.filter(f => f.is_active).reduce((sum, f) => sum + Number(f.equity_percentage), 0)
+  const founderList = Array.isArray(founders) ? founders : []
+  const totalEquity = founderList.filter(f => f.is_active).reduce((sum, f) => sum + Number(f.equity_percentage), 0)
   const isValidEquity = Math.abs(totalEquity - 100) < 0.01
 
   if (isLoading) return <div className="p-8">Loading founders...</div>
@@ -78,7 +79,13 @@ export function FounderPage() {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {founders.map((founder) => {
+            {founderList.length === 0 ? (
+              <TableRow>
+                <TableCell colSpan={6} className="text-center text-muted py-8">
+                  No founders found.
+                </TableCell>
+              </TableRow>
+            ) : founderList.map((founder) => {
               const expectedDistribution = founder.is_active && summary 
                 ? summary.distribution_pool * (Number(founder.equity_percentage) / 100) 
                 : 0

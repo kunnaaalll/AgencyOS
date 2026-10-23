@@ -42,7 +42,7 @@ export function RawBusinessesPage() {
           <tbody>
             {isLoading ? (
               <tr><td colSpan={8} className="p-4 text-center">Loading...</td></tr>
-            ) : (businesses as any)?.items?.length === 0 ? (
+            ) : (!Array.isArray((businesses as any)?.items) || (businesses as any)?.items?.length === 0) ? (
               <tr><td colSpan={8} className="p-4 text-center">No businesses discovered yet.</td></tr>
             ) : (businesses as any)?.items?.map((business: any) => (
               <tr key={business.id} className="border-b hover:bg-gray-50">

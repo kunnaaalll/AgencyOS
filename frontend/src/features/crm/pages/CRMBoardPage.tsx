@@ -125,10 +125,15 @@ function DroppableColumn({ id, stage, columnOpps, onEdit, onDelete }: { id: Pipe
 
 export function CRMBoardPage() {
   const queryClient = useQueryClient();
-  const { data: opportunities = [], isLoading: loading } = useQuery({
+  const { data: rawOpportunities = [], isLoading: loading } = useQuery({
     queryKey: ['opportunities'],
     queryFn: crmApi.getOpportunities,
   });
+  const opportunities: Opportunity[] = Array.isArray(rawOpportunities)
+    ? (rawOpportunities as Opportunity[])
+    : Array.isArray((rawOpportunities as any)?.items)
+    ? (rawOpportunities as any).items
+    : [];
 
   const updateStageMutation = useMutation({
     mutationFn: ({ id, stage }: { id: string; stage: PipelineStage }) => 

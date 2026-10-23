@@ -1,0 +1,31 @@
+# ============================================================
+# AgencyOS V2.1 — Safe Coexistence Mode Override
+# ============================================================
+# Purpose:
+#   Run AgencyOS on a server with existing active websites/apps.
+#   - NEVER binds to public ports 80 or 443 (Traefik disabled).
+#   - Exposes Frontend & Backend ONLY on internal loopback (127.0.0.1).
+#   - Zero port conflicts with host Nginx/Apache/Caddy/Postgres/Redis.
+#   - Memory & CPU resource limits strictly enforced.
+#
+# Usage:
+#   docker compose --env-file .env.production -f docker-compose.prod.yml -f docker-compose.coexist.yml up -d
+# ============================================================
+
+services:
+
+  # ── Disable Standalone Traefik ──────────────────────────────
+  traefik:
+    deploy:
+      replicas: 0
+    ports: []
+
+  # ── Expose Frontend to Localhost ONLY ───────────────────────
+  frontend:
+    ports:
+      - "${FRONTEND_BIND:-127.0.0.1:8088}:80"
+
+  # ── Expose Backend API to Localhost ONLY ────────────────────
+  backend:
+    ports:
+      - "${BACKEND_BIND:-127.0.0.1:8000}:8000"

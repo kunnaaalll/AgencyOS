@@ -112,10 +112,17 @@ def create_app() -> FastAPI:
 
     app.add_middleware(SlowAPIMiddleware)
 
-    # ── CORS ───────
+    # ── CORS ──────────────────────────────────────────────────
+    allowed_origins = list(
+        {
+            origin.strip()
+            for origin in [settings.FRONTEND_URL] + settings.cors_origins_list
+            if origin.strip()
+        }
+    )
     app.add_middleware(
         CORSMiddleware,
-        allow_origins=[settings.FRONTEND_URL],
+        allow_origins=allowed_origins,
         allow_credentials=True,
         allow_methods=["*"],
         allow_headers=["*"],

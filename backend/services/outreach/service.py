@@ -16,6 +16,7 @@ from domain.outreach.schemas import AIOutreachOutputSchema
 from domain.monitoring.models import TokenUsageLog
 from events.bus import EventBus
 from core.config import settings
+from services.harvey.prompts import HARVEY_SYSTEM_PROMPT
 
 
 class OutreachGenerationService:
@@ -37,28 +38,62 @@ class OutreachGenerationService:
         start_time = time.time()
 
         prompt = self._build_prompt(lead, analysis, qualification, channel)
-
-        model_used = "freellmapi/auto"
         usage = None
 
+        system_content = (
+            HARVEY_SYSTEM_PROMPT
+            if channel == OutreachChannel.EMAIL
+            else "You are an expert sales AI preparing outreach drafts. Output ONLY valid JSON matching the exact schema requested, with no markdown formatting or extra text."
+        )
+
         try:
-            response = await acompletion(
-                model="openai/auto",
-                api_base=settings.FREELLM_API_BASE,
-                messages=[
-                    {
-                        "role": "system",
-                        "content": "You are an expert sales AI preparing outreach drafts. Output ONLY valid JSON matching the exact schema requested, with no markdown formatting or extra text.",
-                    },
-                    {"role": "user", "content": prompt},
-                ],
-                response_format={"type": "json_object"},
-            )
+            if settings.OPENROUTER_API_KEY:
+                model_used = settings.OPENROUTER_MODEL
+                if not model_used.startswith("openrouter/"):
+                    model_used = f"openrouter/{model_used}"
+
+                try:
+                    response = await acompletion(
+                        model=model_used,
+                        api_key=settings.OPENROUTER_API_KEY,
+                        messages=[
+                            {"role": "system", "content": system_content},
+                            {"role": "user", "content": prompt},
+                        ],
+                        response_format={"type": "json_object"},
+                    )
+                except Exception as model_err:
+                    if any(k in str(model_err).lower() for k in ["403", "404", "429", "harness", "unavailable"]):
+                        logger.warning(f"Model {model_used} unavailable on OpenRouter, falling back to openrouter/free: {model_err}")
+                        model_used = "openrouter/free"
+                        response = await acompletion(
+                            model="openrouter/free",
+                            api_key=settings.OPENROUTER_API_KEY,
+                            messages=[
+                                {"role": "system", "content": system_content},
+                                {"role": "user", "content": prompt},
+                            ],
+                            response_format={"type": "json_object"},
+                        )
+                    else:
+                        raise
+            else:
+                model_used = "freellmapi/auto"
+                response = await acompletion(
+                    model="openai/auto",
+                    api_base=settings.FREELLM_API_BASE,
+                    messages=[
+                        {"role": "system", "content": system_content},
+                        {"role": "user", "content": prompt},
+                    ],
+                    response_format={"type": "json_object"},
+                )
             response_content = response.choices[0].message.content
             usage = response.usage
         except Exception as e:
-            logger.error(f"AI generation failed via FreeLLM API: {str(e)}", exc_info=True)
-            raise DomainException(f"AI generation failed via FreeLLM API: {str(e)}")
+            provider = "OpenRouter" if settings.OPENROUTER_API_KEY else "FreeLLM API"
+            logger.error(f"AI generation failed via {provider}: {str(e)}", exc_info=True)
+            raise DomainException(f"AI generation failed via {provider}: {str(e)}")
 
         execution_time_ms = (time.time() - start_time) * 1000
         tokens_used = usage.total_tokens if usage else 0
@@ -132,7 +167,11 @@ class OutreachGenerationService:
 
         channel_rules = ""
         if channel == OutreachChannel.EMAIL:
-            channel_rules = "Length: 100-200 words. Requirements: Personalized opening, Reference observed pain points, Value proposition, Soft CTA."
+            channel_rules = (
+                "HARVEY RULES: Under 75 words strictly. Write like a real person sending a quick note from their laptop. "
+                "Hook with ONE observed signal from their website. Zero buzzwords (ban 'delve', 'streamline', 'game-changer', 'hope this finds you well'). "
+                "End with a soft CTA (e.g., 'Worth a quick 2-minute video?')."
+            )
         elif channel == OutreachChannel.LINKEDIN:
             channel_rules = "Length: 50-80 words. Professional and concise."
         elif channel == OutreachChannel.WHATSAPP:

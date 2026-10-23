@@ -1,6 +1,6 @@
 import React from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { outreachApi } from '../api/outreachApi';
+import { outreachApi, OutreachDraftResponse } from '../api/outreachApi';
 import { Link } from '@tanstack/react-router';
 
 export const OutreachListPage: React.FC = () => {
@@ -11,6 +11,12 @@ export const OutreachListPage: React.FC = () => {
 
   if (isLoading) return <div className="p-8">Loading outreach drafts...</div>;
   if (error) return <div className="p-8 text-red-500">Failed to load outreach drafts.</div>;
+
+  const list: OutreachDraftResponse[] = Array.isArray(drafts)
+    ? (drafts as OutreachDraftResponse[])
+    : Array.isArray((drafts as any)?.items)
+    ? (drafts as any).items
+    : [];
 
   return (
     <div className="p-8">
@@ -30,40 +36,41 @@ export const OutreachListPage: React.FC = () => {
             </tr>
           </thead>
           <tbody className="bg-white divide-y divide-gray-200">
-            {drafts?.map((d) => (
-              <tr key={d.id}>
-                <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                  {d.business_name || d.lead_id}
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                  {d.channel}
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                  <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
-                    d.status === 'APPROVED' ? 'bg-green-100 text-green-800' : 
-                    d.status === 'USED' ? 'bg-blue-100 text-blue-800' :
-                    d.status === 'REJECTED' ? 'bg-red-100 text-red-800' :
-                    'bg-yellow-100 text-yellow-800'
-                  }`}>
-                    {d.status}
-                  </span>
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                  {new Date(d.created_at).toLocaleDateString()}
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                  <Link to="/outreach/$draftId" params={{ draftId: d.id }} className="text-indigo-600 hover:text-indigo-900">
-                    View & Edit
-                  </Link>
-                </td>
-              </tr>
-            ))}
-            {drafts?.length === 0 && (
+            {list.length === 0 ? (
               <tr>
-                <td colSpan={6} className="px-6 py-4 text-center text-sm text-gray-500">
+                <td colSpan={5} className="px-6 py-8 text-center text-sm text-gray-500">
                   No outreach drafts found.
                 </td>
               </tr>
+            ) : (
+              list.map((d: OutreachDraftResponse) => (
+                <tr key={d.id}>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                    {d.business_name || d.lead_id}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                    {d.channel}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                    <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
+                      d.status === 'APPROVED' ? 'bg-green-100 text-green-800' : 
+                      d.status === 'USED' ? 'bg-blue-100 text-blue-800' :
+                      d.status === 'REJECTED' ? 'bg-red-100 text-red-800' :
+                      'bg-yellow-100 text-yellow-800'
+                    }`}>
+                      {d.status}
+                    </span>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                    {new Date(d.created_at).toLocaleDateString()}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                    <Link to="/outreach/$draftId" params={{ draftId: d.id }} className="text-indigo-600 hover:text-indigo-900">
+                      View & Edit
+                    </Link>
+                  </td>
+                </tr>
+              ))
             )}
           </tbody>
         </table>
