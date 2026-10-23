@@ -23,9 +23,9 @@ services:
   # ── Expose Frontend to Localhost ONLY ───────────────────────
   frontend:
     ports:
-      - "${FRONTEND_BIND:-127.0.0.1:8188}:80"
+      - "${FRONTEND_BIND:-127.0.0.1:8188:80}"
 
   # ── Expose Backend API to Localhost ONLY ────────────────────
   backend:
     ports:
-      - "${BACKEND_BIND:-127.0.0.1:8100}:8000"
+      - "${BACKEND_BIND:-127.0.0.1:8100:8000}"
