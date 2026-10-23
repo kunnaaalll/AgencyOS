@@ -29,3 +29,36 @@ services:
   backend:
     ports:
       - "${BACKEND_BIND:-127.0.0.1:8100:8000}"
+
+  # ── Disable Heavy Monitoring Stack (Preserves Host RAM & CPU) ──
+  prometheus:
+    deploy:
+      replicas: 0
+
+  grafana:
+    deploy:
+      replicas: 0
+
+  loki:
+    deploy:
+      replicas: 0
+
+  promtail:
+    deploy:
+      replicas: 0
+
+  alertmanager:
+    deploy:
+      replicas: 0
+
+  node-exporter:
+    deploy:
+      replicas: 0
+
+  postgres-exporter:
+    deploy:
+      replicas: 0
+
+  redis-exporter:
+    deploy:
+      replicas: 0
