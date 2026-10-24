@@ -38,12 +38,12 @@ export function LeadsListPage() {
   const queryClient = useQueryClient()
   const { data: leads, isLoading } = useQuery({
     queryKey: ['leads'],
-    queryFn: () => fetchLeads(true),
+    queryFn: () => fetchLeads(),
   })
 
   const [sorting, setSorting] = useState<SortingState>([])
   const [globalFilter, setGlobalFilter] = useState('')
-  const [cleanOnly, setCleanOnly] = useState(true)
+  const [cleanOnly, setCleanOnly] = useState(false)
 
   const statusMutation = useMutation({
     mutationFn: async ({ id, status }: { id: string; status: string }) => {
@@ -58,7 +58,7 @@ export function LeadsListPage() {
   const filteredData = useMemo(() => {
     if (!Array.isArray(leads)) return []
     if (!cleanOnly) return leads
-    return leads.filter(l => Boolean(l.phone && l.website))
+    return leads.filter(l => Boolean(l.phone || l.website || l.email))
   }, [leads, cleanOnly])
 
   const columnHelper = createColumnHelper<Lead>()

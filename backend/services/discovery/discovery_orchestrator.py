@@ -25,26 +25,45 @@ logger = structlog.get_logger()
 # ── Catalogs ──────────────────────────────────────────────────────────────────
 
 INDUSTRIES = [
-    "dentist",
-    "restaurant",
-    "salon",
-    "spa",
-    "skin clinic",
-    "gym",
+    # Media, Entertainment & OTT
+    "production house",
+    "film production company",
+    "ad film production",
+    "OTT platform",
+    "media agency",
+    "video production studio",
+    "animation studio",
+    # Online & Digital Businesses
+    "D2C brand",
+    "online clothing brand",
+    "ecommerce brand",
+    "SaaS startup",
+    "edtech platform",
+    "cloud kitchen",
+    # High-Ticket & Professional Services
+    "luxury real estate",
     "interior designer",
     "architect",
-    "lawyer",
-    "CA",
-    "real estate agent",
-    "school",
-    "coaching class",
+    "corporate law firm",
+    "wealth management",
+    "event management company",
+    "wedding planner",
+    # Healthcare & Aesthetics
+    "skin clinic",
+    "aesthetic clinic",
+    "cosmetic surgeon",
+    "IVF centre",
+    "dentist",
     "hospital",
-    "bakery",
-    "cafe",
+    # Lifestyle, Fitness & Hospitality
+    "gym",
+    "fitness studio",
+    "luxury salon",
+    "spa",
+    "fine dining restaurant",
     "hotel",
+    "resort",
     "jeweller",
-    "furniture store",
-    "digital marketing agency",
 ]
 
 MUMBAI_LOCATIONS = [

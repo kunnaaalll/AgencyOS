@@ -248,7 +248,7 @@ async def enrich_business(ctx: dict, business_id: str) -> None:
             google_maps_url=business.google_maps_url,
             source="Discovery Engine",
             status="NEW",
-            is_published=False,
+            is_published=True,
         )
         session.add(lead)
 
