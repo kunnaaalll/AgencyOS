@@ -221,38 +221,3 @@ async def delete_lead(
     await db.commit()
 
 
-@router.post("/analysis/{lead_id}", response_model=LeadAnalysisResponse)
-async def create_analysis(
-    lead_id: uuid.UUID,
-    analysis_in: LeadAnalysisCreate,
-    db: AsyncSession = Depends(get_db),
-    current_user: User = Depends(get_current_user),
-):
-    if not current_user.has_permission("analysis:create"):
-        raise HTTPException(status_code=403, detail="Not enough permissions")
-
-    lead = await db.get(Lead, lead_id)
-    if not lead:
-        raise HTTPException(status_code=404, detail="Lead not found")
-
-    analysis = LeadAnalysis(lead_id=lead_id, **analysis_in.model_dump())
-    db.add(analysis)
-    await db.commit()
-    await db.refresh(analysis)
-    return analysis
-
-
-@router.get("/analysis/{lead_id}", response_model=LeadAnalysisResponse)
-async def get_analysis(
-    lead_id: uuid.UUID,
-    db: AsyncSession = Depends(get_db),
-    current_user: User = Depends(get_current_user),
-):
-    if not current_user.has_permission("analysis:read"):
-        raise HTTPException(status_code=403, detail="Not enough permissions")
-
-    result = await db.execute(select(LeadAnalysis).where(LeadAnalysis.lead_id == lead_id))
-    analysis = result.scalars().first()
-    if not analysis:
-        raise HTTPException(status_code=404, detail="Analysis not found")
-    return analysis
