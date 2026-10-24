@@ -14,6 +14,9 @@ const getApiBaseUrl = (): string => {
     if (host === 'localhost' || host === '127.0.0.1') {
       return 'http://localhost:8000'
     }
+    if (host.includes('trycloudflare.com') || host.includes('pages.dev') || !host.includes('.')) {
+      return window.location.origin
+    }
     return `${window.location.protocol}//api.${host}`
   }
   return 'http://localhost:8000'
