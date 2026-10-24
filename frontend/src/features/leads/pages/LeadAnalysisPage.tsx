@@ -1,7 +1,15 @@
 import { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { useParams, Link } from '@tanstack/react-router'
-import { fetchLeadById, fetchLeadAnalysisById, triggerWebsiteAnalysis, updateLead, autoDiscoverWebsite, LeadAnalysis } from '../api'
+import {
+  fetchLeadById,
+  fetchLeadAnalysisById,
+  fetchAnalysisStatus,
+  triggerWebsiteAnalysis,
+  updateLead,
+  autoDiscoverWebsite,
+  LeadAnalysis,
+} from '../api'
 import { qualificationApi } from '@/features/qualification/api/qualificationApi'
 import {
   ArrowLeft,
@@ -36,12 +44,25 @@ export function LeadAnalysisPage() {
   const [statusMessage, setStatusMessage] = useState<string | null>(null)
   const [isManualInputOpen, setIsManualInputOpen] = useState(false)
   const [copiedPitch, setCopiedPitch] = useState(false)
+  const [isLocallyAuditing, setIsLocallyAuditing] = useState(false)
 
   const { data: lead, isLoading: isLeadLoading } = useQuery({
     queryKey: ['lead', id],
     queryFn: () => fetchLeadById(id),
     enabled: !!id,
   })
+
+  // Poll analysis status to detect active background Playwright jobs
+  const { data: analysisStatus } = useQuery({
+    queryKey: ['leadAnalysisStatus', id],
+    queryFn: () => fetchAnalysisStatus(id),
+    enabled: !!id,
+    refetchInterval: (query) => {
+      return isLocallyAuditing || query.state.data?.is_running ? 2000 : false
+    },
+  })
+
+  const isAuditRunning = isLocallyAuditing || Boolean(analysisStatus?.is_running)
 
   const {
     data: analysisData,
@@ -52,6 +73,7 @@ export function LeadAnalysisPage() {
     queryFn: () => fetchLeadAnalysisById(id),
     enabled: !!id,
     retry: false,
+    refetchInterval: isAuditRunning ? 2500 : false,
   })
 
   const {
@@ -69,17 +91,24 @@ export function LeadAnalysisPage() {
   const analysis: LeadAnalysis | null =
     analysisData && !Array.isArray(analysisData) && analysisData.id ? analysisData : null
 
-  // Mutation to run website crawler
+  // If analysis is now completed and present, clear local auditing flag
+  if (analysis && isLocallyAuditing) {
+    setIsLocallyAuditing(false)
+  }
+
+  // Mutation to run website crawler with instant lock against spamming
   const runMutation = useMutation({
     mutationFn: () => triggerWebsiteAnalysis(id),
-    onSuccess: () => {
-      setStatusMessage('Website analysis queued! The automated crawler is actively inspecting pages.')
-      setTimeout(() => {
-        refetchAnalysis()
-        queryClient.invalidateQueries({ queryKey: ['leadAnalysis', id] })
-      }, 3000)
+    onMutate: () => {
+      setIsLocallyAuditing(true)
+    },
+    onSuccess: (data) => {
+      setIsLocallyAuditing(true)
+      setStatusMessage('Playwright browser crawler started! Actively inspecting mobile responsiveness, SEO, and page speed...')
+      queryClient.invalidateQueries({ queryKey: ['leadAnalysisStatus', id] })
     },
     onError: (err: any) => {
+      setIsLocallyAuditing(false)
       const msg = err?.response?.data?.detail || 'Failed to trigger website audit'
       setStatusMessage(`Error: ${msg}`)
     },
@@ -104,18 +133,18 @@ export function LeadAnalysisPage() {
   // Mutation to update website and then trigger analysis
   const updateAndRunMutation = useMutation({
     mutationFn: async (urlToSave: string) => {
+      setIsLocallyAuditing(true)
       await updateLead(id, { website: urlToSave })
       return triggerWebsiteAnalysis(id)
     },
     onSuccess: () => {
-      setStatusMessage('Website linked and automated audit queued!')
+      setIsLocallyAuditing(true)
+      setStatusMessage('Website linked and automated Playwright audit queued!')
       queryClient.invalidateQueries({ queryKey: ['lead', id] })
-      setTimeout(() => {
-        refetchAnalysis()
-        queryClient.invalidateQueries({ queryKey: ['leadAnalysis', id] })
-      }, 3000)
+      queryClient.invalidateQueries({ queryKey: ['leadAnalysisStatus', id] })
     },
     onError: (err: any) => {
+      setIsLocallyAuditing(false)
       const msg = err?.response?.data?.detail || 'Failed to update website'
       setStatusMessage(`Error: ${msg}`)
     },
@@ -129,6 +158,7 @@ export function LeadAnalysisPage() {
       if (data.success && data.website) {
         queryClient.invalidateQueries({ queryKey: ['lead', id] })
         queryClient.invalidateQueries({ queryKey: ['leads'] })
+        queryClient.invalidateQueries({ queryKey: ['leadAnalysisStatus', id] })
         setTimeout(() => {
           refetchAnalysis()
           queryClient.invalidateQueries({ queryKey: ['leadAnalysis', id] })
@@ -219,12 +249,21 @@ export function LeadAnalysisPage() {
               <h1 className="text-xl md:text-2xl font-bold text-zinc-900 dark:text-zinc-100">
                 Lead Intelligence: {lead?.business_name || 'Business'}
               </h1>
-              <p className="text-xs text-zinc-500 mt-0.5">
+              <p className="text-xs text-zinc-500 mt-0.5 flex items-center flex-wrap gap-2">
                 {lead?.industry ? `${lead.industry} • ` : ''}
                 {lead?.city ? `${lead.city} • ` : ''}
-                Website Audit: <span className="font-semibold text-amber-600">Pending Crawl</span>
+                {isAuditRunning ? (
+                  <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-bold bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/30 animate-pulse">
+                    <RefreshCw className="w-3 h-3 animate-spin" />
+                    Crawl in Progress: Automated Playwright Browser Active
+                  </span>
+                ) : (
+                  <span>
+                    Website Audit: <span className="font-semibold text-amber-600">Pending Crawl</span>
+                  </span>
+                )}
                 {qualification?.model_used && (
-                  <span className="ml-2 font-mono text-[10px] text-zinc-400">
+                  <span className="font-mono text-[10px] text-zinc-400">
                     (AI: {qualification.model_used.split('/').pop()})
                   </span>
                 )}
@@ -236,11 +275,11 @@ export function LeadAnalysisPage() {
             <button
               onClick={() => regenerateQualMutation.mutate()}
               disabled={regenerateQualMutation.isPending}
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-purple-600 hover:bg-purple-500 text-white font-medium text-xs rounded-xl shadow-sm transition-all disabled:opacity-50"
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-purple-600 hover:bg-purple-500 text-white font-medium text-xs rounded-xl shadow-sm transition-all disabled:opacity-50 disabled:cursor-not-allowed"
               title="Trigger live LLM re-evaluation"
             >
               <Zap className={`w-3.5 h-3.5 ${regenerateQualMutation.isPending ? 'animate-spin' : 'text-amber-300'}`} />
-              {regenerateQualMutation.isPending ? 'Synthesizing LLM...' : '⚡ Re-Generate AI Intelligence'}
+              {regenerateQualMutation.isPending ? 'Synthesizing with LLM...' : '⚡ Re-Generate AI Intelligence'}
             </button>
           </div>
         </div>
@@ -260,51 +299,108 @@ export function LeadAnalysisPage() {
         {/* Dynamic Intelligence Card */}
         <div className="bg-white dark:bg-zinc-900 rounded-2xl border border-zinc-200 dark:border-zinc-800 p-6 md:p-8 shadow-sm">
           {effectiveWebsite ? (
-            <div className="text-center max-w-xl mx-auto space-y-5">
-              <div className="w-16 h-16 rounded-2xl bg-indigo-50 dark:bg-indigo-950/60 border border-indigo-200 dark:border-indigo-800 flex items-center justify-center mx-auto text-indigo-600">
-                <Sparkles className="w-8 h-8" />
-              </div>
+            isAuditRunning ? (
+              /* LIVE IN-PROGRESS AUDIT VIEW (ANTI-SPAM SHIELD) */
+              <div className="text-center max-w-xl mx-auto space-y-6 py-4 animate-fade-in">
+                <div className="relative w-20 h-20 mx-auto flex items-center justify-center">
+                  <div className="absolute inset-0 rounded-full bg-indigo-500/20 animate-ping" />
+                  <div className="relative w-16 h-16 rounded-2xl bg-indigo-600 flex items-center justify-center text-white shadow-lg shadow-indigo-500/30">
+                    <RefreshCw className="w-8 h-8 animate-spin" />
+                  </div>
+                </div>
 
-              <div>
-                <h2 className="text-xl font-bold text-zinc-900 dark:text-zinc-100 mb-1">
-                  Ready to Run Website Audit
-                </h2>
-                <p className="text-zinc-600 dark:text-zinc-400 text-sm leading-relaxed">
-                  AgencyOS deep-crawls business websites using automated Playwright browsers to inspect SEO meta-tags, mobile responsiveness, conversion call-to-actions, and social authority.
-                </p>
-              </div>
+                <div>
+                  <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-amber-50 dark:bg-amber-950/60 text-amber-700 dark:text-amber-300 border border-amber-200 dark:border-amber-800 mb-2">
+                    <Activity className="w-3.5 h-3.5 animate-pulse text-amber-500" />
+                    Live Crawler Active • In Process
+                  </span>
+                  <h2 className="text-xl font-bold text-zinc-900 dark:text-zinc-100">
+                    Deep Playwright Website Crawl in Progress
+                  </h2>
+                  <p className="text-zinc-600 dark:text-zinc-400 text-xs mt-1.5 max-w-md mx-auto leading-relaxed">
+                    Automated browser is navigating to{' '}
+                    <span className="font-mono font-medium text-indigo-600 underline">
+                      {effectiveWebsite}
+                    </span>{' '}
+                    to inspect SEO structure, mobile viewport responsiveness, Core Web Vitals, and conversion hooks.
+                  </p>
+                </div>
 
-              <div className="p-3 bg-zinc-50 dark:bg-zinc-800/60 border border-zinc-200 dark:border-zinc-700 rounded-xl text-xs flex items-center justify-between">
-                <span className="text-zinc-500">Target Website:</span>
-                <a
-                  href={effectiveWebsite.startsWith('http') ? effectiveWebsite : `https://${effectiveWebsite}`}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="font-mono font-medium text-indigo-600 hover:underline flex items-center gap-1.5"
+                {/* Live Step Tracker */}
+                <div className="p-4 rounded-xl bg-zinc-50 dark:bg-zinc-800/60 border border-zinc-200 dark:border-zinc-700 text-left space-y-2.5 max-w-md mx-auto">
+                  <div className="flex items-center gap-2.5 text-xs text-emerald-600 dark:text-emerald-400 font-medium">
+                    <CheckCircle2 className="w-4 h-4 shrink-0" />
+                    <span>Playwright headless worker dispatched to background</span>
+                  </div>
+                  <div className="flex items-center gap-2.5 text-xs text-indigo-600 dark:text-indigo-400 font-semibold animate-pulse">
+                    <RefreshCw className="w-4 h-4 animate-spin shrink-0" />
+                    <span>Inspecting DOM tree, mobile viewport & SEO metadata...</span>
+                  </div>
+                  <div className="flex items-center gap-2.5 text-xs text-zinc-400 font-medium">
+                    <div className="w-4 h-4 rounded-full border border-zinc-300 dark:border-zinc-600 flex items-center justify-center text-[10px] shrink-0">
+                      •
+                    </div>
+                    <span>Generating 6-vector score report & syncing with AI intelligence</span>
+                  </div>
+                </div>
+
+                {/* Anti-spam Disabled Button */}
+                <button
+                  disabled
+                  className="w-full inline-flex items-center justify-center gap-2 px-5 py-3 rounded-xl bg-zinc-100 dark:bg-zinc-800 text-zinc-400 dark:text-zinc-500 font-semibold text-sm cursor-not-allowed border border-zinc-200 dark:border-zinc-700 shadow-none select-none"
                 >
-                  {effectiveWebsite}
-                  <ExternalLink className="w-3.5 h-3.5" />
-                </a>
+                  <RefreshCw className="w-4 h-4 animate-spin text-indigo-500" />
+                  Website Audit in Process... Please Wait (Auto-Refreshing)
+                </button>
               </div>
+            ) : (
+              /* READY TO AUDIT VIEW */
+              <div className="text-center max-w-xl mx-auto space-y-5">
+                <div className="w-16 h-16 rounded-2xl bg-indigo-50 dark:bg-indigo-950/60 border border-indigo-200 dark:border-indigo-800 flex items-center justify-center mx-auto text-indigo-600">
+                  <Sparkles className="w-8 h-8" />
+                </div>
 
-              <button
-                onClick={() => runMutation.mutate()}
-                disabled={runMutation.isPending}
-                className="w-full inline-flex items-center justify-center gap-2 px-5 py-3 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-semibold text-sm shadow-md transition-all disabled:opacity-50"
-              >
-                {runMutation.isPending ? (
-                  <>
-                    <RefreshCw className="w-4 h-4 animate-spin" />
-                    Enqueuing Website Audit...
-                  </>
-                ) : (
-                  <>
-                    <Sparkles className="w-4 h-4 text-amber-300" />
-                    Run AI Website Audit Now
-                  </>
-                )}
-              </button>
-            </div>
+                <div>
+                  <h2 className="text-xl font-bold text-zinc-900 dark:text-zinc-100 mb-1">
+                    Ready to Run Website Audit
+                  </h2>
+                  <p className="text-zinc-600 dark:text-zinc-400 text-sm leading-relaxed">
+                    AgencyOS deep-crawls business websites using automated Playwright browsers to inspect SEO meta-tags, mobile responsiveness, conversion call-to-actions, and social authority.
+                  </p>
+                </div>
+
+                <div className="p-3 bg-zinc-50 dark:bg-zinc-800/60 border border-zinc-200 dark:border-zinc-700 rounded-xl text-xs flex items-center justify-between">
+                  <span className="text-zinc-500">Target Website:</span>
+                  <a
+                    href={effectiveWebsite.startsWith('http') ? effectiveWebsite : `https://${effectiveWebsite}`}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="font-mono font-medium text-indigo-600 hover:underline flex items-center gap-1.5"
+                  >
+                    {effectiveWebsite}
+                    <ExternalLink className="w-3.5 h-3.5" />
+                  </a>
+                </div>
+
+                <button
+                  onClick={() => runMutation.mutate()}
+                  disabled={runMutation.isPending || isAuditRunning}
+                  className="w-full inline-flex items-center justify-center gap-2 px-5 py-3 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-semibold text-sm shadow-md transition-all disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
+                >
+                  {runMutation.isPending || isAuditRunning ? (
+                    <>
+                      <RefreshCw className="w-4 h-4 animate-spin" />
+                      Dispatching Playwright Crawler...
+                    </>
+                  ) : (
+                    <>
+                      <Sparkles className="w-4 h-4 text-amber-300" />
+                      Run AI Website Audit Now
+                    </>
+                  )}
+                </button>
+              </div>
+            )
           ) : (
             <div className="space-y-6 text-left">
               {/* Header Box */}
@@ -330,7 +426,7 @@ export function LeadAnalysisPage() {
                   <button
                     onClick={() => autoDiscoverMutation.mutate()}
                     disabled={autoDiscoverMutation.isPending}
-                    className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-medium text-xs shadow-sm transition-all disabled:opacity-50"
+                    className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-medium text-xs shadow-sm transition-all disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
                   >
                     {autoDiscoverMutation.isPending ? (
                       <>
@@ -420,7 +516,7 @@ export function LeadAnalysisPage() {
                         setCopiedPitch(true)
                         setTimeout(() => setCopiedPitch(false), 2000)
                       }}
-                      className="inline-flex items-center gap-1 text-xs font-medium px-2.5 py-1 rounded bg-zinc-200 dark:bg-zinc-700 hover:bg-zinc-300 text-zinc-700 dark:text-zinc-200 transition-colors"
+                      className="inline-flex items-center gap-1 text-xs font-medium px-2.5 py-1 rounded bg-zinc-200 dark:bg-zinc-700 hover:bg-zinc-300 text-zinc-700 dark:text-zinc-200 transition-colors cursor-pointer"
                     >
                       {copiedPitch ? (
                         <>
@@ -457,7 +553,7 @@ export function LeadAnalysisPage() {
               <div className="border-t border-zinc-200 dark:border-zinc-800 pt-4">
                 <button
                   onClick={() => setIsManualInputOpen(!isManualInputOpen)}
-                  className="flex items-center justify-between w-full text-xs font-semibold text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-200 py-1"
+                  className="flex items-center justify-between w-full text-xs font-semibold text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-200 py-1 cursor-pointer"
                 >
                   <span className="flex items-center gap-1.5">
                     <Globe className="w-3.5 h-3.5" />
@@ -487,10 +583,10 @@ export function LeadAnalysisPage() {
                         }
                         updateAndRunMutation.mutate(formatted)
                       }}
-                      disabled={updateAndRunMutation.isPending || !websiteInput.trim()}
-                      className="inline-flex items-center gap-1.5 px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl font-medium text-xs disabled:opacity-50 shrink-0"
+                      disabled={updateAndRunMutation.isPending || isAuditRunning || !websiteInput.trim()}
+                      className="inline-flex items-center gap-1.5 px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl font-medium text-xs disabled:opacity-50 disabled:cursor-not-allowed shrink-0 cursor-pointer"
                     >
-                      {updateAndRunMutation.isPending ? (
+                      {updateAndRunMutation.isPending || isAuditRunning ? (
                         <RefreshCw className="w-3.5 h-3.5 animate-spin" />
                       ) : (
                         <Save className="w-3.5 h-3.5" />
@@ -615,7 +711,7 @@ export function LeadAnalysisPage() {
           <button
             onClick={() => regenerateQualMutation.mutate()}
             disabled={regenerateQualMutation.isPending}
-            className="inline-flex items-center gap-1.5 px-3.5 py-2 bg-purple-600 hover:bg-purple-500 text-white rounded-xl text-xs font-semibold shadow-sm transition-colors disabled:opacity-50"
+            className="inline-flex items-center gap-1.5 px-3.5 py-2 bg-purple-600 hover:bg-purple-500 text-white rounded-xl text-xs font-semibold shadow-sm transition-colors disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
             title="Re-run bespoke LLM evaluation"
           >
             <Zap className={`w-3.5 h-3.5 ${regenerateQualMutation.isPending ? 'animate-spin' : 'text-amber-300'}`} />
@@ -624,11 +720,11 @@ export function LeadAnalysisPage() {
 
           <button
             onClick={() => runMutation.mutate()}
-            disabled={runMutation.isPending}
-            className="inline-flex items-center gap-1.5 px-3.5 py-2 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700 hover:bg-zinc-50 dark:hover:bg-zinc-800 text-zinc-700 dark:text-zinc-300 rounded-xl text-xs font-medium shadow-sm transition-colors disabled:opacity-50"
+            disabled={runMutation.isPending || isAuditRunning}
+            className="inline-flex items-center gap-1.5 px-3.5 py-2 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700 hover:bg-zinc-50 dark:hover:bg-zinc-800 text-zinc-700 dark:text-zinc-300 rounded-xl text-xs font-medium shadow-sm transition-colors disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
           >
-            <RefreshCw className={`w-3.5 h-3.5 ${runMutation.isPending ? 'animate-spin' : ''}`} />
-            {runMutation.isPending ? 'Auditing...' : 'Re-run Crawler'}
+            <RefreshCw className={`w-3.5 h-3.5 ${runMutation.isPending || isAuditRunning ? 'animate-spin' : ''}`} />
+            {runMutation.isPending || isAuditRunning ? 'Auditing...' : 'Re-run Crawler'}
           </button>
 
           <Link
@@ -646,7 +742,7 @@ export function LeadAnalysisPage() {
           <span>{statusMessage}</span>
           <button
             onClick={() => setStatusMessage(null)}
-            className="text-xs font-semibold hover:underline text-indigo-600"
+            className="text-xs font-semibold hover:underline text-indigo-600 cursor-pointer"
           >
             Dismiss
           </button>
@@ -701,7 +797,7 @@ export function LeadAnalysisPage() {
                 setCopiedPitch(true)
                 setTimeout(() => setCopiedPitch(false), 2000)
               }}
-              className="inline-flex items-center gap-1 text-xs font-medium px-2.5 py-1 rounded bg-zinc-100 dark:bg-zinc-800 hover:bg-zinc-200 text-zinc-700 dark:text-zinc-200 transition-colors"
+              className="inline-flex items-center gap-1 text-xs font-medium px-2.5 py-1 rounded bg-zinc-100 dark:bg-zinc-800 hover:bg-zinc-200 text-zinc-700 dark:text-zinc-200 transition-colors cursor-pointer"
             >
               {copiedPitch ? (
                 <>

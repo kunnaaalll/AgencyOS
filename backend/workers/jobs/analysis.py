@@ -11,6 +11,12 @@ logger = logging.getLogger(__name__)
 
 async def analyze_website_job(ctx: dict, lead_id: str, website_url: str | None = None) -> None:
     logger.info(f"Starting background job: analyze_website for lead {lead_id}")
+    redis = ctx.get("redis")
+    if redis:
+        try:
+            await redis.set(f"analysis:running:{lead_id}", "1", ex=300)
+        except Exception:
+            pass
 
     try:
         lead_uuid = UUID(lead_id)
@@ -50,7 +56,6 @@ async def analyze_website_job(ctx: dict, lead_id: str, website_url: str | None =
             logger.info(f"Website analysis completed for lead {lead_id}")
 
             # Automatically trigger AI Qualification for this lead with analysis data synced!
-            redis = ctx.get("redis")
             if redis:
                 await redis.enqueue_job("qualify_lead_job", str(lead_id))
             else:
@@ -58,4 +63,10 @@ async def analyze_website_job(ctx: dict, lead_id: str, website_url: str | None =
                 await qualify_lead_job(ctx, str(lead_id))
     except Exception as e:
         logger.error(f"Failed to analyze website for lead {lead_id}: {e}", exc_info=True)
+    finally:
+        if redis:
+            try:
+                await redis.delete(f"analysis:running:{lead_id}")
+            except Exception:
+                pass
 

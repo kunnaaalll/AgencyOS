@@ -94,8 +94,13 @@ export const fetchLeadAnalysisById = async (leadId: string): Promise<LeadAnalysi
   }
 }
 
-export const triggerWebsiteAnalysis = async (leadId: string): Promise<{ message: string }> => {
+export const triggerWebsiteAnalysis = async (leadId: string): Promise<{ message: string; status?: string; is_running?: boolean }> => {
   const { data } = await api.post(`/analysis/run/${leadId}`)
+  return data
+}
+
+export const fetchAnalysisStatus = async (leadId: string): Promise<{ status: string; is_running: boolean }> => {
+  const { data } = await api.get(`/analysis/status/${leadId}`)
   return data
 }
 
