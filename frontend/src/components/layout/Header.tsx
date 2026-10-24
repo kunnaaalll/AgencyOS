@@ -32,9 +32,9 @@ export function Header() {
 
   return (
     <motion.header 
-      initial={{ y: -20, opacity: 0 }}
+      initial={{ y: -10, opacity: 0 }}
       animate={{ y: 0, opacity: 1 }}
-      className="h-20 flex items-center justify-between px-8 sticky top-0 z-30 mb-4 pt-4 backdrop-blur-md bg-white/40 dark:bg-zinc-950/40 border-b border-slate-200/40 dark:border-zinc-800/40"
+      className="h-16 flex items-center justify-between px-6 bg-white dark:bg-zinc-900 border-b border-zinc-200 dark:border-zinc-800 shrink-0 z-20"
     >
       <div className="flex items-center">
         <div className="text-slate-500 dark:text-slate-400 font-medium text-sm flex items-center gap-2">

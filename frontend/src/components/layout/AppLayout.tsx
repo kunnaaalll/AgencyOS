@@ -6,12 +6,12 @@ import { CommandPalette } from '@/components/ui/CommandPalette'
 
 export function AppLayout() {
   return (
-      <div className="flex min-h-screen bg-[var(--background)] text-[var(--foreground)] font-sans relative transition-colors duration-300">
+    <div className="flex h-screen w-screen bg-[var(--background)] text-[var(--foreground)] font-sans relative overflow-hidden transition-colors duration-300">
       <Sidebar />
       <CommandPalette />
-      <div className="flex-1 flex flex-col pl-64 w-full min-h-screen">
+      <div className="flex-1 flex flex-col pl-64 w-full h-screen overflow-hidden">
         <Header />
-        <main className="flex-1 px-8 pb-12 w-full max-w-[1600px] mx-auto">
+        <main className="flex-1 px-6 py-4 w-full overflow-y-auto overflow-x-hidden">
           <Outlet />
         </main>
       </div>
