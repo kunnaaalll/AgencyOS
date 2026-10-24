@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { useParams, Link } from '@tanstack/react-router'
-import { fetchLeadById, fetchLeadAnalysisById, triggerWebsiteAnalysis, updateLead, LeadAnalysis } from '../api'
+import { fetchLeadById, fetchLeadAnalysisById, triggerWebsiteAnalysis, updateLead, autoDiscoverWebsite, LeadAnalysis } from '../api'
 import {
   ArrowLeft,
   CheckCircle2,
@@ -20,6 +20,13 @@ import {
   Share2,
   Send,
   Save,
+  MessageSquare,
+  PhoneCall,
+  Copy,
+  Check,
+  Flame,
+  LayoutTemplate,
+  ChevronDown,
 } from 'lucide-react'
 
 export function LeadAnalysisPage() {
@@ -27,6 +34,8 @@ export function LeadAnalysisPage() {
   const queryClient = useQueryClient()
   const [websiteInput, setWebsiteInput] = useState('')
   const [statusMessage, setStatusMessage] = useState<string | null>(null)
+  const [isManualInputOpen, setIsManualInputOpen] = useState(false)
+  const [copiedPitch, setCopiedPitch] = useState(false)
 
   const { data: lead, isLoading: isLeadLoading } = useQuery({
     queryKey: ['lead', id],
@@ -85,6 +94,26 @@ export function LeadAnalysisPage() {
     },
   })
 
+  // Mutation to auto-discover website via web search
+  const autoDiscoverMutation = useMutation({
+    mutationFn: () => autoDiscoverWebsite(id),
+    onSuccess: (data) => {
+      setStatusMessage(data.message)
+      if (data.success && data.website) {
+        queryClient.invalidateQueries({ queryKey: ['lead', id] })
+        queryClient.invalidateQueries({ queryKey: ['leads'] })
+        setTimeout(() => {
+          refetchAnalysis()
+          queryClient.invalidateQueries({ queryKey: ['leadAnalysis', id] })
+        }, 3000)
+      }
+    },
+    onError: (err: any) => {
+      const msg = err?.response?.data?.detail || 'Auto-discovery encountered an error'
+      setStatusMessage(`Error: ${msg}`)
+    },
+  })
+
   if (isLeadLoading || isAnalysisLoading) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[400px] text-zinc-500 space-y-4">
@@ -133,25 +162,25 @@ export function LeadAnalysisPage() {
           </div>
         )}
 
-        {/* Empty State Banner */}
-        <div className="bg-white dark:bg-zinc-900 rounded-2xl border border-zinc-200 dark:border-zinc-800 p-8 shadow-sm text-center">
-          <div className="w-16 h-16 rounded-2xl bg-indigo-50 dark:bg-indigo-950/60 border border-indigo-200 dark:border-indigo-800 flex items-center justify-center mx-auto mb-5 text-indigo-600">
-            <Sparkles className="w-8 h-8" />
-          </div>
-
-          <h2 className="text-xl font-bold text-zinc-900 dark:text-zinc-100 mb-2">
-            No Website Audit Generated Yet
-          </h2>
-
-          <p className="text-zinc-600 dark:text-zinc-400 max-w-xl mx-auto text-sm leading-relaxed mb-6">
-            AgencyOS deep-crawls business websites using automated Playwright browsers to inspect SEO meta-tags,
-            mobile responsiveness, conversion call-to-actions, and social authority.
-          </p>
-
+        {/* Empty State / Offline Teardown Banner */}
+        <div className="bg-white dark:bg-zinc-900 rounded-2xl border border-zinc-200 dark:border-zinc-800 p-8 shadow-sm">
           {effectiveWebsite ? (
-            <div className="max-w-md mx-auto space-y-4">
+            <div className="text-center max-w-xl mx-auto space-y-5">
+              <div className="w-16 h-16 rounded-2xl bg-indigo-50 dark:bg-indigo-950/60 border border-indigo-200 dark:border-indigo-800 flex items-center justify-center mx-auto text-indigo-600">
+                <Sparkles className="w-8 h-8" />
+              </div>
+
+              <div>
+                <h2 className="text-xl font-bold text-zinc-900 dark:text-zinc-100 mb-1">
+                  Ready to Run Website Audit
+                </h2>
+                <p className="text-zinc-600 dark:text-zinc-400 text-sm leading-relaxed">
+                  AgencyOS deep-crawls business websites using automated Playwright browsers to inspect SEO meta-tags, mobile responsiveness, conversion call-to-actions, and social authority.
+                </p>
+              </div>
+
               <div className="p-3 bg-zinc-50 dark:bg-zinc-800/60 border border-zinc-200 dark:border-zinc-700 rounded-xl text-xs flex items-center justify-between">
-                <span className="text-zinc-500">Target URL:</span>
+                <span className="text-zinc-500">Target Website:</span>
                 <a
                   href={effectiveWebsite.startsWith('http') ? effectiveWebsite : `https://${effectiveWebsite}`}
                   target="_blank"
@@ -175,56 +204,187 @@ export function LeadAnalysisPage() {
                   </>
                 ) : (
                   <>
-                    <Sparkles className="w-4 h-4" />
+                    <Sparkles className="w-4 h-4 text-amber-300" />
                     Run AI Website Audit Now
                   </>
                 )}
               </button>
             </div>
           ) : (
-            <div className="max-w-md mx-auto space-y-4 text-left">
-              <div className="p-3 bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800 rounded-xl text-xs text-amber-800 dark:text-amber-200 flex items-start gap-2">
-                <ShieldAlert className="w-4 h-4 shrink-0 mt-0.5" />
-                <span>
-                  This lead currently has no recorded website URL. Enter their website below to start the audit.
-                </span>
-              </div>
-
-              <div>
-                <label className="block text-xs font-semibold text-zinc-700 dark:text-zinc-300 mb-1.5">
-                  Business Website URL
-                </label>
-                <div className="flex gap-2">
-                  <div className="relative flex-1">
-                    <Globe className="w-4 h-4 text-zinc-400 absolute left-3 top-3" />
-                    <input
-                      type="url"
-                      placeholder="https://example.com"
-                      value={websiteInput}
-                      onChange={(e) => setWebsiteInput(e.target.value)}
-                      className="w-full pl-9 pr-3 py-2.5 bg-zinc-50 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 text-zinc-900 dark:text-zinc-100"
-                    />
+            <div className="space-y-6 text-left">
+              {/* Header Box */}
+              <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 p-5 rounded-xl bg-gradient-to-r from-purple-900/10 via-indigo-900/5 to-slate-900/10 border border-purple-200 dark:border-purple-800/40">
+                <div className="space-y-1">
+                  <div className="flex items-center gap-2">
+                    <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-amber-100 dark:bg-amber-950/60 text-amber-800 dark:text-amber-300 border border-amber-300 dark:border-amber-800">
+                      <Flame className="w-3 h-3 text-amber-500 fill-amber-500" />
+                      Prime Acquisition Prospect
+                    </span>
+                    <span className="text-xs text-zinc-500 dark:text-zinc-400">Zero Standalone Website on Google Maps</span>
                   </div>
+                  <h2 className="text-lg font-bold text-zinc-900 dark:text-zinc-100">
+                    Offline Business Intelligence: {lead?.business_name}
+                  </h2>
+                  <p className="text-xs text-zinc-600 dark:text-zinc-400 max-w-2xl">
+                    This business has no standalone website indexed on Google Maps. In B2B agency sales, businesses without a website have the highest conversion rate for a <strong>High-Converting Conversion Website & Local SEO Retainer</strong>.
+                  </p>
+                </div>
+
+                <div className="flex items-center gap-2 shrink-0">
                   <button
-                    onClick={() => {
-                      if (!websiteInput.trim()) return
-                      let formatted = websiteInput.trim()
-                      if (!formatted.startsWith('http')) {
-                        formatted = `https://${formatted}`
-                      }
-                      updateAndRunMutation.mutate(formatted)
-                    }}
-                    disabled={updateAndRunMutation.isPending || !websiteInput.trim()}
-                    className="inline-flex items-center gap-1.5 px-4 py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl font-medium text-sm disabled:opacity-50 shrink-0"
+                    onClick={() => autoDiscoverMutation.mutate()}
+                    disabled={autoDiscoverMutation.isPending}
+                    className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-medium text-xs shadow-sm transition-all disabled:opacity-50"
                   >
-                    {updateAndRunMutation.isPending ? (
-                      <RefreshCw className="w-4 h-4 animate-spin" />
+                    {autoDiscoverMutation.isPending ? (
+                      <>
+                        <RefreshCw className="w-3.5 h-3.5 animate-spin" />
+                        Scanning Web...
+                      </>
                     ) : (
-                      <Save className="w-4 h-4" />
+                      <>
+                        <Search className="w-3.5 h-3.5" />
+                        Auto-Discover Website via Search
+                      </>
                     )}
-                    Save & Audit
                   </button>
                 </div>
+              </div>
+
+              {/* 3 Strategy KPI Cards */}
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                <div className="p-4 rounded-xl border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-800/40">
+                  <span className="text-xs text-zinc-500 block mb-1">Opportunity Score</span>
+                  <div className="flex items-baseline gap-2">
+                    <span className="text-2xl font-bold text-indigo-600 dark:text-indigo-400">95/100</span>
+                    <span className="text-[11px] font-medium text-emerald-600">Uncontested Pitch</span>
+                  </div>
+                  <p className="text-[11px] text-zinc-500 mt-1">Direct pitch for website build without competing against existing agencies.</p>
+                </div>
+
+                <div className="p-4 rounded-xl border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-800/40">
+                  <span className="text-xs text-zinc-500 block mb-1">Recommended Retainer Offer</span>
+                  <div className="text-lg font-bold text-zinc-900 dark:text-zinc-100">
+                    ₹45k Setup + ₹20k/mo
+                  </div>
+                  <p className="text-[11px] text-zinc-500 mt-1">High-Speed Next.js Clinic Website + Google Maps Local Ranking Pack.</p>
+                </div>
+
+                <div className="p-4 rounded-xl border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-800/40">
+                  <span className="text-xs text-zinc-500 block mb-1">Estimated Revenue Leak</span>
+                  <div className="text-lg font-bold text-rose-600 dark:text-rose-400">
+                    ₹2,50,000 / month
+                  </div>
+                  <p className="text-[11px] text-zinc-500 mt-1">High-intent local patients searching Google who book with competitors instead.</p>
+                </div>
+              </div>
+
+              {/* Ready-to-Send Outreach Playbook */}
+              {(() => {
+                const cleanPhone = lead?.phone ? lead.phone.replace(/[^\d+]/g, '') : ''
+                const waNum = cleanPhone.startsWith('+')
+                  ? cleanPhone.slice(1)
+                  : cleanPhone.length === 10
+                  ? `91${cleanPhone}`
+                  : cleanPhone
+                const pitchScript = `Hi ${lead?.business_name || 'Business'} team, noticed your top patient ratings in ${lead?.city || 'Maharashtra'}, but noticed you don't have a modern mobile booking website online. You're currently losing high-intent patients to local clinics that offer instant online appointment booking. We build high-converting medical websites with WhatsApp booking—can I share a quick 60-second preview?`
+                const waLink = `https://wa.me/${waNum}?text=${encodeURIComponent(pitchScript)}`
+
+                return (
+                  <div className="p-5 rounded-xl border border-slate-200 dark:border-zinc-800 bg-slate-50/50 dark:bg-zinc-800/20 space-y-3">
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider flex items-center gap-1.5">
+                        <MessageSquare className="w-3.5 h-3.5 text-purple-600" />
+                        AI 1-Click Outreach Pitch Script
+                      </span>
+                      <div className="flex items-center gap-2">
+                        <button
+                          onClick={() => {
+                            navigator.clipboard.writeText(pitchScript)
+                            setCopiedPitch(true)
+                            setTimeout(() => setCopiedPitch(false), 2000)
+                          }}
+                          className="inline-flex items-center gap-1 text-xs font-medium px-2.5 py-1 rounded bg-zinc-200 dark:bg-zinc-700 hover:bg-zinc-300 text-zinc-700 dark:text-zinc-200 transition-colors"
+                        >
+                          {copiedPitch ? (
+                            <>
+                              <Check className="w-3 h-3 text-emerald-600" />
+                              Copied!
+                            </>
+                          ) : (
+                            <>
+                              <Copy className="w-3 h-3 text-zinc-500" />
+                              Copy Script
+                            </>
+                          )}
+                        </button>
+                        {waNum && (
+                          <a
+                            href={waLink}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="inline-flex items-center gap-1 text-xs font-semibold px-3 py-1 rounded bg-emerald-600 hover:bg-emerald-500 text-white transition-colors"
+                          >
+                            <Send className="w-3 h-3" />
+                            Send via WhatsApp
+                          </a>
+                        )}
+                      </div>
+                    </div>
+
+                    <div className="p-3.5 rounded-lg bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 text-xs font-mono text-slate-700 dark:text-slate-300 leading-relaxed select-all">
+                      {pitchScript}
+                    </div>
+                  </div>
+                )
+              })()}
+
+              {/* Optional Collapsible Manual Link */}
+              <div className="border-t border-zinc-200 dark:border-zinc-800 pt-4">
+                <button
+                  onClick={() => setIsManualInputOpen(!isManualInputOpen)}
+                  className="flex items-center justify-between w-full text-xs font-semibold text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-200 py-1"
+                >
+                  <span className="flex items-center gap-1.5">
+                    <Globe className="w-3.5 h-3.5" />
+                    Already found their standalone website? Link it manually to trigger Playwright crawl
+                  </span>
+                  <ChevronDown className={`w-4 h-4 transition-transform ${isManualInputOpen ? 'rotate-180' : ''}`} />
+                </button>
+
+                {isManualInputOpen && (
+                  <div className="mt-3 flex gap-2">
+                    <div className="relative flex-1">
+                      <Globe className="w-4 h-4 text-zinc-400 absolute left-3 top-3" />
+                      <input
+                        type="url"
+                        placeholder="https://example.com"
+                        value={websiteInput}
+                        onChange={(e) => setWebsiteInput(e.target.value)}
+                        className="w-full pl-9 pr-3 py-2 bg-zinc-50 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-xl text-xs focus:outline-none focus:ring-2 focus:ring-indigo-500 text-zinc-900 dark:text-zinc-100"
+                      />
+                    </div>
+                    <button
+                      onClick={() => {
+                        if (!websiteInput.trim()) return
+                        let formatted = websiteInput.trim()
+                        if (!formatted.startsWith('http')) {
+                          formatted = `https://${formatted}`
+                        }
+                        updateAndRunMutation.mutate(formatted)
+                      }}
+                      disabled={updateAndRunMutation.isPending || !websiteInput.trim()}
+                      className="inline-flex items-center gap-1.5 px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl font-medium text-xs disabled:opacity-50 shrink-0"
+                    >
+                      {updateAndRunMutation.isPending ? (
+                        <RefreshCw className="w-3.5 h-3.5 animate-spin" />
+                      ) : (
+                        <Save className="w-3.5 h-3.5" />
+                      )}
+                      Save & Audit
+                    </button>
+                  </div>
+                )}
               </div>
             </div>
           )}

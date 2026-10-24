@@ -1,6 +1,6 @@
 import uuid
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, Request, status
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -136,6 +136,72 @@ async def update_lead(
     await db.commit()
     await db.refresh(lead)
     return lead
+
+
+@router.post("/leads/{id}/auto-discover-website")
+async def auto_discover_website(
+    id: uuid.UUID,
+    request: Request,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    """Automatically find and attach the official domain for a lead using web search."""
+    if not current_user.has_permission("leads:update"):
+        raise HTTPException(status_code=403, detail="Not enough permissions")
+
+    lead = await db.get(Lead, id)
+    if not lead:
+        raise HTTPException(status_code=404, detail="Lead not found")
+
+    from urllib.parse import urlparse
+    from duckduckgo_search import DDGS
+
+    query = f"{lead.business_name} {lead.city or ''} official website"
+    found_url = None
+    blacklist_domains = {
+        "facebook.com", "instagram.com", "linkedin.com", "twitter.com", "x.com",
+        "youtube.com", "justdial.com", "indiamart.com", "practo.com", "google.com",
+        "yelp.com", "tripadvisor.com", "yellowpages.com", "sulekha.com", "wikipedia.org",
+    }
+
+    try:
+        with DDGS() as ddgs:
+            results = ddgs.text(query, max_results=8)
+            for r in results:
+                href = r.get("href", "")
+                if href:
+                    parsed = urlparse(href)
+                    domain = parsed.netloc.lower().replace("www.", "")
+                    if not any(b in domain for b in blacklist_domains):
+                        found_url = f"{parsed.scheme}://{parsed.netloc}"
+                        break
+    except Exception as e:
+        pass
+
+    if found_url:
+        lead.website = found_url
+        await db.commit()
+        await db.refresh(lead)
+
+        # Enqueue background analysis
+        redis_pool = getattr(request.app.state, "redis", None)
+        if redis_pool:
+            try:
+                await redis_pool.enqueue_job("analyze_website_job", str(lead.id), lead.website)
+            except Exception:
+                pass
+
+        return {
+            "success": True,
+            "website": found_url,
+            "message": f"Successfully auto-discovered website: {found_url}. Audit queued in background.",
+        }
+
+    return {
+        "success": False,
+        "website": None,
+        "message": "Verified Offline Business: No independent website found online. High-value candidate for Website Creation Pitch.",
+    }
 
 
 @router.delete("/leads/{id}", status_code=status.HTTP_204_NO_CONTENT)

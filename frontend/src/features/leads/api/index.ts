@@ -104,6 +104,11 @@ export const updateLead = async (id: string, updates: Partial<Lead>): Promise<Le
   return data
 }
 
+export const autoDiscoverWebsite = async (id: string): Promise<{ success: boolean; website: string | null; message: string }> => {
+  const { data } = await api.post(`/leads/${id}/auto-discover-website`)
+  return data
+}
+
 export const promoteCleanBatch = async (minCompleteness = 60): Promise<{ message: string; promoted_count: number }> => {
   const { data } = await api.post(`/discovery/businesses/promote-clean-batch?min_completeness=${minCompleteness}&require_phone=true&require_website=true`)
   return data

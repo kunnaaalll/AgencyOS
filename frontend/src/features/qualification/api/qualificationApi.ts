@@ -29,7 +29,13 @@ export const qualificationApi = {
   },
 
   generateQualification: async (leadId: string): Promise<{ message: string, job_id?: string }> => {
-    const { data } = await api.post('/qualification/generate', { lead_id: leadId });
+    const { data } = await api.post(`/qualification/run/${leadId}`);
     return data;
-  }
+  },
+
+  batchQualifyAll: async (): Promise<{ message: string; qualified_count: number; total_leads: number }> => {
+    const { data } = await api.post('/qualification/batch-qualify-all');
+    return data;
+  },
 };
+

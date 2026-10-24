@@ -20,6 +20,7 @@ Endpoints:
 
 import math
 import uuid
+from datetime import UTC, datetime
 
 import structlog
 from arq.connections import ArqRedis
@@ -296,6 +297,7 @@ async def list_raw_businesses(
 @router.post("/businesses/{business_id}/promote")
 async def promote_business_to_lead(
     business_id: uuid.UUID,
+    request: Request,
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
@@ -345,6 +347,7 @@ async def promote_business_to_lead(
         priority=priority,
     )
     db.add(lead)
+    business.enriched_at = datetime.now(UTC)
 
     # Update discovery run stats
     if business.run_id:
@@ -356,18 +359,127 @@ async def promote_business_to_lead(
             run.businesses_created += 1
 
     await db.commit()
+    await db.refresh(lead)
+
+    # Auto-enqueue audit or AI qualification in Redis
+    redis_pool = getattr(request.app.state, "redis", None)
+    if redis_pool:
+        try:
+            if lead.website:
+                await redis_pool.enqueue_job("analyze_website_job", str(lead.id), lead.website)
+            else:
+                await redis_pool.enqueue_job("qualify_lead_job", str(lead.id))
+        except Exception as e:
+            logger.warning("failed_to_enqueue_lead_job", error=str(e), lead_id=str(lead.id))
+
     return {"message": "Promoted to lead successfully", "lead_id": str(lead.id)}
+
+
+@router.post("/businesses/promote-all-valid")
+async def promote_all_valid_businesses(
+    request: Request,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    """One-click auto-promote all valid discovered businesses directly into All Leads CRM."""
+    if not current_user.has_permission("discovery:update") or not current_user.has_permission(
+        "leads:create"
+    ):
+        raise HTTPException(status_code=403, detail="Not enough permissions")
+
+    from domain.lead.enums import LeadStatus, Priority
+    from domain.lead.models import Lead
+
+    result = await db.execute(
+        select(RawBusiness).where(
+            RawBusiness.validation_status == "VALID",
+            RawBusiness.is_duplicate.is_(False),
+        ).limit(200)
+    )
+    businesses = result.scalars().all()
+
+    redis_pool = getattr(request.app.state, "redis", None)
+    promoted_count = 0
+
+    for b in businesses:
+        # Avoid creating duplicates in CRM
+        existing = await db.execute(
+            select(Lead).where(
+                (Lead.business_name == b.business_name) |
+                ((Lead.phone == b.phone) & (b.phone.isnot(None))) |
+                ((Lead.website == b.website) & (b.website.isnot(None)))
+            ).limit(1)
+        )
+        if existing.scalar_one_or_none():
+            b.enriched_at = b.enriched_at or datetime.now(UTC)
+            continue
+
+        score = 75
+        if b.review_count and b.review_count >= 50:
+            score += 15
+        elif b.review_count and b.review_count >= 20:
+            score += 10
+        if b.rating and b.rating >= 4.0:
+            score += 5
+        score = min(score, 99)
+
+        lead = Lead(
+            business_name=b.business_name,
+            email=b.email,
+            phone=b.phone,
+            website=b.website,
+            city=b.city,
+            state=b.state,
+            country=b.country,
+            industry=b.industry,
+            google_maps_url=b.google_maps_url,
+            instagram_url=b.instagram_url,
+            linkedin_url=b.linkedin_url,
+            source=f"Discovery Radar ({b.source})",
+            status=LeadStatus.NEW,
+            is_published=True,
+            score=score,
+            priority=Priority.HIGH if score >= 85 else Priority.MEDIUM,
+        )
+        db.add(lead)
+        b.enriched_at = datetime.now(UTC)
+        promoted_count += 1
+
+        if b.run_id:
+            run_res = await db.execute(select(DiscoveryRun).where(DiscoveryRun.id == b.run_id))
+            run_obj = run_res.scalar_one_or_none()
+            if run_obj:
+                run_obj.businesses_created += 1
+
+        await db.flush()
+
+        # Enqueue pipeline jobs
+        if redis_pool:
+            try:
+                if lead.website:
+                    await redis_pool.enqueue_job("analyze_website_job", str(lead.id), lead.website)
+                else:
+                    await redis_pool.enqueue_job("qualify_lead_job", str(lead.id))
+            except Exception:
+                pass
+
+    await db.commit()
+    return {
+        "message": f"Successfully promoted {promoted_count} validated businesses to All Leads CRM",
+        "promoted_count": promoted_count,
+    }
 
 
 @router.post("/businesses/promote-clean-batch")
 async def promote_clean_batch(
+    request: Request,
     min_completeness: int = Query(60, ge=40, le=100),
     require_phone: bool = Query(True),
-    require_website: bool = Query(True),
+    require_website: bool = Query(False),
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
-    """Batch promote only high-quality, clean records with complete data to Hot Leads."""
+    """Batch promote high-quality, clean records with complete data to Hot Leads."""
     if not current_user.has_permission("discovery:update") or not current_user.has_permission(
         "leads:create"
     ):
@@ -388,6 +500,7 @@ async def promote_clean_batch(
     result = await db.execute(query.limit(100))
     businesses = result.scalars().all()
 
+    redis_pool = getattr(request.app.state, "redis", None)
     promoted_count = 0
     for b in businesses:
         # Check if already in leads
@@ -395,6 +508,7 @@ async def promote_clean_batch(
             select(Lead).where(Lead.business_name == b.business_name).limit(1)
         )
         if lead_check.scalar_one_or_none():
+            b.enriched_at = b.enriched_at or datetime.now(UTC)
             continue
 
         score = 75
@@ -425,7 +539,18 @@ async def promote_clean_batch(
             priority=Priority.HIGH if score >= 85 else Priority.MEDIUM,
         )
         db.add(lead)
+        b.enriched_at = datetime.now(UTC)
         promoted_count += 1
+        await db.flush()
+
+        if redis_pool:
+            try:
+                if lead.website:
+                    await redis_pool.enqueue_job("analyze_website_job", str(lead.id), lead.website)
+                else:
+                    await redis_pool.enqueue_job("qualify_lead_job", str(lead.id))
+            except Exception:
+                pass
 
     await db.commit()
     return {"message": f"Successfully promoted {promoted_count} clean hot leads", "promoted_count": promoted_count}

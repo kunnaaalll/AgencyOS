@@ -64,19 +64,37 @@ async def get_website_analysis(
     _=Depends(require_permission("analysis:read")),
 ) -> Any:
     """Get website analysis results for a specific lead."""
-    result = await db.execute(select(WebsiteAnalysis).where(WebsiteAnalysis.lead_id == lead_id))
-    analysis = result.scalar_one_or_none()
+    result = await db.execute(
+        select(WebsiteAnalysis, Lead.business_name)
+        .outerjoin(Lead, WebsiteAnalysis.lead_id == Lead.id)
+        .where(WebsiteAnalysis.lead_id == lead_id)
+    )
+    row = result.first()
 
-    if not analysis:
+    if not row:
         raise HTTPException(status_code=404, detail="Analysis not found for this lead")
 
-    return analysis
+    analysis, business_name = row
+    resp = WebsiteAnalysisResponse.model_validate(analysis)
+    resp.business_name = business_name
+    return resp
 
 
 @router.get("", response_model=list[WebsiteAnalysisResponse])
 async def list_analyses(
     db: AsyncSession = Depends(get_db), _=Depends(require_permission("analysis:read"))
 ) -> Any:
-    """List all website analyses."""
-    result = await db.execute(select(WebsiteAnalysis).order_by(WebsiteAnalysis.analyzed_at.desc()))
-    return result.scalars().all()
+    """List all website analyses with their business names."""
+    result = await db.execute(
+        select(WebsiteAnalysis, Lead.business_name)
+        .outerjoin(Lead, WebsiteAnalysis.lead_id == Lead.id)
+        .order_by(WebsiteAnalysis.analyzed_at.desc())
+    )
+    rows = result.all()
+    output = []
+    for analysis, business_name in rows:
+        resp = WebsiteAnalysisResponse.model_validate(analysis)
+        resp.business_name = business_name
+        output.append(resp)
+    return output
+

@@ -227,6 +227,20 @@ export const discoveryApi = {
     return res.data;
   },
 
+  promoteAllValid: async () => {
+    const res = await api.post<{ message: string; promoted_count: number }>(`/discovery/businesses/promote-all-valid`);
+    return res.data;
+  },
+
+  promoteCleanBatch: async (params?: { min_completeness?: number; require_phone?: boolean; require_website?: boolean }) => {
+    const query = new URLSearchParams();
+    if (params?.min_completeness) query.set('min_completeness', String(params.min_completeness));
+    if (params?.require_phone !== undefined) query.set('require_phone', String(params.require_phone));
+    if (params?.require_website !== undefined) query.set('require_website', String(params.require_website));
+    const res = await api.post<{ message: string; promoted_count: number }>(`/discovery/businesses/promote-clean-batch?${query.toString()}`);
+    return res.data;
+  },
+
   markDuplicate: async (id: string) => {
     const res = await api.delete(`/discovery/businesses/${id}/duplicate`);
     return res.data;

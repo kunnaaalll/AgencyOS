@@ -26,6 +26,8 @@ class WebsiteAnalysisCreate(WebsiteAnalysisBase):
 class WebsiteAnalysisResponse(WebsiteAnalysisBase):
     id: UUID
     lead_id: UUID
+    business_name: str | None = None
     analyzed_at: datetime | None = None
 
     model_config = ConfigDict(from_attributes=True)
+

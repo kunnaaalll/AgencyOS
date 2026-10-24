@@ -81,10 +81,64 @@ async def get_qualification(
 async def list_qualifications(
     db: AsyncSession = Depends(get_db), _=Depends(require_permission("qualification:read"))
 ) -> Any:
-    """List all AI qualifications."""
+    """List all AI qualifications with populated business names."""
     result = await db.execute(
         select(AIQualification)
         .options(joinedload(AIQualification.lead))
         .order_by(AIQualification.created_at.desc())
     )
-    return result.scalars().all()
+    qualifications = result.scalars().all()
+    output = []
+    for q in qualifications:
+        resp = AIQualificationResponse.model_validate(q)
+        if q.lead and q.lead.business_name:
+            resp.business_name = q.lead.business_name
+        output.append(resp)
+    return output
+
+
+@router.post("/batch-qualify-all")
+async def batch_qualify_all(
+    request: Request,
+    db: AsyncSession = Depends(get_db),
+    _=Depends(require_permission("qualification:create")),
+) -> Any:
+    """Run AI qualifications for all leads in the database."""
+    from domain.lead.models import Lead
+    from domain.analysis.models import WebsiteAnalysis
+    from services.qualification_ai.service import AIQualificationService
+
+    leads_res = await db.execute(select(Lead))
+    all_leads = leads_res.scalars().all()
+
+    service = AIQualificationService(db)
+    qualified_count = 0
+
+    for lead in all_leads:
+        # Check if already qualified
+        existing = await db.execute(
+            select(AIQualification).where(AIQualification.lead_id == lead.id)
+        )
+        if existing.scalars().first():
+            continue
+
+        # Get website analysis if any
+        analysis_res = await db.execute(
+            select(WebsiteAnalysis)
+            .where(WebsiteAnalysis.lead_id == lead.id)
+            .order_by(WebsiteAnalysis.analyzed_at.desc())
+        )
+        analysis = analysis_res.scalars().first()
+
+        try:
+            await service.qualify_lead(lead, analysis)
+            qualified_count += 1
+        except Exception as e:
+            pass
+
+    return {
+        "message": f"Successfully qualified {qualified_count} leads with AI",
+        "qualified_count": qualified_count,
+        "total_leads": len(all_leads),
+    }
+

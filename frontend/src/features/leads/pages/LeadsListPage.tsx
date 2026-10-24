@@ -23,6 +23,7 @@ import {
   Flame,
   Sparkles,
   Users,
+  LayoutTemplate,
 } from 'lucide-react'
 
 const STAGES = [
@@ -209,17 +210,36 @@ export function LeadsListPage() {
         },
       }),
       columnHelper.accessor('id', {
-        header: 'Audit',
-        cell: (info) => (
-          <Link
-            to="/leads/$id/analysis"
-            params={{ id: info.getValue() }}
-            className="inline-flex items-center justify-center gap-1 px-2 py-1 text-[11px] font-semibold rounded-md bg-indigo-50 dark:bg-indigo-950/40 text-indigo-700 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-800 hover:bg-indigo-100 transition-colors shrink-0 w-full"
-          >
-            <Sparkles className="w-3 h-3 text-indigo-500 shrink-0" />
-            Audit
-          </Link>
-        ),
+        header: 'Audit & Pitch',
+        cell: (info) => {
+          const lead = info.row.original
+          const hasWebsite = !!lead.website
+
+          return (
+            <Link
+              to="/leads/$id/analysis"
+              params={{ id: info.getValue() }}
+              className={`inline-flex items-center justify-center gap-1 px-2 py-1 text-[11px] font-semibold rounded-md border transition-colors shrink-0 w-full ${
+                hasWebsite
+                  ? 'bg-indigo-50 dark:bg-indigo-950/40 text-indigo-700 dark:text-indigo-300 border-indigo-200 dark:border-indigo-800 hover:bg-indigo-100'
+                  : 'bg-purple-50 dark:bg-purple-950/40 text-purple-700 dark:text-purple-300 border-purple-200 dark:border-purple-800 hover:bg-purple-100'
+              }`}
+              title={hasWebsite ? 'Inspect Playwright Website Audit' : 'Offline Prospect: View Website Creation Offer & Pitch'}
+            >
+              {hasWebsite ? (
+                <>
+                  <Sparkles className="w-3 h-3 text-indigo-500 shrink-0" />
+                  Audit
+                </>
+              ) : (
+                <>
+                  <LayoutTemplate className="w-3 h-3 text-purple-600 shrink-0" />
+                  Pitch Web
+                </>
+              )}
+            </Link>
+          )
+        },
       }),
     ],
     [statusMutation]

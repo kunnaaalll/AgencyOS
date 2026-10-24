@@ -48,5 +48,14 @@ async def analyze_website_job(ctx: dict, lead_id: str, website_url: str | None =
             )
 
             logger.info(f"Website analysis completed for lead {lead_id}")
+
+            # Automatically trigger AI Qualification for this lead with analysis data synced!
+            redis = ctx.get("redis")
+            if redis:
+                await redis.enqueue_job("qualify_lead_job", str(lead_id))
+            else:
+                from workers.jobs.qualification_ai import qualify_lead_job
+                await qualify_lead_job(ctx, str(lead_id))
     except Exception as e:
         logger.error(f"Failed to analyze website for lead {lead_id}: {e}", exc_info=True)
+

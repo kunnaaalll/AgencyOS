@@ -10,6 +10,7 @@ import api from "@/lib/api";
 export interface WebsiteAnalysis {
   id: string;
   lead_id: string;
+  business_name?: string | null;
   website_url: string;
   website_score: number | null;
   seo_score: number | null;
