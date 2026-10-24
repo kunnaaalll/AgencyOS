@@ -36,14 +36,26 @@ class AIQualificationService:
         try:
             from litellm import acompletion
 
-            if settings.OPENROUTER_API_KEY:
-                model_used = settings.OPENROUTER_MODEL or "openrouter/free"
-                if not model_used.startswith("openrouter/"):
-                    model_used = f"openrouter/{model_used}"
+            candidate_models = [
+                settings.OPENROUTER_MODEL,
+                "openrouter/nvidia/nemotron-3.5-lightning:free",
+                "openrouter/liquid/lfm-2.5-2.6b:free",
+                "openrouter/recursive/flint-v1.0:free",
+            ]
+            # Filter and normalize model names
+            valid_models = []
+            for m in candidate_models:
+                if m:
+                    norm = m if m.startswith("openrouter/") else f"openrouter/{m}"
+                    if norm not in valid_models:
+                        valid_models.append(norm)
 
+            response = None
+            last_err = None
+            for candidate in valid_models:
                 try:
                     response = await acompletion(
-                        model=model_used,
+                        model=candidate,
                         api_key=settings.OPENROUTER_API_KEY,
                         messages=[
                             {
@@ -52,78 +64,123 @@ class AIQualificationService:
                             },
                             {"role": "user", "content": prompt},
                         ],
-                        response_format={"type": "json_object"},
                         timeout=15,
                     )
-                except Exception as model_err:
-                    logger.warning(
-                        f"Primary model {model_used} unavailable on OpenRouter, retrying with free tier: {model_err}"
-                    )
-                    model_used = "openrouter/free"
-                    response = await acompletion(
-                        model="openrouter/free",
-                        api_key=settings.OPENROUTER_API_KEY,
-                        messages=[
-                            {
-                                "role": "system",
-                                "content": "You are an expert AI business qualification engine. Output ONLY valid JSON matching the exact schema requested, with no markdown formatting or extra text.",
-                            },
-                            {"role": "user", "content": prompt},
-                        ],
-                        response_format={"type": "json_object"},
-                        timeout=15,
-                    )
-            else:
-                model_used = "freellmapi/auto"
-                response = await acompletion(
-                    model="openai/auto",
-                    api_base=settings.FREELLM_API_BASE,
-                    messages=[
-                        {
-                            "role": "system",
-                            "content": "You are an expert AI business qualification engine. Output ONLY valid JSON matching the exact schema requested, with no markdown formatting or extra text.",
-                        },
-                        {"role": "user", "content": prompt},
-                    ],
-                    response_format={"type": "json_object"},
-                    timeout=15,
-                )
+                    model_used = candidate
+                    break
+                except Exception as cerr:
+                    last_err = cerr
+                    continue
+
+            if not response:
+                raise last_err or Exception("All candidate LLM models failed")
 
             response_content = response.choices[0].message.content
             usage = response.usage
-            parsed_json = json.loads(response_content)
+            clean_content = response_content.strip()
+            if clean_content.startswith("```json"):
+                clean_content = clean_content[7:]
+            if clean_content.startswith("```"):
+                clean_content = clean_content[3:]
+            if clean_content.endswith("```"):
+                clean_content = clean_content[:-3]
+            clean_content = clean_content.strip()
+
+            parsed_json = json.loads(clean_content)
             ai_output = AIOutputSchema(**parsed_json)
         except Exception as e:
             logger.warning(
-                "LLM qualification call or parse failed, applying deterministic agency qualification model",
+                "LLM qualification call or parse failed, applying dynamic industry-tailored qualification model",
                 error=str(e),
                 lead_id=str(lead.id),
                 lead_name=lead.business_name,
             )
             has_website = bool(lead.website)
             overall_score = getattr(analysis, "overall_score", 0) if analysis else 0
-            ind = lead.industry or "Commercial Services"
+            ind = (lead.industry or "Commercial Business").strip()
             city = lead.city or "Mumbai"
+            ind_lower = ind.lower()
 
-            if not has_website:
+            # Dynamic industry-specific intelligence
+            if any(k in ind_lower for k in ["gym", "fitness", "workout", "crossfit"]):
+                ai_output = AIOutputSchema(
+                    priority=Priority.HIGH,
+                    opportunity_score=92,
+                    qualification_status=QualificationStatus.QUALIFIED,
+                    summary=f"{lead.business_name} (Gym & Fitness) in {city} has strong local footfall but lacks an online membership acquisition portal. Prime prospect for membership funnels.",
+                    pain_points=[
+                        "Zero online trial pass booking portal (relying 100% on walk-in inquiries)",
+                        f"High-intent local fitness searchers choosing competing gyms in {city} on Google Maps",
+                        "Absence of automated WhatsApp membership inquiry follow-up funnels",
+                    ],
+                    recommended_pitch=f"Hi {lead.business_name} team, noticed your strong fitness reputation in {city}. Without a modern membership booking portal online, local fitness enthusiasts searching Google for gyms are signing up with competitors. We build high-converting fitness websites with automated trial bookings—can I share a quick 60-second preview?",
+                    recommended_package="₹45,000 - ₹75,000/mo Fitness Member Acquisition & Local SEO",
+                    confidence=0.92,
+                )
+            elif any(k in ind_lower for k in ["dentist", "dental", "orthodont"]):
                 ai_output = AIOutputSchema(
                     priority=Priority.HIGH,
                     opportunity_score=94,
                     qualification_status=QualificationStatus.QUALIFIED,
-                    summary=f"{lead.business_name} ({ind}) is operating in {city} with zero digital web presence. High growth potential via custom website development and Google Local search dominance.",
+                    summary=f"{lead.business_name} (Dental Clinic) in {city} is an established clinic lacking online appointment automation, losing high-value cosmetic & implant cases to local competitors.",
                     pain_points=[
-                        "Missing digital presence: No website or online capture mechanism",
-                        "High search intent lost to competitors on Google Maps and Local pack",
-                        "Inability to run direct digital marketing or retargeting funnels",
+                        "No instant online appointment scheduling widget for new patients",
+                        f"High-ticket dental implant patients booking with competing clinics in {city} on Google Maps",
+                        "Absence of automated WhatsApp patient recall and review generation funnels",
                     ],
-                    recommended_pitch=f"Lead with custom responsive website development and high-intent local SEO dominance for {ind} in {city}.",
-                    recommended_package="₹50,000 - ₹85,000/mo Web & Local SEO Retainer",
-                    confidence=0.91,
+                    recommended_pitch=f"Hi {lead.business_name} team, noticed your top patient reviews in {city}, but noticed you don't have a modern mobile booking website online. You're currently losing high-intent patients to local clinics that offer instant online appointment booking. We build high-converting dental clinic websites with WhatsApp booking—can I share a preview?",
+                    recommended_package="₹50,000 - ₹85,000/mo Dental Patient Acquisition & Local SEO",
+                    confidence=0.94,
+                )
+            elif any(k in ind_lower for k in ["skin", "hair", "derma", "aesthetic", "laser", "cosmetic"]):
+                ai_output = AIOutputSchema(
+                    priority=Priority.HIGH,
+                    opportunity_score=95,
+                    qualification_status=QualificationStatus.QUALIFIED,
+                    summary=f"{lead.business_name} (Aesthetic / Skin Clinic) in {city} offers high-margin treatments but has zero standalone treatment booking portal, leading to lost client acquisition.",
+                    pain_points=[
+                        "No online consultation booking for high-ticket skin, laser, and hair treatments",
+                        f"Losing HydraFacial, PRP, and laser hair reduction searchers to competing clinics in {city}",
+                        "Missing digital procedure showcase and patient testimonial catalog",
+                    ],
+                    recommended_pitch=f"Hi {lead.business_name} team, noticed your aesthetic clinic in {city}, but noticed you don't have a modern treatment showcase website online. You are currently losing high-ticket skin & laser clients to clinics with online treatment catalogs and 1-click WhatsApp booking. Can I share a quick 60-second demo?",
+                    recommended_package="₹55,000 - ₹95,000/mo Aesthetic Patient Growth Retainer",
+                    confidence=0.95,
+                )
+            elif any(k in ind_lower for k in ["production", "ott", "media", "film", "studio"]):
+                ai_output = AIOutputSchema(
+                    priority=Priority.HIGH,
+                    opportunity_score=90,
+                    qualification_status=QualificationStatus.QUALIFIED,
+                    summary=f"{lead.business_name} ({ind}) in {city} is an established media entity without a dedicated digital showcase funnel to capture commercial corporate video & ad retainers.",
+                    pain_points=[
+                        "No dedicated digital showreel or commercial case study website",
+                        f"Brand commercial and ad production inquiries lost to competing studios in {city}",
+                        "Absence of an inbound portfolio funnel to capture corporate video and ad retainers",
+                    ],
+                    recommended_pitch=f"Hi {lead.business_name} team, noticed your creative production work in {city}. In commercial production, brands look for video showcases and case studies before reaching out. We build high-speed video showcase websites that convert brand inquiries—can I share a quick portfolio preview?",
+                    recommended_package="₹60,000 - ₹1,20,000/mo Brand Retainer Funnel & SEO",
+                    confidence=0.90,
+                )
+            elif not has_website:
+                ai_output = AIOutputSchema(
+                    priority=Priority.HIGH,
+                    opportunity_score=88,
+                    qualification_status=QualificationStatus.QUALIFIED,
+                    summary=f"{lead.business_name} ({ind}) is operating in {city} with zero standalone web presence. Prime candidate for a conversion website and Google Maps dominance.",
+                    pain_points=[
+                        f"Missing standalone website: 100% reliant on offline footfall and walk-ins",
+                        f"High local search intent lost to digital-first competitors in {city}",
+                        "Inability to run direct digital marketing or retargeting ad funnels",
+                    ],
+                    recommended_pitch=f"Hi {lead.business_name} team, noticed your strong business presence in {city}, but noticed you don't have a standalone website for local customer capture. Customers searching Google for {ind} in {city} are choosing competitors with modern booking portals. Can I share a quick 60-second preview of what your new site could look like?",
+                    recommended_package="₹45,000 - ₹75,000/mo Web & Local SEO Retainer",
+                    confidence=0.88,
                 )
             elif overall_score < 50:
                 ai_output = AIOutputSchema(
                     priority=Priority.HIGH,
-                    opportunity_score=88,
+                    opportunity_score=86,
                     qualification_status=QualificationStatus.QUALIFIED,
                     summary=f"{lead.business_name} has an active website with critical conversion, SEO, and speed gaps (Overall Audit Score: {overall_score}/100).",
                     pain_points=[
@@ -131,9 +188,9 @@ class AIQualificationService:
                         "Sub-optimal mobile experience and slow page loading metrics",
                         "Unclear call-to-action hooks failing to convert visiting traffic into inquiries",
                     ],
-                    recommended_pitch="Offer immediate performance overhaul, technical SEO remediation, and conversion-optimized landing pages.",
-                    recommended_package="₹65,000 - ₹1,20,000/mo Growth & Technical SEO Retainer",
-                    confidence=0.89,
+                    recommended_pitch=f"Hi {lead.business_name} team, noticed a couple technical SEO and mobile conversion leaks on your website that are causing potential {ind} customers to drop off. Can I share a quick 60-second video teardown?",
+                    recommended_package="₹55,000 - ₹1,00,000/mo Growth & Technical SEO Retainer",
+                    confidence=0.87,
                 )
             else:
                 ai_output = AIOutputSchema(
@@ -145,7 +202,7 @@ class AIQualificationService:
                         "Under-leveraged customer acquisition beyond organic discovery",
                         "Need for scalable paid advertising funnels across Meta and Google",
                     ],
-                    recommended_pitch=f"Pitch multi-channel performance marketing, paid Google/Meta advertising, and automated lead nurturing.",
+                    recommended_pitch=f"Hi {lead.business_name} team, your digital foundations look solid ({overall_score}/100). Next step to scale customer acquisition in {city} is targeted Meta & Google performance marketing. Can I share our B2B growth roadmap?",
                     recommended_package="₹45,000 - ₹75,000/mo Paid Acquisition Retainer",
                     confidence=0.85,
                 )
@@ -207,56 +264,61 @@ class AIQualificationService:
         return qualification
 
 
-    def _build_prompt(self, lead: Lead, analysis: WebsiteAnalysis) -> str:
-        # Extract analysis details safely
-        website_score = getattr(analysis, "total_score", 0)
-        seo_score = getattr(analysis, "seo_score", 0)
-        cta_score = getattr(analysis, "cta_score", 0)
-        # Extract nested scoring fields gracefully
-        social_score = getattr(analysis, "social_score", 0)
-        digital_maturity_score = getattr(analysis, "digital_maturity_score", 0)
+    def _build_prompt(self, lead: Lead, analysis: WebsiteAnalysis | None) -> str:
+        has_website = bool(lead.website)
+        ind = lead.industry or "Commercial Business"
+        city = lead.city or "Mumbai"
 
-        strengths = getattr(analysis, "strengths", [])
-        weaknesses = getattr(analysis, "weaknesses", [])
+        website_score = getattr(analysis, "total_score", 0) if analysis else 0
+        seo_score = getattr(analysis, "seo_score", 0) if analysis else 0
+        cta_score = getattr(analysis, "cta_score", 0) if analysis else 0
+        social_score = getattr(analysis, "social_score", 0) if analysis else 0
+        digital_maturity_score = getattr(analysis, "digital_maturity_score", 0) if analysis else 0
 
-        # The prompt payload
-        prompt = f"""
-Evaluate the following business lead and output a JSON response matching the required schema.
+        strengths = getattr(analysis, "strengths", []) if analysis else []
+        weaknesses = getattr(analysis, "weaknesses", []) if analysis else []
 
-### Lead Information
-Business Name: {lead.business_name}
-Industry: {lead.industry or "Unknown"}
-Location: {lead.city or "Unknown"}, {lead.state or "Unknown"}
+        prompt = f"""You are a master digital marketing strategist analyzing business leads in India.
+Analyze this specific business lead and generate a bespoke, high-converting agency qualification report.
 
-### Analysis Scores
-Website Score: {website_score}/100
-SEO Score: {seo_score}/100
-CTA Score: {cta_score}/100
-Social Score: {social_score}/100
-Digital Maturity Score: {digital_maturity_score}/100
+### Lead Profile:
+- Business Name: {lead.business_name}
+- Industry / Niche: {ind}
+- Target Location: {city}
+- Website Status: {"Active Website (" + str(lead.website) + ")" if has_website else "NO STANDALONE WEBSITE (Verified Offline Business)"}
+- Google Maps Rating: {lead.rating or "Unrated"} ({lead.review_count or 0} reviews)
 
-### Strengths
-{json.dumps(strengths)}
+### Digital Analysis Scores:
+- Website Architecture Score: {website_score}/100
+- SEO Discoverability Score: {seo_score}/100
+- CTA & Conversion Score: {cta_score}/100
+- Social Authority Score: {social_score}/100
+- Digital Maturity Score: {digital_maturity_score}/100
+- Detected Flaws: {json.dumps(weaknesses)}
+- Detected Strengths: {json.dumps(strengths)}
 
-### Weaknesses / Pain Points
-{json.dumps(weaknesses)}
+### MANDATORY INDUSTRY RULES:
+1. NEVER use generic or copy-pasted medical terms for non-medical businesses.
+   - If this is a GYM or Fitness: Focus on personal training, high-ticket memberships, trial pass bookings.
+   - If this is a DENTAL CLINIC / HEALTHCARE: Focus on high-ticket cosmetic/implant patients, WhatsApp appointment bookings.
+   - If this is a SALON / SPA / BEAUTY / AESTHETIC: Focus on weekend bookings, bridal packages, high-ticket treatments.
+   - If this is a PRODUCTION HOUSE / OTT / MEDIA: Focus on brand commercial retainers, OTT streaming, corporate video inquiries.
+   - If this is an ECOMMERCE / D2C / RETAIL: Focus on ROAS, abandoned cart capture, customer acquisition funnels.
+2. "opportunity_score": Integer 60-98 based on commercial viability and growth upside.
+3. "summary": 2 sharp, professional sentences specifically referencing their industry ({ind}) and location ({city}).
+4. "pain_points": Exactly 3 highly specific, realistic commercial or digital leaks for a {ind} in {city}.
+5. "recommended_pitch": A tailored, ready-to-send 1-click WhatsApp pitch hook starting with "Hi {lead.business_name} team," referencing their exact niche ({ind}) and city ({city}) with a specific solution hook.
+6. "recommended_package": Realistic retainer recommendation in INR (e.g. "₹45,000 - ₹75,000/mo Custom Membership Acquisition Funnel & Local SEO").
 
-### Rules for Priority:
-- HIGH Priority: Poor digital presence, active business, good market, strong improvement potential.
-- LOW Priority: No website, inactive business, already highly optimized.
-- MEDIUM Priority: Average digital presence, moderate improvement potential.
-
-### Output Schema Rules:
-Return a JSON object strictly following this structure:
+Output ONLY a JSON object strictly following this structure:
 {{
   "priority": "HIGH" | "MEDIUM" | "LOW",
   "opportunity_score": integer (0-100),
   "qualification_status": "QUALIFIED" | "REVIEW_REQUIRED" | "NOT_QUALIFIED",
   "summary": "String explaining the executive summary",
-  "pain_points": ["point 1", "point 2"],
+  "pain_points": ["point 1", "point 2", "point 3"],
   "recommended_pitch": "String of the recommended pitch",
-  "recommended_package": "String representing suggested package or price",
+  "recommended_package": "String representing suggested package or price in INR",
   "confidence": float (0.0 to 1.0)
-}}
-"""
+}}"""
         return prompt

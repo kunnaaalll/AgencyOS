@@ -56,13 +56,17 @@ async def run_qualification(
 from sqlalchemy.orm import joinedload
 
 
+@router.get("/lead/{lead_id}", response_model=AIQualificationResponse)
 @router.get("/{lead_id}", response_model=AIQualificationResponse)
 async def get_qualification(
     lead_id: str,
     db: AsyncSession = Depends(get_db),
     _=Depends(require_permission("qualification:read")),
 ) -> Any:
-    """Get AI qualification results for a specific lead."""
+    """Get AI qualification results for a specific lead. Generates on the fly if missing."""
+    from domain.analysis.models import WebsiteAnalysis
+    from services.qualification_ai.service import AIQualificationService
+
     result = await db.execute(
         select(AIQualification)
         .options(joinedload(AIQualification.lead))
@@ -72,9 +76,55 @@ async def get_qualification(
     qualification = result.scalars().first()
 
     if not qualification:
-        raise HTTPException(status_code=404, detail="Qualification not found for this lead")
+        # Check if lead exists to auto-qualify on demand
+        lead = await db.get(Lead, lead_id)
+        if not lead:
+            raise HTTPException(status_code=404, detail="Lead not found")
 
-    return qualification
+        analysis_res = await db.execute(
+            select(WebsiteAnalysis)
+            .where(WebsiteAnalysis.lead_id == lead.id)
+            .order_by(WebsiteAnalysis.analyzed_at.desc())
+        )
+        analysis = analysis_res.scalars().first()
+
+        service = AIQualificationService(db)
+        qualification = await service.qualify_lead(lead, analysis)
+
+    resp = AIQualificationResponse.model_validate(qualification)
+    if qualification.lead and qualification.lead.business_name:
+        resp.business_name = qualification.lead.business_name
+    return resp
+
+
+@router.post("/generate/{lead_id}", response_model=AIQualificationResponse)
+async def generate_qualification(
+    lead_id: str,
+    db: AsyncSession = Depends(get_db),
+    _=Depends(require_permission("qualification:create")),
+) -> Any:
+    """Synchronously generate or regenerate AI qualification for a specific lead."""
+    from domain.analysis.models import WebsiteAnalysis
+    from services.qualification_ai.service import AIQualificationService
+
+    lead = await db.get(Lead, lead_id)
+    if not lead:
+        raise HTTPException(status_code=404, detail="Lead not found")
+
+    analysis_res = await db.execute(
+        select(WebsiteAnalysis)
+        .where(WebsiteAnalysis.lead_id == lead.id)
+        .order_by(WebsiteAnalysis.analyzed_at.desc())
+    )
+    analysis = analysis_res.scalars().first()
+
+    service = AIQualificationService(db)
+    qualification = await service.qualify_lead(lead, analysis)
+
+    resp = AIQualificationResponse.model_validate(qualification)
+    if lead.business_name:
+        resp.business_name = lead.business_name
+    return resp
 
 
 @router.get("", response_model=list[AIQualificationResponse])
@@ -100,6 +150,7 @@ async def list_qualifications(
 @router.post("/batch-qualify-all")
 async def batch_qualify_all(
     request: Request,
+    force: bool = False,
     db: AsyncSession = Depends(get_db),
     _=Depends(require_permission("qualification:create")),
 ) -> Any:
@@ -115,12 +166,13 @@ async def batch_qualify_all(
     qualified_count = 0
 
     for lead in all_leads:
-        # Check if already qualified
-        existing = await db.execute(
-            select(AIQualification).where(AIQualification.lead_id == lead.id)
-        )
-        if existing.scalars().first():
-            continue
+        if not force:
+            # Check if already qualified
+            existing = await db.execute(
+                select(AIQualification).where(AIQualification.lead_id == lead.id)
+            )
+            if existing.scalars().first():
+                continue
 
         # Get website analysis if any
         analysis_res = await db.execute(
@@ -137,7 +189,7 @@ async def batch_qualify_all(
             pass
 
     return {
-        "message": f"Successfully qualified {qualified_count} leads with AI",
+        "message": f"Successfully qualified {qualified_count} leads with AI (force={force})",
         "qualified_count": qualified_count,
         "total_leads": len(all_leads),
     }

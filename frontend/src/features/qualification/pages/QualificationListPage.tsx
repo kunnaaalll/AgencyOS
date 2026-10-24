@@ -15,7 +15,7 @@ export const QualificationListPage: React.FC = () => {
   });
 
   const batchMutation = useMutation({
-    mutationFn: qualificationApi.batchQualifyAll,
+    mutationFn: (force?: boolean) => qualificationApi.batchQualifyAll(force),
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ['qualifications'] });
       setNotification({
@@ -58,7 +58,7 @@ export const QualificationListPage: React.FC = () => {
 
         <div className="flex items-center gap-3">
           <button
-            onClick={() => batchMutation.mutate()}
+            onClick={() => batchMutation.mutate(false)}
             disabled={batchMutation.isPending}
             className="h-10 px-4 rounded-xl font-bold text-xs sm:text-sm text-white bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 shadow-md shadow-purple-500/25 active:scale-[0.98] transition-all flex items-center gap-2 cursor-pointer disabled:opacity-50 select-none"
           >
@@ -178,7 +178,7 @@ export const QualificationListPage: React.FC = () => {
                     <p className="font-semibold text-slate-700 dark:text-slate-300">No AI qualifications generated yet</p>
                     <p className="text-xs text-slate-500 mt-1 mb-4">Click below to run autonomous AI qualification across all discovered leads.</p>
                     <button
-                      onClick={() => batchMutation.mutate()}
+                      onClick={() => batchMutation.mutate(false)}
                       disabled={batchMutation.isPending}
                       className="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold text-white bg-purple-600 hover:bg-purple-500 shadow-sm transition-all"
                     >
