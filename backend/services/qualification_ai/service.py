@@ -285,8 +285,8 @@ Analyze this specific business lead and generate a bespoke, high-converting agen
 - Business Name: {lead.business_name}
 - Industry / Niche: {ind}
 - Target Location: {city}
-- Website Status: {"Active Website (" + str(lead.website) + ")" if has_website else "NO STANDALONE WEBSITE (Verified Offline Business)"}
-- Google Maps Rating: {lead.rating or "Unrated"} ({lead.review_count or 0} reviews)
+- Google Maps Presence: {lead.google_maps_url or "Active on Google Maps"}
+- Current Lead Priority: {lead.priority.value if lead.priority else "HIGH"}
 
 ### Digital Analysis Scores:
 - Website Architecture Score: {website_score}/100
