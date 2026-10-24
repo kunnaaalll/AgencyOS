@@ -20,8 +20,8 @@ export function LoginPage() {
     formState: { errors },
   } = useForm<LoginRequest>({
     defaultValues: {
-      email: 'admin@agencyos.io',
-      password: 'GK0pzBYsGk_0PLyLosscew',
+      email: '',
+      password: '',
     },
   })
 
@@ -139,17 +139,6 @@ export function LoginPage() {
                 ) : (
                   'Sign In'
                 )}
-              </Button>
-
-              <Button
-                variant="secondary"
-                size="lg"
-                type="button"
-                onClick={() => login({ email: 'admin@agencyos.io', password: 'GK0pzBYsGk_0PLyLosscew' })}
-                disabled={isPending}
-                className="w-full font-semibold bg-emerald-50 text-emerald-800 border border-emerald-200 hover:bg-emerald-100 flex items-center justify-center gap-2 text-xs h-11"
-              >
-                ⚡ 1-Click Instant Agency Access (Bypass)
               </Button>
             </div>
           </form>

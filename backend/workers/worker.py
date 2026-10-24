@@ -7,11 +7,13 @@ Phase 9.1: Enterprise Discovery Pipeline
 import structlog
 from arq.connections import RedisSettings as ArqRedisSettings
 
+from arq.cron import cron
 from core.config import settings
 from utils.browser_pool import initialize_browser_pool, shutdown_browser_pool
 from workers.jobs.analysis import analyze_website_job
 from workers.jobs.discovery import (
     bulk_discovery_job,
+    continuous_autonomous_crawler,
     discover_businesses,
     enrich_business,
     validate_business,
@@ -45,6 +47,7 @@ FUNCTIONS: list = [
     validate_business,
     enrich_business,
     bulk_discovery_job,
+    continuous_autonomous_crawler,
     # Other pipelines
     analyze_website_job,
     qualify_lead_job,
@@ -59,6 +62,11 @@ class WorkerSettings:
     """
 
     functions = FUNCTIONS
+
+    # 24/7 Continuous Autonomous Discovery Sweeps across all 34 sectors
+    cron_jobs = [
+        cron(continuous_autonomous_crawler, minute={0, 15, 30, 45}),
+    ]
 
     redis_settings = ArqRedisSettings(
         host=settings.REDIS_HOST,

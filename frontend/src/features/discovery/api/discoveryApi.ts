@@ -129,7 +129,55 @@ export interface DiscoveryCatalog {
   sources: string[];
 }
 
+export interface CrawlerStatus {
+  status: string;
+  is_running: boolean;
+  is_crawling: boolean;
+  mode: string;
+  interval_minutes: number;
+  schedule: string;
+  sectors_monitored: number;
+  locations_monitored: number;
+  system_health: {
+    worker_daemon: string;
+    redis_connected: boolean;
+    browser_pool: string;
+    pipeline_state: string;
+  };
+  metrics: {
+    active_runs: number;
+    total_runs: number;
+    total_discovered: number;
+    total_validated: number;
+    validation_rate: number;
+  };
+  last_crawl: {
+    id: string | null;
+    source: string;
+    query: string | null;
+    location: string | null;
+    status: string;
+    created_at: string | null;
+    discovered: number;
+    validated: number;
+  } | null;
+  next_sweep_seconds: number;
+}
+
 export const discoveryApi = {
+  // 24/7 Crawler Status & Trigger
+  getCrawlerStatus: async () => {
+    const res = await api.get<CrawlerStatus>("/discovery/crawler/status");
+    return res.data;
+  },
+
+  triggerCrawlerSweep: async () => {
+    const res = await api.post<{ message: string; job_id: string; sectors: string[]; locations: string[] }>(
+      "/discovery/crawler/sweep"
+    );
+    return res.data;
+  },
+
   // Single runs
   createRun: async (data: { source: string; query?: string; location?: string; limit?: number }) => {
     const res = await api.post<DiscoveryRun>("/discovery/run", data);
@@ -196,3 +244,4 @@ export const discoveryApi = {
     return res.data;
   },
 };
+

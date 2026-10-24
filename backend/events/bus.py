@@ -18,38 +18,35 @@ Handler = Callable[[BaseEvent], Coroutine[Any, Any, None]]
 class EventBus:
     """
     Simple in-process event bus for decoupled event handling.
-
-    Usage:
-        bus = EventBus()
-
-        @bus.subscribe("contact.created")
-        async def handle_contact_created(event: ContactCreatedEvent):
-            await send_welcome_email(event.email)
-
-        await bus.publish(ContactCreatedEvent(...))
+    Supports both EventBus.publish(...) and event_bus.publish(...).
     """
 
-    def __init__(self) -> None:
-        self._handlers: dict[str, list[Handler]] = defaultdict(list)
+    _handlers: dict[str, list[Handler]] = defaultdict(list)
 
-    def subscribe(self, event_type: str) -> Callable[[Handler], Handler]:
+    def __init__(self) -> None:
+        pass
+
+    @classmethod
+    def subscribe(cls, event_type: str) -> Callable[[Handler], Handler]:
         """Decorator to register an event handler."""
 
         def decorator(handler: Handler) -> Handler:
-            self._handlers[event_type].append(handler)
+            cls._handlers[event_type].append(handler)
             return handler
 
         return decorator
 
-    async def publish(self, event: BaseEvent) -> None:
+    @classmethod
+    async def publish(cls, event: BaseEvent) -> None:
         """Publish an event to all registered handlers."""
-        handlers = self._handlers.get(event.event_type, [])
+        handlers = cls._handlers.get(event.event_type, [])
         if handlers:
-            await asyncio.gather(*[handler(event) for handler in handlers])
+            await asyncio.gather(*[handler(event) for handler in handlers], return_exceptions=True)
 
-    def clear(self) -> None:
+    @classmethod
+    def clear(cls) -> None:
         """Clear all handlers (useful for testing)."""
-        self._handlers.clear()
+        cls._handlers.clear()
 
 
 # Singleton event bus instance

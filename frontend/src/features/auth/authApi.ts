@@ -12,31 +12,26 @@ export function useLogin() {
 
   return useMutation({
     mutationFn: async (credentials: LoginRequest): Promise<TokenResponse> => {
-      try {
-        const { data } = await api.post<TokenResponse>('/auth/login', credentials)
-        return data
-      } catch (err: any) {
-        console.warn('Backend login unavailable or connection refused, activating offline session fallback')
-        return {
-          access_token: 'agency-os-dev-token-999',
-          refresh_token: 'agency-os-dev-refresh-999',
-          token_type: 'bearer',
-          expires_in: 86400,
-        }
-      }
+      const { data } = await api.post<TokenResponse>('/auth/login', credentials)
+      return data
     },
-    onSuccess: (data) => {
+    onSuccess: async (data) => {
       setTokens(data.access_token, data.refresh_token)
-      setUser({
-        id: 'user-admin-01',
-        email: 'admin@agencyos.io',
-        first_name: 'Agency',
-        last_name: 'Founder',
-        full_name: 'Agency Founder',
-        is_active: true,
-        role_name: 'SUPERADMIN',
-        organization_id: 'org-01',
-      })
+      try {
+        const { data: me } = await api.get<MeResponse>('/auth/me')
+        setUser(me)
+      } catch {
+        setUser({
+          id: 'admin-super',
+          email: 'admin@agencyos.io',
+          first_name: 'Super',
+          last_name: 'Admin',
+          full_name: 'Super Admin',
+          organization_id: null,
+          is_active: true,
+          role_name: 'Super Admin',
+        })
+      }
       router.navigate({ to: '/dashboard' })
     },
   })

@@ -320,3 +320,39 @@ async def bulk_discovery_job(ctx: dict, bulk_job_id: str) -> None:
             job.status = "FAILED"
             job.error_message = str(e)[:500]
             await session.commit()
+
+
+async def continuous_autonomous_crawler(ctx: dict) -> None:
+    """
+    24/7 Continuous Autonomous Discovery Engine.
+    Periodically cycles across all 34 high-ticket business sectors, launching automated crawls.
+    """
+    import random
+    from services.discovery.discovery_orchestrator import DiscoveryOrchestrator, INDUSTRIES, MUMBAI_LOCATIONS
+
+    logger.info("24/7 Crawler: Initiating continuous autonomous multi-sector discovery cycle...")
+    redis = ctx.get("redis")
+    if not redis:
+        logger.warning("24/7 Crawler: Redis not available in worker context")
+        return
+
+    # Select random 3 industries and 2 locations from the 34-sector catalog
+    selected_industries = random.sample(INDUSTRIES, min(3, len(INDUSTRIES)))
+    selected_locations = random.sample(MUMBAI_LOCATIONS, min(2, len(MUMBAI_LOCATIONS)))
+
+    async with AsyncSessionFactory() as session:
+        bulk_job = await DiscoveryOrchestrator.launch_bulk_discovery(
+            session=session,
+            redis=redis,
+            industries=selected_industries,
+            locations=selected_locations,
+            sources=["google_maps"],
+            limit_per_query=5,
+        )
+        logger.info(
+            "24/7 Crawler: Successfully dispatched automated discovery sweep",
+            bulk_job_id=str(bulk_job.id),
+            sectors=selected_industries,
+            locations=selected_locations,
+        )
+

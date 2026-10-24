@@ -21,6 +21,7 @@ export function Header() {
     if (path.startsWith('/finance')) return { section: 'Business OS', current: 'Finance' };
     if (path.startsWith('/analytics')) return { section: 'Business OS', current: 'Analytics' };
     if (path.startsWith('/settings')) return { section: 'Platform', current: 'Settings' };
+    if (path.startsWith('/profile')) return { section: 'Platform', current: 'My Profile' };
     return { section: 'Overview', current: 'Dashboard' };
   };
 
