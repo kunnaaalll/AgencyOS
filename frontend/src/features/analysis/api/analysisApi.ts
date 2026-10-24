@@ -43,11 +43,22 @@ export function useAnalysisList() {
 export function useAnalysisDetail(leadId: string) {
   return useQuery({
     queryKey: analysisKeys.detail(leadId),
-    queryFn: async (): Promise<WebsiteAnalysis> => {
-      const response = await api.get(`/analysis/${leadId}`);
-      return response.data;
+    queryFn: async (): Promise<WebsiteAnalysis | null> => {
+      try {
+        const response = await api.get(`/analysis/${leadId}`);
+        if (!response.data || Array.isArray(response.data) || !response.data.id) {
+          return null;
+        }
+        return response.data;
+      } catch (err: any) {
+        if (err?.response?.status === 404) {
+          return null;
+        }
+        throw err;
+      }
     },
     enabled: !!leadId,
+    retry: false,
   });
 }
 

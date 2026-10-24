@@ -32,20 +32,24 @@ export interface LeadStats {
 export interface LeadAnalysis {
   id: string
   lead_id: string
+  website_url?: string
   website_score: number | null
   seo_score: number | null
-  instagram_score: number | null
-  reviews_score: number | null
+  mobile_score?: number | null
+  social_score?: number | null
+  instagram_score?: number | null
+  reviews_score?: number | null
   cta_score: number | null
   digital_maturity_score: number | null
-  total_score: number | null
-  summary: string | null
+  overall_score?: number | null
+  total_score?: number | null
+  summary?: string | null
   pain_points: string[]
   strengths: string[]
   weaknesses: string[]
   analyzed_at: string | null
-  created_at: string
-  updated_at: string
+  created_at?: string
+  updated_at?: string
 }
 
 export const fetchLeads = async (is_published?: boolean, min_score?: number): Promise<Lead[]> => {
@@ -75,8 +79,23 @@ export const fetchLeadById = async (id: string): Promise<Lead> => {
   return data
 }
 
-export const fetchLeadAnalysisById = async (leadId: string): Promise<LeadAnalysis> => {
-  const { data } = await api.get(`/analysis/${leadId}`)
+export const fetchLeadAnalysisById = async (leadId: string): Promise<LeadAnalysis | null> => {
+  try {
+    const { data } = await api.get(`/analysis/${leadId}`)
+    if (!data || Array.isArray(data) || !data.id) {
+      return null
+    }
+    return data
+  } catch (err: any) {
+    if (err?.response?.status === 404) {
+      return null
+    }
+    throw err
+  }
+}
+
+export const triggerWebsiteAnalysis = async (leadId: string): Promise<{ message: string }> => {
+  const { data } = await api.post(`/analysis/run/${leadId}`)
   return data
 }
 

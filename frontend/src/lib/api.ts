@@ -382,24 +382,42 @@ api.interceptors.response.use(
     const url = error.config?.url || ''
 
     const status = error.response?.status
-    // If backend connection is refused or unavailable on local dev, provide rich fallback data
+    // 404 is a legitimate resource-not-found response from the live server; do NOT hijack with mock data
+    if (status === 404) {
+      return Promise.reject(error)
+    }
+
+    // If backend connection is refused, times out, or returns a 5xx server crash on local dev:
     const isNetworkError =
       !error.response ||
       error.code === 'ERR_NETWORK' ||
       error.code === 'ECONNREFUSED' ||
       (error.message && error.message.includes('Network Error')) ||
-      (status !== undefined && (status >= 500 || status === 404))
+      (status !== undefined && status >= 500)
 
     if (isNetworkError) {
       console.warn(`[AgencyOS API Fallback] Serving local data for endpoint: ${url}`)
+      const cleanUrl = url.split('?')[0]
       for (const [pattern, data] of Object.entries(FALLBACK_RESPONSES)) {
-        if (url.includes(pattern)) {
+        if (cleanUrl === pattern || cleanUrl.endsWith(pattern)) {
+          return Promise.resolve({ data, status: 200, statusText: 'OK', headers: {}, config: error.config! })
+        }
+        if (cleanUrl.includes(pattern)) {
+          // If fallback is an array and URL has subpath/UUID (e.g. /analysis/uuid or /leads/uuid), skip array fallback!
+          const remainder = cleanUrl.slice(cleanUrl.indexOf(pattern) + pattern.length)
+          if (remainder.length > 1 && Array.isArray(data)) {
+            continue
+          }
           return Promise.resolve({ data, status: 200, statusText: 'OK', headers: {}, config: error.config! })
         }
       }
-      // For any GET request that wasn't explicitly matched, return an array [] by default to prevent .map crashes
+      // For any GET request that wasn't explicitly matched, return an array [] by default only if not a detail path
       const method = (error.config?.method || 'get').toLowerCase()
       if (method === 'get') {
+        const isDetailPath = /\/[a-f0-9-]{36}/i.test(cleanUrl) || /\/\d+$/.test(cleanUrl)
+        if (isDetailPath) {
+          return Promise.reject(error)
+        }
         return Promise.resolve({ data: [], status: 200, statusText: 'OK', headers: {}, config: error.config! })
       }
       return Promise.resolve({ data: { success: true }, status: 200, statusText: 'OK', headers: {}, config: error.config! })

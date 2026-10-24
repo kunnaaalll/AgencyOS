@@ -43,12 +43,16 @@ export const AnalysisDetailPage: React.FC = () => {
     { subject: "Digital Maturity", A: analysis.digital_maturity_score || 0, fullMark: 15 },
   ];
 
+  const strengths = Array.isArray(analysis.strengths) ? analysis.strengths : [];
+  const weaknesses = Array.isArray(analysis.weaknesses) ? analysis.weaknesses : [];
+  const painPoints = Array.isArray(analysis.pain_points) ? analysis.pain_points : [];
+
   return (
     <div className="p-8 max-w-7xl mx-auto">
       <div className="flex justify-between items-center mb-8">
         <div>
           <h1 className="text-3xl font-bold text-gray-900">Analysis: {analysis.website_url}</h1>
-          <p className="text-gray-500 mt-2">Overall Score: <span className="font-bold text-indigo-600">{analysis.overall_score}</span></p>
+          <p className="text-gray-500 mt-2">Overall Score: <span className="font-bold text-indigo-600">{analysis.overall_score ?? 0}</span></p>
         </div>
         <div className="space-x-4">
           <Link to="/analysis" className="text-indigo-600 hover:underline">Back to List</Link>
@@ -83,24 +87,24 @@ export const AnalysisDetailPage: React.FC = () => {
           <div className="bg-green-50 p-6 rounded-lg shadow-sm border border-green-100">
             <h3 className="text-lg font-semibold text-green-800 mb-2">Strengths</h3>
             <ul className="list-disc pl-5 text-green-700 space-y-1">
-              {analysis.strengths.map((s, i) => <li key={i}>{s}</li>)}
-              {analysis.strengths.length === 0 && <li>None identified.</li>}
+              {strengths.map((s, i) => <li key={i}>{s}</li>)}
+              {strengths.length === 0 && <li>None identified.</li>}
             </ul>
           </div>
 
           <div className="bg-orange-50 p-6 rounded-lg shadow-sm border border-orange-100">
             <h3 className="text-lg font-semibold text-orange-800 mb-2">Weaknesses</h3>
             <ul className="list-disc pl-5 text-orange-700 space-y-1">
-              {analysis.weaknesses.map((w, i) => <li key={i}>{w}</li>)}
-              {analysis.weaknesses.length === 0 && <li>None identified.</li>}
+              {weaknesses.map((w, i) => <li key={i}>{w}</li>)}
+              {weaknesses.length === 0 && <li>None identified.</li>}
             </ul>
           </div>
 
           <div className="bg-red-50 p-6 rounded-lg shadow-sm border border-red-100">
             <h3 className="text-lg font-semibold text-red-800 mb-2">Pain Points</h3>
             <ul className="list-disc pl-5 text-red-700 space-y-1">
-              {analysis.pain_points.map((p, i) => <li key={i}>{p}</li>)}
-              {analysis.pain_points.length === 0 && <li>None identified.</li>}
+              {painPoints.map((p, i) => <li key={i}>{p}</li>)}
+              {painPoints.length === 0 && <li>None identified.</li>}
             </ul>
           </div>
         </div>
