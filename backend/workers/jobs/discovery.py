@@ -273,7 +273,8 @@ async def enrich_business(ctx: dict, business_id: str) -> None:
         # Automatically enqueue downstream workflows
         redis = ctx.get("redis")
         if redis:
-            await redis.enqueue_job("analyze_website_job", str(lead.id))
+            if lead.website:
+                await redis.enqueue_job("analyze_website_job", str(lead.id), lead.website)
             await redis.enqueue_job("qualify_lead_job", str(lead.id))
 
 

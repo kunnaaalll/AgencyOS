@@ -9,12 +9,22 @@ from services.analysis.service import WebsiteAnalysisService
 logger = logging.getLogger(__name__)
 
 
-async def analyze_website_job(ctx: dict, lead_id: str, website_url: str) -> None:
+async def analyze_website_job(ctx: dict, lead_id: str, website_url: str | None = None) -> None:
     logger.info(f"Starting background job: analyze_website for lead {lead_id}")
 
     try:
         lead_uuid = UUID(lead_id)
         async with AsyncSessionFactory() as session:
+            if not website_url:
+                from domain.lead.models import Lead
+                lead = await session.get(Lead, lead_uuid)
+                if lead and lead.website:
+                    website_url = lead.website
+
+            if not website_url:
+                logger.info(f"Lead {lead_id} has no website to analyze, skipping")
+                return
+
             service = WebsiteAnalysisService(session)
 
             # Run analysis
