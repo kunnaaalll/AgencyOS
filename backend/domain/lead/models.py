@@ -23,6 +23,7 @@ class Lead(Base):
     email: Mapped[str | None] = mapped_column(String(255), nullable=True)
 
     instagram_url: Mapped[str | None] = mapped_column(String(255), nullable=True)
+    facebook_url: Mapped[str | None] = mapped_column(String(500), nullable=True)
     linkedin_url: Mapped[str | None] = mapped_column(String(255), nullable=True)
     google_maps_url: Mapped[str | None] = mapped_column(String(2000), nullable=True)
 
