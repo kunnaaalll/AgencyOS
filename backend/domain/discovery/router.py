@@ -25,7 +25,7 @@ from datetime import UTC, datetime
 import structlog
 from arq.connections import ArqRedis
 from fastapi import APIRouter, Depends, HTTPException, Query, Request
-from sqlalchemy import and_, func, select
+from sqlalchemy import and_, func, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 logger = structlog.get_logger(__name__)
@@ -403,13 +403,13 @@ async def promote_all_valid_businesses(
 
     for b in businesses:
         # Avoid creating duplicates in CRM
-        existing = await db.execute(
-            select(Lead).where(
-                (Lead.business_name == b.business_name) |
-                ((Lead.phone == b.phone) & (b.phone.isnot(None))) |
-                ((Lead.website == b.website) & (b.website.isnot(None)))
-            ).limit(1)
-        )
+        dup_conditions = [Lead.business_name == b.business_name]
+        if b.phone:
+            dup_conditions.append(Lead.phone == b.phone)
+        if b.website:
+            dup_conditions.append(Lead.website == b.website)
+
+        existing = await db.execute(select(Lead).where(or_(*dup_conditions)).limit(1))
         if existing.scalar_one_or_none():
             b.enriched_at = b.enriched_at or datetime.now(UTC)
             continue
