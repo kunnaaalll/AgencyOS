@@ -1,23 +1,46 @@
-import React, { useEffect } from 'react';
+import React from 'react';
 import { motion } from 'framer-motion';
 import { Search, Bell, User, Command } from 'lucide-react';
+import { useRouterState } from '@tanstack/react-router';
 
 export function Header() {
+  const routerState = useRouterState();
+  const pathname = routerState?.location?.pathname || '/';
 
+  const getBreadcrumb = (path: string) => {
+    if (path.startsWith('/discovery')) return { section: 'Growth OS', current: 'Lead Discovery' };
+    if (path.startsWith('/leads')) return { section: 'Growth OS', current: 'All Leads' };
+    if (path.startsWith('/analysis')) return { section: 'Growth OS', current: 'Website Audits' };
+    if (path.startsWith('/qualifications')) return { section: 'Growth OS', current: 'Qualifications' };
+    if (path.startsWith('/crm')) return { section: 'Growth OS', current: 'CRM Pipeline' };
+    if (path.startsWith('/outreach')) return { section: 'Growth OS', current: 'Outreach' };
+    if (path.startsWith('/clients')) return { section: 'Delivery OS', current: 'Clients' };
+    if (path.startsWith('/tasks') || path.startsWith('/projects')) return { section: 'Delivery OS', current: 'Tasks' };
+    if (path.startsWith('/knowledge')) return { section: 'Delivery OS', current: 'Knowledge' };
+    if (path.startsWith('/documents')) return { section: 'Delivery OS', current: 'Documents' };
+    if (path.startsWith('/finance')) return { section: 'Business OS', current: 'Finance' };
+    if (path.startsWith('/analytics')) return { section: 'Business OS', current: 'Analytics' };
+    if (path.startsWith('/settings')) return { section: 'Platform', current: 'Settings' };
+    return { section: 'Overview', current: 'Dashboard' };
+  };
+
+  const breadcrumb = getBreadcrumb(pathname);
 
   const openCmdK = () => {
     document.dispatchEvent(new KeyboardEvent('keydown', { key: 'k', metaKey: true }));
   };
+
   return (
     <motion.header 
-      initial={{ y: -50, opacity: 0 }}
+      initial={{ y: -20, opacity: 0 }}
       animate={{ y: 0, opacity: 1 }}
-      className="h-20 flex items-center justify-between px-8 sticky top-0 z-30 mb-8 pt-4"
+      className="h-20 flex items-center justify-between px-8 sticky top-0 z-30 mb-4 pt-4 backdrop-blur-md bg-white/40 dark:bg-zinc-950/40 border-b border-slate-200/40 dark:border-zinc-800/40"
     >
       <div className="flex items-center">
-        {/* Breadcrumbs could go here, omitting for simplicity or making it abstract */}
-        <div className="text-gray-500 font-medium text-sm">
-          Overview / <span className="text-gray-900 font-semibold">Dashboard</span>
+        <div className="text-slate-500 dark:text-slate-400 font-medium text-sm flex items-center gap-2">
+          <span>{breadcrumb.section}</span>
+          <span className="text-slate-300 dark:text-zinc-700">/</span>
+          <span className="text-slate-900 dark:text-slate-100 font-bold">{breadcrumb.current}</span>
         </div>
       </div>
 
@@ -25,31 +48,31 @@ export function Header() {
         {/* Search Bar / Command Palette Trigger */}
         <div 
           onClick={openCmdK}
-          className="glass-panel flex items-center gap-3 px-4 py-2 rounded-2xl cursor-pointer hover:bg-white/60 dark:hover:bg-gray-800/60 transition-all border border-white/40 dark:border-white/10 text-gray-500 dark:text-gray-400 w-64 shadow-sm group"
+          className="flex items-center gap-3 px-3.5 py-1.5 rounded-xl cursor-pointer bg-white/80 dark:bg-zinc-900/80 hover:bg-white dark:hover:bg-zinc-900 transition-all border border-slate-200/80 dark:border-zinc-800 text-slate-500 dark:text-slate-400 w-64 shadow-xs group"
         >
-          <Search className="w-4 h-4 text-gray-400 group-hover:text-pink-400 transition-colors" />
-          <span className="text-sm font-medium flex-1">Search anything...</span>
-          <div className="flex items-center gap-1 text-xs font-semibold bg-white/50 dark:bg-gray-800/50 px-2 py-0.5 rounded-lg border border-white/60 dark:border-white/10">
-            <Command className="w-3 h-3" />
+          <Search className="w-4 h-4 text-slate-400 group-hover:text-indigo-600 transition-colors" />
+          <span className="text-xs font-medium flex-1">Search anything...</span>
+          <div className="flex items-center gap-1 text-[10px] font-bold bg-slate-100 dark:bg-zinc-800 text-slate-500 px-1.5 py-0.5 rounded border border-slate-200 dark:border-zinc-700">
+            <Command className="w-2.5 h-2.5" />
             <span>K</span>
           </div>
         </div>
 
         {/* Action Icons */}
         <div className="flex items-center gap-2">
-          <button className="glass-panel w-10 h-10 rounded-2xl flex items-center justify-center text-gray-500 dark:text-gray-400 hover:text-pink-500 dark:hover:text-pink-400 hover:bg-white/60 dark:hover:bg-gray-800/60 transition-all shadow-sm">
-            <Bell className="w-5 h-5" />
+          <button className="w-9 h-9 rounded-xl flex items-center justify-center text-slate-500 dark:text-slate-400 hover:text-indigo-600 hover:bg-white dark:hover:bg-zinc-900 transition-all border border-slate-200/80 dark:border-zinc-800 bg-white/60 dark:bg-zinc-900/60 shadow-xs cursor-pointer">
+            <Bell className="w-4 h-4" />
           </button>
         </div>
 
         {/* Profile */}
-        <div className="glass-panel p-1 pr-4 rounded-2xl flex items-center gap-3 shadow-sm hover:bg-white/60 transition-all cursor-pointer border border-white/40">
-          <div className="w-8 h-8 rounded-xl bg-gradient-accent flex items-center justify-center text-gray-800 font-bold text-sm shadow-inner">
-            <User className="w-4 h-4" />
+        <div className="p-1 pr-3 rounded-xl flex items-center gap-2.5 shadow-xs hover:bg-white dark:hover:bg-zinc-900 transition-all cursor-pointer border border-slate-200/80 dark:border-zinc-800 bg-white/60 dark:bg-zinc-900/60">
+          <div className="w-7 h-7 rounded-lg bg-indigo-600 text-white flex items-center justify-center font-bold text-xs shadow-inner">
+            <User className="w-3.5 h-3.5" />
           </div>
           <div className="flex flex-col">
-            <span className="text-sm font-semibold text-gray-900 leading-tight">Admin User</span>
-            <span className="text-xs text-gray-500 font-medium">Founder</span>
+            <span className="text-xs font-bold text-slate-900 dark:text-slate-100 leading-tight">Admin User</span>
+            <span className="text-[10px] text-slate-400 font-medium">Founder</span>
           </div>
         </div>
       </div>
