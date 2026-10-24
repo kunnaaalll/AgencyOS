@@ -1,4 +1,5 @@
 from datetime import datetime
+from uuid import UUID
 
 from pydantic import BaseModel, ConfigDict
 
@@ -6,8 +7,8 @@ from domain.qualification_ai.enums import Priority, QualificationStatus
 
 
 class AIQualificationBase(BaseModel):
-    lead_id: str
-    website_analysis_id: str | None = None
+    lead_id: UUID | str
+    website_analysis_id: UUID | str | None = None
     priority: Priority = Priority.MEDIUM
     opportunity_score: int = 0
     qualification_status: QualificationStatus = QualificationStatus.REVIEW_REQUIRED
@@ -24,7 +25,7 @@ class AIQualificationCreate(AIQualificationBase):
 
 
 class AIQualificationResponse(AIQualificationBase):
-    id: str
+    id: UUID | str
     created_at: datetime
     business_name: str | None = None
 
