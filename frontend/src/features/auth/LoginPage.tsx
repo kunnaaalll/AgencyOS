@@ -61,12 +61,15 @@ export function LoginPage() {
       <div className="relative w-full max-w-[420px] mx-4 perspective-1000">
         
         {/* Logo Section */}
-        <div className="text-center mb-10 gsap-fade-up flex flex-col items-center">
-          <div className="inline-flex items-center justify-center w-[80px] h-[80px] rounded-2xl bg-[var(--color-surface-card)] border border-[var(--color-hairline)] mb-6 shadow-sm gsap-float overflow-hidden">
-            <img src="/logo.png" alt="AgencyOS Logo" className="w-full h-full object-cover mix-blend-multiply dark:mix-blend-normal" />
+        <div className="text-center mb-8 gsap-fade-up flex flex-col items-center">
+          <div className="inline-flex items-center justify-center w-20 h-20 rounded-2xl bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 mb-5 shadow-lg shadow-indigo-500/10 gsap-float p-3">
+            <img src="/stand-transparent.png" alt="AgencyOS Emblem" className="w-full h-full object-contain" />
           </div>
-          <h1 className="text-claude-display-lg text-[var(--color-ink)] mb-2">AgencyOS</h1>
-          <p className="text-claude-body-md text-[var(--color-muted)]">Sign in to your workspace.</p>
+          <div className="flex items-center justify-center mb-2">
+            <img src="/Logo-transparent.png" alt="AgencyOS" className="h-8 w-auto object-contain dark:hidden" />
+            <img src="/Logo-dark.png" alt="AgencyOS" className="h-8 w-auto object-contain hidden dark:block" />
+          </div>
+          <p className="text-xs text-zinc-500 dark:text-zinc-400">Autonomous Agency Intelligence & Operations Platform</p>
         </div>
 
         {/* Card */}
@@ -145,9 +148,12 @@ export function LoginPage() {
         </div>
 
         {/* Footer */}
-        <p className="text-center text-[var(--color-muted)] text-claude-body-sm mt-8 gsap-fade-up">
-          AgencyOS V2 · Core Platform
-        </p>
+        <div className="text-center mt-8 gsap-fade-up flex items-center justify-center gap-2 text-xs text-zinc-400 dark:text-zinc-500">
+          <img src="/stand-transparent.png" alt="AgencyOS" className="w-4 h-4 object-contain" />
+          <span className="font-semibold text-zinc-600 dark:text-zinc-400">AgencyOS</span>
+          <span>•</span>
+          <span>Autonomous Growth & Retainer Infrastructure</span>
+        </div>
       </div>
     </div>
   )

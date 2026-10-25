@@ -328,8 +328,8 @@ export function DashboardPage() {
       <div className="rounded-2xl border border-blue-200 bg-gradient-to-r from-blue-50/90 via-indigo-50/70 to-purple-50/90 p-4 shadow-xs backdrop-blur-md">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div className="flex items-start sm:items-center gap-3">
-            <div className="p-2.5 rounded-xl bg-blue-600 text-white shadow-xs shrink-0">
-              <Bot className="w-5 h-5 animate-pulse" />
+            <div className="p-2 rounded-xl bg-white dark:bg-zinc-800 border border-indigo-200 dark:border-indigo-800 shadow-xs shrink-0 flex items-center justify-center w-11 h-11">
+              <img src="/stand-transparent.png" alt="AgencyOS" className="w-7 h-7 object-contain" />
             </div>
             <div>
               <div className="flex flex-wrap items-center gap-2">

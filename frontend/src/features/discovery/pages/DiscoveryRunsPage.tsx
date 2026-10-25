@@ -278,11 +278,11 @@ export function DiscoveryRunsPage() {
 
         <div className="relative z-10 flex flex-col lg:flex-row lg:items-center justify-between gap-6 pb-6 border-b border-white/10">
           <div className="flex items-start sm:items-center gap-4">
-            {/* Pulsing 24/7 Beacon */}
+            {/* Pulsing 24/7 Beacon with Brand Emblem */}
             <div className="relative flex items-center justify-center shrink-0">
-              <span className="animate-ping absolute inline-flex h-9 w-9 rounded-full bg-emerald-400 opacity-30"></span>
-              <div className="relative inline-flex items-center justify-center w-11 h-11 rounded-xl bg-emerald-500/20 border border-emerald-500/50 text-emerald-400 shadow-lg shadow-emerald-500/20">
-                <Activity className="w-5 h-5 animate-pulse" />
+              <span className="animate-ping absolute inline-flex h-10 w-10 rounded-full bg-emerald-400 opacity-25"></span>
+              <div className="relative inline-flex items-center justify-center w-12 h-12 rounded-xl bg-white/10 backdrop-blur-md border border-indigo-400/30 p-2 shadow-lg shadow-indigo-500/20">
+                <img src="/stand-transparent.png" alt="AgencyOS Engine" className="w-full h-full object-contain" />
               </div>
             </div>
 

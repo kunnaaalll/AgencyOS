@@ -246,6 +246,10 @@ export function LeadAnalysisPage() {
               <ArrowLeft className="w-5 h-5 text-zinc-600 dark:text-zinc-400" />
             </Link>
             <div>
+              <div className="flex items-center gap-1.5 mb-1">
+                <img src="/stand-transparent.png" alt="AgencyOS" className="w-4 h-4 object-contain" />
+                <span className="text-[10px] font-bold text-indigo-600 dark:text-indigo-400 uppercase tracking-widest font-mono">AgencyOS Intelligence Teardown</span>
+              </div>
               <h1 className="text-xl md:text-2xl font-bold text-zinc-900 dark:text-zinc-100">
                 Lead Intelligence: {lead?.business_name || 'Business'}
               </h1>
@@ -943,6 +947,20 @@ export function LeadAnalysisPage() {
           ) : (
             <p className="text-xs text-zinc-400 italic">No immediate client pain points flagged.</p>
           )}
+        </div>
+
+        {/* Verified AgencyOS Signature Box */}
+        <div className="flex flex-col sm:flex-row items-center justify-between p-4 rounded-xl border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-800/40 text-xs text-zinc-500 gap-3">
+          <div className="flex items-center gap-2">
+            <img src="/stand-transparent.png" alt="AgencyOS" className="w-5 h-5 object-contain" />
+            <span className="font-semibold text-zinc-700 dark:text-zinc-300">Generated & Verified by AgencyOS Engine</span>
+            <span>•</span>
+            <span>Continuous Market Intelligence</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <img src="/Logo-transparent.png" alt="AgencyOS" className="h-4 w-auto object-contain dark:hidden" />
+            <img src="/Logo-dark.png" alt="AgencyOS" className="h-4 w-auto object-contain hidden dark:block" />
+          </div>
         </div>
       </div>
     </div>

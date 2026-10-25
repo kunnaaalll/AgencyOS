@@ -80,13 +80,22 @@ export function Sidebar() {
       className="w-64 flex flex-col h-screen fixed top-0 left-0 p-4 pb-4 z-40 bg-transparent"
     >
       <div className="glass-panel w-full h-full rounded-3xl flex flex-col overflow-hidden border border-white/40 shadow-sm relative">
-        <div className="p-6 pb-2">
-          <div className="flex items-center gap-3 mb-2">
-            <div className="w-8 h-8 rounded-xl bg-gradient-primary flex items-center justify-center shadow-sm">
-              <div className="w-3 h-3 bg-white rounded-full mix-blend-overlay"></div>
+        <div className="p-5 pb-3">
+          <Link to="/" className="flex items-center gap-2.5 group">
+            <img 
+              src="/stand-transparent.png" 
+              alt="AgencyOS Emblem" 
+              className="w-8 h-8 object-contain shrink-0 drop-shadow-xs transition-transform group-hover:scale-105" 
+            />
+            <div className="flex flex-col">
+              <span className="font-extrabold text-[15px] tracking-tight text-zinc-900 dark:text-zinc-100 leading-none">
+                Agency<span className="text-indigo-600 dark:text-indigo-400">OS</span>
+              </span>
+              <span className="text-[9px] font-semibold tracking-wider text-zinc-400 dark:text-zinc-500 uppercase mt-0.5 font-mono">
+                AUTONOMOUS V2
+              </span>
             </div>
-            <h1 className="font-semibold text-lg tracking-tight text-gray-900 dark:text-gray-100">AgencyOS</h1>
-          </div>
+          </Link>
         </div>
 
         <div className="flex-1 overflow-y-auto no-scrollbar px-4 py-4 space-y-8">
@@ -134,14 +143,21 @@ export function Sidebar() {
           ))}
         </div>
 
-        <div className="p-4 border-t border-white/30">
+        <div className="p-3 border-t border-zinc-200/50 dark:border-zinc-800/50 space-y-2">
           <button 
             onClick={handleLogout}
-            className="flex items-center gap-3 px-3 py-2.5 w-full rounded-xl text-sm font-medium text-gray-600 dark:text-gray-400 hover:bg-white/40 dark:hover:bg-gray-800/40 hover:text-gray-900 dark:hover:text-gray-100 transition-all"
+            className="flex items-center gap-3 px-3 py-2 w-full rounded-xl text-xs font-medium text-gray-600 dark:text-gray-400 hover:bg-white/40 dark:hover:bg-gray-800/40 hover:text-gray-900 dark:hover:text-gray-100 transition-all"
           >
-            <LogOut className="w-5 h-5 text-gray-400 dark:text-gray-500" strokeWidth={2} />
+            <LogOut className="w-4 h-4 text-gray-400 dark:text-gray-500" strokeWidth={2} />
             Sign Out
           </button>
+          <div className="flex items-center justify-between px-3 pt-1 text-[10px] text-gray-400 dark:text-gray-500 select-none">
+            <div className="flex items-center gap-1.5">
+              <img src="/stand-transparent.png" alt="AgencyOS" className="w-3.5 h-3.5 object-contain" />
+              <span className="font-semibold text-gray-500 dark:text-gray-400">AgencyOS</span>
+            </div>
+            <span className="font-mono text-[9px] bg-white/60 dark:bg-zinc-800 px-1 py-0.5 rounded border border-zinc-200/50 dark:border-zinc-700/50">v2.4</span>
+          </div>
         </div>
       </div>
     </motion.aside>

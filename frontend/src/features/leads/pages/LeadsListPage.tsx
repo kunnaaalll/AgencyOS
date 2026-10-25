@@ -275,6 +275,7 @@ export function LeadsListPage() {
         <div className="flex items-center gap-3">
           <div>
             <h1 className="text-xl font-bold text-zinc-900 dark:text-zinc-100 flex items-center gap-2">
+              <img src="/stand-transparent.png" alt="AgencyOS" className="w-5 h-5 object-contain" />
               Leads Directory
               <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-indigo-100 dark:bg-indigo-950 text-indigo-700 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-800">
                 {filteredData.length} Records

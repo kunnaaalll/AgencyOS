@@ -35,8 +35,9 @@ export function GlobalNav() {
           >
             {mobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
           </button>
-          <Link to="/" className="flex items-center text-ink hover:opacity-80 transition-opacity flex-shrink-0 mr-4">
-            <img src="/logo-wide.png" alt="AgencyOS" className="h-[80px] md:h-[120px] w-auto object-contain mix-blend-multiply dark:mix-blend-normal" style={{ margin: "-20px 0" }} />
+          <Link to="/" className="flex items-center hover:opacity-90 transition-opacity flex-shrink-0 mr-4">
+            <img src="/Logo-transparent.png" alt="AgencyOS" className="h-7 w-auto object-contain dark:hidden" />
+            <img src="/Logo-dark.png" alt="AgencyOS" className="h-7 w-auto object-contain hidden dark:block" />
           </Link>
         </div>
         
