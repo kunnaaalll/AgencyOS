@@ -405,7 +405,7 @@ export function LeadsListPage() {
                 onChange={(e) => table.setPageSize(Number(e.target.value))}
                 className="bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded px-1.5 py-0.5 text-[11px] text-zinc-700 dark:text-zinc-300"
               >
-                {[10, 15, 25, 50].map((size) => (
+                {[10, 25, 50, 100, 250, 500].map((size) => (
                   <option key={size} value={size}>
                     {size}
                   </option>

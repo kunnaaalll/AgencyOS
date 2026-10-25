@@ -25,14 +25,14 @@ async def list_leads(
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(get_current_user),
     skip: int = 0,
-    limit: int = 100,
+    limit: int = 5000,
     is_published: bool | None = None,
     min_score: int | None = None,
 ):
     if not current_user.has_permission("leads:read"):
         raise HTTPException(status_code=403, detail="Not enough permissions")
 
-    query = select(Lead)
+    query = select(Lead).order_by(Lead.created_at.desc())
     if is_published is not None:
         query = query.where(Lead.is_published == is_published)
     if min_score is not None:

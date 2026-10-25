@@ -52,10 +52,17 @@ export interface LeadAnalysis {
   updated_at?: string
 }
 
-export const fetchLeads = async (is_published?: boolean, min_score?: number): Promise<Lead[]> => {
+export const fetchLeads = async (
+  is_published?: boolean,
+  min_score?: number,
+  limit = 5000,
+  skip = 0
+): Promise<Lead[]> => {
   const params = new URLSearchParams()
   if (is_published !== undefined) params.append('is_published', String(is_published))
   if (min_score !== undefined) params.append('min_score', String(min_score))
+  params.append('limit', String(limit))
+  if (skip > 0) params.append('skip', String(skip))
   
   const queryString = params.toString()
   const url = queryString ? `/leads?${queryString}` : '/leads'
